@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useId, useRef, useState } from "react";
 import { Button, cx } from "./primitives";
 
 const SIZES = { sm: "max-w-md", md: "max-w-2xl", lg: "max-w-4xl" };
@@ -26,6 +26,7 @@ export function Dialog({
   footer?: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     const el = ref.current;
@@ -35,6 +36,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
+      aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
@@ -47,7 +49,7 @@ export function Dialog({
     >
       <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-3">
         <div className="min-w-0">
-          <h2 className="text-base font-semibold">{title}</h2>
+          <h2 id={titleId} className="text-base font-semibold break-words">{title}</h2>
           {subtitle && <div className="mt-0.5 text-xs text-muted">{subtitle}</div>}
         </div>
         <button

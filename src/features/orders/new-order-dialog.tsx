@@ -178,7 +178,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
                   {(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" autoFocus placeholder="Nome, telefone ou placa" />}
                 </Field>
                 {suggestions.length > 0 && (
-                  <ul className="absolute top-[58px] right-0 left-0 z-10 rounded-md border border-line bg-surface py-1 shadow-lg" aria-label="Clientes cadastrados">
+                  <ul className="absolute top-full mt-1 right-0 left-0 z-10 rounded-md border border-line bg-surface py-1 shadow-lg" aria-label="Clientes cadastrados">
                     {suggestions.map((c) => (
                       <li key={c.id}>
                         <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-primary-soft" onClick={() => selectCustomer(c.id)}>

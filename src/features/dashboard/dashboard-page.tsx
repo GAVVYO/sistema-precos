@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, CalendarPlus, CheckCircle2, CircleDollarSign, PackageCheck, Plus, Wrench } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, CalendarPlus, CheckCircle2, CircleDollarSign, Clock3, PackageCheck, Plus, Wrench } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
@@ -28,26 +28,35 @@ function OrderLink({ order }: { order: ServiceOrder }) {
 
 function OpenOrdersTable({ orders, empty }: { orders: ServiceOrder[]; empty: string }) {
   const { customerOf, vehicleOf, userOf } = useApp();
+  const [sort, setSort] = useState<{ key: "openedAt" | "customer" | "service" | "status"; desc: boolean }>({ key: "openedAt", desc: false });
+  const columns = [
+    { key: "openedAt", label: "OS / abertura" },
+    { key: "customer", label: "Cliente / veículo" },
+    { key: "service", label: "Serviço / responsável" },
+    { key: "status", label: "Status" },
+  ] as const;
+  const value = (o: ServiceOrder): string => sort.key === "customer" ? customerOf(o.customerId)?.name ?? "" : sort.key === "service" ? o.description : sort.key === "status" ? ORDER_STATUS_LABELS[o.status] : o.openedAt;
+  const sorted = [...orders].sort((a, b) => (sort.desc ? -1 : 1) * value(a).localeCompare(value(b), "pt-BR", { numeric: true }));
   if (orders.length === 0) return <EmptyState icon={<Wrench className="size-7" aria-hidden />} title={empty} />;
   return (
     <div className="overflow-x-auto">
       <table className="data-table">
         <thead>
-          <tr><th>OS</th><th>Cliente</th><th>Veículo</th><th>Placa</th><th>Serviço</th><th>Responsável</th><th>Status</th><th>Abertura</th></tr>
+          <tr>{columns.map((c) => <th key={c.key} aria-sort={sort.key === c.key ? sort.desc ? "descending" : "ascending" : "none"}>
+            <button type="button" className="inline-flex items-center gap-1.5 rounded hover:text-primary" onClick={() => setSort({ key: c.key, desc: sort.key === c.key ? !sort.desc : false })}>
+              {c.label}{sort.key !== c.key ? <ArrowUpDown className="size-3 opacity-50" aria-hidden /> : sort.desc ? <ArrowDown className="size-3 text-primary" aria-hidden /> : <ArrowUp className="size-3 text-primary" aria-hidden />}
+            </button>
+          </th>)}</tr>
         </thead>
         <tbody>
-          {orders.map((o) => {
+          {sorted.map((o) => {
             const v = vehicleOf(o.vehicleId);
             return (
               <tr key={o.id}>
-                <td><OrderLink order={o} /></td>
-                <td>{customerOf(o.customerId)?.name}</td>
-                <td>{vehicleLabel(v)}</td>
-                <td className="font-mono text-xs">{v ? formatPlate(v.plate) : "—"}</td>
-                <td className="max-w-56 truncate" title={o.description}>{o.description}</td>
-                <td>{userOf(o.mechanicId)?.name.split(" ").slice(0, 2).join(" ") ?? <span className="text-muted">A definir</span>}</td>
+                <td className="whitespace-nowrap"><OrderLink order={o} /><span className="mt-1 block text-[11px] text-muted">{dateOf(o.openedAt) === todayISO() ? `Hoje, ${formatTime(o.openedAt)}` : formatDateTime(o.openedAt)}</span></td>
+                <td><span className="block font-medium">{customerOf(o.customerId)?.name}</span><span className="mt-1 block text-xs text-muted">{vehicleLabel(v)} · <span className="vehicle-plate">{v ? formatPlate(v.plate) : "—"}</span></span></td>
+                <td><span className="block max-w-72 truncate" title={o.description}>{o.description}</span><span className="mt-1 block text-xs text-muted">{userOf(o.mechanicId)?.name ?? "Responsável a definir"}</span></td>
                 <td><StatusBadge order={o} /></td>
-                <td className="whitespace-nowrap">{dateOf(o.openedAt) === todayISO() ? `Hoje, ${formatTime(o.openedAt)}` : formatDateTime(o.openedAt)}</td>
               </tr>
             );
           })}
@@ -121,11 +130,11 @@ function RecentActivity() {
       {relevant.length === 0 ? (
         <EmptyState title="Nenhuma atividade registrada" />
       ) : (
-        <ul className="divide-y divide-line">
+        <ul className="activity-feed divide-y divide-line">
           {relevant.map((e) => {
             const order = view.orders.find((o) => o.id === e.orderId);
             return (
-              <li key={e.id} className="px-4 py-2 text-[13px]">
+              <li key={e.id} className="relative py-2.5 pr-4 pl-9 text-[13px]"><span className="activity-dot" aria-hidden />
                 <button type="button" className="font-semibold text-primary hover:underline" onClick={() => order && openOrder(order.id)}>
                   {order ? formatOrderNumber(order.number) : "OS"}
                 </button>{" "}
@@ -154,15 +163,15 @@ function OperationalDashboard() {
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-3 gap-3 xl:grid-cols-6">
-        <Stat label="Ordens aguardando" value={open.filter((o) => o.status === "waiting").length} tone="warning" />
-        <Stat label="Ordens em andamento" value={open.filter((o) => o.status === "in_progress").length} />
-        <Stat label="Ordens concluídas" value={doneWeek} hint={`${doneToday} hoje · últimos 7 dias`} tone="success" />
+      <div className="dashboard-stats mb-4 grid grid-cols-3 gap-3">
+        <Stat emphasis icon={<Clock3 className="size-5" aria-hidden />} label="Ordens aguardando" value={open.filter((o) => o.status === "waiting").length} tone="warning" />
+        <Stat emphasis icon={<Wrench className="size-5" aria-hidden />} label="Ordens em andamento" value={open.filter((o) => o.status === "in_progress").length} />
+        <Stat emphasis icon={<CheckCircle2 className="size-5" aria-hidden />} label="Ordens concluídas" value={doneWeek} hint={`${doneToday} hoje · últimos 7 dias`} tone="success" />
         <Stat label="Veículos com serviço aberto" value={new Set(open.map((o) => o.vehicleId)).size} />
         {showAgenda && <Stat label="Agendamentos do dia" value={todayAppointments} />}
         {showStock && <Stat label="Peças com estoque baixo" value={lowStock} tone={lowStock ? "danger" : "neutral"} />}
       </div>
-      <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="space-y-4">
           <Card>
             <CardHeader title="Serviços em andamento" subtitle="Ordens aguardando ou em execução" actions={<Link href="/ordens" className="text-xs font-medium text-primary hover:underline">Abrir quadro</Link>} />

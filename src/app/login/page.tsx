@@ -1,11 +1,12 @@
 "use client";
 
-import { FlaskConical, Wrench } from "lucide-react";
+import { FlaskConical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useDemoState } from "@/app-state/app-context";
 import { BackendUnavailable } from "@/components/layout/backend-unavailable";
 import { Button, cx, Field, Select, Skeleton } from "@/components/ui/primitives";
+import { BrandMark } from "@/components/ui/brand-mark";
 import { APP_MODE } from "@/config/env";
 import { demoStore } from "@/demo/store";
 import { ROLE_LABELS } from "@/domain/permissions";
@@ -32,11 +33,9 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-lg">
+      <div className="page-enter w-full max-w-lg">
         <div className="mb-5 flex items-center justify-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-md bg-primary text-white">
-            <Wrench className="size-5" aria-hidden />
-          </span>
+          <BrandMark className="size-11" />
           <div>
             <p className="text-lg leading-tight font-semibold">GAVYO Auto</p>
             <p className="text-xs text-muted">Gestão para oficinas e centros automotivos</p>

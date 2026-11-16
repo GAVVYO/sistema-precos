@@ -98,7 +98,7 @@ function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment:
           <div className="relative col-span-4">
             <Field label="Cliente">{(p) => <Input {...p} value={customerName} onChange={(e) => setCustomerName(e.target.value)} autoComplete="off" autoFocus={!a} />}</Field>
             {matches.length > 0 && (
-              <ul className="absolute top-[58px] right-0 left-0 z-10 rounded-md border border-line bg-surface py-1 shadow-lg" aria-label="Clientes cadastrados">
+              <ul className="absolute top-full mt-1 right-0 left-0 z-10 rounded-md border border-line bg-surface py-1 shadow-lg" aria-label="Clientes cadastrados">
                 {matches.map((c) => {
                   const v = view.vehicles.find((x) => x.customerId === c.id);
                   return (

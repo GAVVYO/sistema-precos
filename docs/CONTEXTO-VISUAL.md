@@ -2,6 +2,8 @@
 
 Documento de passagem para quem for refinar a interface do GAVYO Auto. Leia também [ARQUITETURA.md](ARQUITETURA.md) e [FUNCIONALIDADES.md](FUNCIONALIDADES.md).
 
+> Atualização de 16/11/2026: o cliente escolheu identidade automotiva técnica e precisa, animações mais presentes e prioridade em Início/Ordens. Veja [REVISAO-VISUAL.md](REVISAO-VISUAL.md) para diagnóstico, primeira implementação, validações e pendências. As observações abaixo descrevem a base anterior a essa rodada.
+
 ## O que é o projeto
 
 ERP para pequenas oficinas mecânicas (Passaré, Fortaleza). **Fase 1: frontend de demonstração**, sem backend — os dados são fictícios e ficam no `localStorage`. Todas as telas e fluxos já funcionam; o objetivo agora é **elevar a qualidade visual sem quebrar comportamento**.

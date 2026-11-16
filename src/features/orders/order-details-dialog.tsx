@@ -141,14 +141,6 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
                 </Select>
               </label>
             )}
-            {can("os.cancel") && !locked && order.status !== "done" && (
-              <Button variant="danger" icon={<Ban className="size-4" aria-hidden />} disabled={!online} onClick={() => setSub("cancel")}>
-                Cancelar OS
-              </Button>
-            )}
-            <Button icon={<FileDown className="size-4" aria-hidden />} loading={exporting} onClick={downloadPdf}>
-              Gerar PDF
-            </Button>
             {can("os.edit") && !cancelled && (
               <Button icon={<Pencil className="size-4" aria-hidden />} disabled={!online} onClick={() => setSub("edit")}>
                 Editar
@@ -269,6 +261,16 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
                   Considera apenas o custo das peças ({formatBRL(totals.partsCostCents)}); não inclui mão de obra interna nem despesas fixas.
                 </p>
               )}
+            </div>
+
+            <div className="rounded-md border border-line p-3">
+              <h3 className="mb-2 text-sm font-semibold">Documentos e gestão</h3>
+              <div className="flex flex-col items-stretch gap-2">
+                <Button icon={<FileDown className="size-4" aria-hidden />} loading={exporting} onClick={downloadPdf}>Gerar PDF</Button>
+                {can("os.cancel") && !locked && order.status !== "done" && (
+                  <Button variant="danger" icon={<Ban className="size-4" aria-hidden />} disabled={!online} onClick={() => setSub("cancel")}>Cancelar OS</Button>
+                )}
+              </div>
             </div>
 
             {!cancelled && customer && (

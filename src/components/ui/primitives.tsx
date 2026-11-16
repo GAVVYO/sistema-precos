@@ -43,7 +43,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       type={type}
       disabled={disabled || loading}
       className={cx(
-        "inline-flex items-center justify-center gap-1.5 rounded-md border font-medium whitespace-nowrap transition-colors",
+        "ui-button inline-flex items-center justify-center gap-1.5 rounded-md border font-semibold whitespace-nowrap transition-colors",
         "disabled:opacity-50 disabled:cursor-not-allowed",
         size === "sm" ? "h-7 px-2.5 text-xs" : "h-9 px-3.5 text-[13px]",
         VARIANTS[variant],
@@ -63,7 +63,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 const control = (className?: string) => cx(/(^|\s)w-/.test(className ?? "") ? "" : "w-full", CONTROL, className);
 
 const CONTROL =
-  "h-9 rounded-md border border-line bg-surface px-2.5 text-[13px] text-ink placeholder:text-slate-400 " +
+  "ui-control h-9 rounded-md border border-line bg-surface px-2.5 text-[13px] text-ink placeholder:text-slate-400 " +
   "disabled:bg-slate-50 disabled:text-muted aria-[invalid=true]:border-danger";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
@@ -129,7 +129,7 @@ export function Field({
 /* ---------- Superfícies ---------- */
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <section className={cx("rounded-md border border-line bg-surface", className)}>{children}</section>;
+  return <section className={cx("ui-card rounded-md border border-line bg-surface", className)}>{children}</section>;
 }
 
 export function CardHeader({
@@ -164,7 +164,7 @@ export function PageHeader({
   return (
     <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-xl font-semibold text-ink">{title}</h1>
+        <h1 className="text-[24px] leading-tight font-semibold tracking-tight text-ink">{title}</h1>
         {description && <p className="mt-0.5 text-[13px] text-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -184,7 +184,7 @@ const TONES: Record<Tone, string> = {
 
 export function Badge({ tone = "neutral", children }: { tone?: Tone; children: ReactNode }) {
   return (
-    <span className={cx("inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap", TONES[tone])}>
+    <span className={cx("inline-flex items-center rounded px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap", TONES[tone])}>
       {children}
     </span>
   );
@@ -196,17 +196,19 @@ export function Stat({
   hint,
   tone = "neutral",
   icon,
+  emphasis = false,
 }: {
   label: string;
   value: ReactNode;
   hint?: string;
   tone?: Tone;
   icon?: ReactNode;
+  emphasis?: boolean;
 }) {
   const color =
     tone === "danger" ? "text-danger" : tone === "warning" ? "text-warning" : tone === "success" ? "text-success" : "text-ink";
   return (
-    <div className="rounded-md border border-line bg-surface px-4 py-3">
+    <div className={cx("stat-panel rounded-md border border-line bg-surface px-4 py-3", emphasis && "stat-emphasis")} data-tone={tone}>
       <div className="flex items-center justify-between gap-2 text-xs font-medium text-muted">
         <span>{label}</span>
         {icon}

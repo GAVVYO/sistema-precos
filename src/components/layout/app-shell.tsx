@@ -9,6 +9,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Button, cx, EmptyState } from "@/components/ui/primitives";
+import { BrandMark } from "@/components/ui/brand-mark";
 import { toast } from "@/components/ui/toast";
 import { demoStore } from "@/demo/store";
 import { ModuleInfo, MODULES, ROLE_LABELS } from "@/domain/permissions";
@@ -245,58 +246,20 @@ function Header() {
 
   return (
     <header className="no-print bg-secondary text-secondary-fg">
-      <div className="mx-auto flex h-12 max-w-[1440px] items-center gap-3 px-4">
+      <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-4 px-4">
         <Link href="/inicio" className="flex min-w-0 shrink-0 items-center gap-2 rounded">
           {settings.logoDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={settings.logoDataUrl} alt="" className="size-7 rounded bg-white object-contain" />
           ) : (
-            <span className="flex size-7 items-center justify-center rounded bg-primary text-primary-fg">
-              <Wrench className="size-4" aria-hidden />
-            </span>
+            <BrandMark className="size-8 shrink-0" />
           )}
-          <span className="max-w-44 truncate text-sm font-semibold">{settings.displayName}</span>
+          <span className="min-w-0"><span className="block text-[10px] font-semibold tracking-[0.18em] opacity-65">GAVYO AUTO</span><span className="block max-w-80 truncate text-sm font-semibold" title={settings.displayName}>{settings.displayName}</span></span>
         </Link>
 
-        <nav aria-label="Navegação principal" className="flex min-w-0 flex-1 items-center gap-0.5">
-          {modules.map((m, i) => (
-            <Link
-              key={m.key}
-              href={m.href}
-              aria-current={isActive(m.href) ? "page" : undefined}
-              className={cx(
-                "rounded px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap",
-                i >= overflowFrom && "hidden xl:block",
-                isActive(m.href) ? "bg-primary text-primary-fg" : "opacity-80 hover:bg-white/10 hover:opacity-100",
-              )}
-            >
-              {m.label}
-            </Link>
-          ))}
-          {modules.length > overflowFrom && (
-            <div className="xl:hidden">
-              <Menu
-                label="Mais módulos"
-                align="left"
-                buttonClassName="flex items-center gap-1 rounded px-2.5 py-1.5 text-[13px] font-medium opacity-80 hover:bg-white/10 hover:opacity-100"
-                button={
-                  <>
-                    Mais <ChevronDown className="size-3.5" aria-hidden />
-                  </>
-                }
-              >
-                {(close) =>
-                  modules.slice(overflowFrom).map((m) => (
-                    <Link key={m.key} href={m.href} role="menuitem" onClick={close} className="block px-3 py-2 text-[13px] hover:bg-slate-50">
-                      {m.label}
-                    </Link>
-                  ))
-                }
-              </Menu>
-            </div>
-          )}
-        </nav>
 
+
+        <div className="ml-auto flex shrink-0 items-center gap-4">
         {can("os.create") && settings.activeModules.includes("orders") && (
           <Button variant="primary" size="sm" className="h-8" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()}>
             Nova OS
@@ -346,6 +309,47 @@ function Header() {
             </>
           )}
         </Menu>
+        </div>
+      </div>
+      <div className="border-b border-line bg-surface text-ink">
+        <nav aria-label="Navegação principal" className="mx-auto flex max-w-[1440px] items-center gap-1 px-4">
+          {modules.map((m, i) => (
+            <Link
+              key={m.key}
+              href={m.href}
+              aria-current={isActive(m.href) ? "page" : undefined}
+              className={cx(
+                "nav-module relative flex items-center gap-2 border-b-2 px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap",
+                i >= overflowFrom && "hidden xl:block",
+                isActive(m.href) ? "border-primary bg-primary-soft text-primary" : "border-transparent text-muted hover:bg-slate-50 hover:text-ink",
+              )}
+            >
+              {m.label}
+            </Link>
+          ))}
+          {modules.length > overflowFrom && (
+            <div className="xl:hidden">
+              <Menu
+                label="Mais módulos"
+                align="left"
+                buttonClassName="flex items-center gap-1 rounded px-2.5 py-1.5 text-[13px] font-medium text-muted hover:bg-slate-50 hover:text-ink"
+                button={
+                  <>
+                    Mais <ChevronDown className="size-3.5" aria-hidden />
+                  </>
+                }
+              >
+                {(close) =>
+                  modules.slice(overflowFrom).map((m) => (
+                    <Link key={m.key} href={m.href} role="menuitem" onClick={close} className="block px-3 py-2 text-[13px] hover:bg-slate-50">
+                      {m.label}
+                    </Link>
+                  ))
+                }
+              </Menu>
+            </div>
+          )}
+        </nav>
       </div>
     </header>
   );
@@ -370,6 +374,7 @@ function ConnectionBanner() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { settings } = useApp();
+  const pathname = usePathname();
 
   useEffect(() => {
     const root = document.documentElement.style;
@@ -402,7 +407,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Header />
       <ConnectionBanner />
       <main id="conteudo" className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-4">
-        {children}
+        <div key={pathname} className="page-enter">{children}</div>
       </main>
     </div>
   );

@@ -102,6 +102,59 @@ dialog::backdrop {
   white-space: nowrap;
 }
 
+/* Acabamento técnico: superfícies quietas, tipografia e instrumentos em destaque. */
+.ui-card { box-shadow: 0 1px 2px rgb(23 32 51 / 3%); }
+.ui-control { transition: border-color 150ms, box-shadow 150ms; }
+.ui-control:hover:not(:disabled) { border-color: color-mix(in srgb, var(--muted) 55%, var(--border)); }
+.ui-control:focus-visible { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent); }
+.ui-button { transition: background-color 160ms, border-color 160ms, transform 160ms, box-shadow 160ms; }
+.ui-button:active:not(:disabled) { transform: translateY(1px); }
+.ui-button:hover:not(:disabled) { box-shadow: 0 2px 4px rgb(23 32 51 / 7%); }
+.nav-module { transition: color 160ms, background-color 160ms; }
+.vehicle-plate {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 4px;
+  background: var(--surface);
+  color: var(--text);
+  font: 600 10px ui-monospace, Consolas, monospace;
+  letter-spacing: .035em;
+  white-space: nowrap;
+}
+.stat-panel { position: relative; overflow: hidden; }
+.stat-emphasis { border-top: 3px solid var(--primary); padding-top: 12px; }
+.stat-emphasis[data-tone="warning"] { border-top-color: var(--warning); }
+.stat-emphasis[data-tone="success"] { border-top-color: var(--success); }
+.stat-emphasis > :nth-child(2) { font-size: 32px; line-height: 1.25; }
+.dashboard-stats > :nth-child(n+4) { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 9px; }
+.dashboard-stats > :nth-child(n+4) > :nth-child(2) { margin: 0; font-size: 20px; }
+.activity-dot { position: absolute; left: 16px; top: 16px; width: 7px; height: 7px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 4px var(--color-primary-soft); }
+.order-card { transition: border-color 160ms, box-shadow 160ms; }
+.order-card:hover, .order-card:focus-within { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); box-shadow: 0 3px 10px rgb(23 32 51 / 7%); }
+.kanban-column { transition: background-color 180ms, box-shadow 180ms; }
+.data-table th { padding-block: 10px; letter-spacing: .015em; }
+.data-table td { padding-block: 10px; }
+.data-table tbody tr { transition: background-color 120ms; }
+.data-table tbody tr:focus-within { background: var(--color-primary-soft); }
+
+/* Movimento sem atrasar ações. Somente opacity/transform na entrada. */
+@keyframes surface-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+.page-enter { animation: surface-in 280ms ease-out; }
+.dashboard-stats > * { animation: surface-in 360ms ease-out both; }
+.dashboard-stats > :nth-child(2) { animation-delay: 45ms; }
+.dashboard-stats > :nth-child(3) { animation-delay: 90ms; }
+dialog[open] { animation: dialog-in 220ms ease-out; }
+dialog[open]::backdrop { animation: backdrop-in 180ms ease-out; }
+.toast-enter { animation: surface-in 220ms ease-out; }
+.order-enter { animation: surface-in 220ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
 @media print {
   .no-print {
     display: none !important;

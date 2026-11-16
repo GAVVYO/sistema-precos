@@ -33,7 +33,8 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
     <article
       ref={overlay ? undefined : setNodeRef}
       className={cx(
-        "rounded-md border border-line bg-surface p-2.5 text-[13px]",
+        "order-card rounded-md border border-line bg-surface p-3 text-[13px]",
+        !overlay && "order-enter",
         isDragging && !overlay && "opacity-40",
         overlay && "rotate-1 shadow-xl",
       )}
@@ -59,8 +60,8 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
             <span className="font-semibold tabular-nums">{orderTotalText(totals)}</span>
           </div>
           <p className="mt-0.5 truncate font-medium">{customerOf(order.customerId)?.name}</p>
-          <p className="truncate text-xs text-muted">
-            {vehicleLabel(vehicle)} · <span className="font-mono">{vehicle ? formatPlate(vehicle.plate) : ""}</span>
+          <p className="mt-1 truncate text-xs text-muted">
+            {vehicleLabel(vehicle)} · <span className="vehicle-plate">{vehicle ? formatPlate(vehicle.plate) : ""}</span>
           </p>
           <p className="mt-1 line-clamp-2 text-xs">{order.description}</p>
         </button>
@@ -73,7 +74,7 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
         </span>
         {!overlay && targets.length > 0 && (
           <select
-            className="h-6 w-[104px] shrink-0 rounded border border-line bg-surface px-1 text-xs text-ink disabled:opacity-50"
+            className="h-7 w-[110px] shrink-0 rounded border border-transparent bg-slate-50 px-1 text-xs font-medium text-primary hover:border-line disabled:opacity-50"
             value=""
             disabled={!online}
             aria-label={`Mover ${number} para outra coluna`}
@@ -100,7 +101,7 @@ function Column({ status, orders, canDrag, filtered }: { status: OrderStatus; or
       ref={setNodeRef}
       aria-label={`${ORDER_STATUS_LABELS[status]}: ${orders.length} OS`}
       className={cx(
-        "flex min-h-64 flex-col rounded-md border border-t-[3px] border-line bg-slate-100/70",
+        "kanban-column flex min-h-64 flex-col rounded-md border border-t-[3px] border-line bg-slate-100/70",
         COLUMN_ACCENT[status],
         isOver && "ring-2 ring-primary/50",
       )}
@@ -109,7 +110,7 @@ function Column({ status, orders, canDrag, filtered }: { status: OrderStatus; or
         <h2 className="text-sm font-semibold">{ORDER_STATUS_LABELS[status]}</h2>
         <span className="rounded bg-surface px-2 py-0.5 text-xs font-semibold text-muted tabular-nums">{orders.length}</span>
       </header>
-      <div className="flex max-h-[calc(100vh-270px)] min-h-40 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
+      <div className="flex max-h-[calc(100vh-310px)] min-h-40 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
         {orders.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-muted">{filtered ? "Nenhuma OS encontrada com os filtros atuais." : "Nenhuma OS nesta etapa."}</p>
         ) : (
@@ -191,7 +192,7 @@ export function OrdersPage() {
         }
       />
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-line bg-surface p-3">
         <div className="relative w-80">
           <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-slate-400" aria-hidden />
           <Input className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por número, cliente, placa ou veículo" aria-label="Buscar ordens de serviço" />

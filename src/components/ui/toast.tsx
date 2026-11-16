@@ -70,7 +70,7 @@ export function Toaster() {
           key={t.id}
           role={t.kind === "error" ? "alert" : "status"}
           className={cx(
-            "flex items-start gap-2 rounded-md border bg-surface px-3 py-2.5 text-[13px] text-ink shadow-lg",
+            "toast-enter flex items-start gap-2 rounded-md border bg-surface px-3 py-2.5 text-[13px] text-ink shadow-lg",
             t.kind === "error" ? "border-danger/40" : "border-success/40",
           )}
         >

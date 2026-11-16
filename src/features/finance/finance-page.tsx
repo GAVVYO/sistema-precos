@@ -7,6 +7,7 @@ import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Period, PeriodPicker, usePeriod } from "@/components/ui/period";
 import { Badge, Button, Card, CardHeader, EmptyState, Field, Input, PageHeader, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
+import { useReducedMotion } from "@/components/ui/use-reduced-motion";
 import { toast } from "@/components/ui/toast";
 import { EXPENSE_CATEGORIES, PAYMENT_METHOD_LABELS } from "@/domain/labels";
 import type { FinancialTransaction, PaymentMethod } from "@/domain/types";
@@ -19,6 +20,7 @@ import { createExpense, createIncome, financeSummary, listReceivables, settleInc
 const SERIES = { received: "#2563EB", expenses: "#D97706" };
 
 function CashChart({ period, transactions }: { period: Period; transactions: FinancialTransaction[] }) {
+  const reducedMotion = useReducedMotion();
   const data = useMemo(() => {
     const to = period.to > todayISO() ? todayISO() : period.to;
     const days = Math.round((Date.parse(to) - Date.parse(period.from)) / 86_400_000) + 1;
@@ -55,8 +57,8 @@ function CashChart({ period, transactions }: { period: Period; transactions: Fin
             itemStyle={{ color: "#172033" }}
           />
           <Legend iconType="square" iconSize={10} wrapperStyle={{ fontSize: 12 }} formatter={(v) => <span style={{ color: "#172033" }}>{v}</span>} />
-          <Bar dataKey="received" name="Receitas recebidas" fill={SERIES.received} radius={[4, 4, 0, 0]} maxBarSize={22} isAnimationActive={false} />
-          <Bar dataKey="expenses" name="Despesas pagas" fill={SERIES.expenses} radius={[4, 4, 0, 0]} maxBarSize={22} isAnimationActive={false} />
+          <Bar dataKey="received" name="Receitas recebidas" fill={SERIES.received} radius={[4, 4, 0, 0]} maxBarSize={22} isAnimationActive={!reducedMotion} animationDuration={650} animationEasing="ease-out" />
+          <Bar dataKey="expenses" name="Despesas pagas" fill={SERIES.expenses} radius={[4, 4, 0, 0]} maxBarSize={22} isAnimationActive={!reducedMotion} animationDuration={650} animationEasing="ease-out" />
         </BarChart>
       </ResponsiveContainer>
     </div>

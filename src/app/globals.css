@@ -391,3 +391,26 @@ textarea.ui-control { min-height: 72px; }
 @keyframes nav-target-in { from { opacity:.4; transform:translateY(-4px); } to { opacity:1; transform:none; } }
 .movable-nav-frame:not(.nav-moving) .personal-nav-item { animation:nav-target-in 160ms ease-out; }
 @media(prefers-reduced-motion:reduce) { .nav-dock-target,.movable-nav-frame .personal-nav-item { animation:none; } }
+
+/* Painel personalizável do Início (react-grid-layout). Fora da edição, sem moldura extra. */
+.widget-frame { position: relative; height: 100%; }
+.widget-content { height: 100%; overflow: auto; border-radius: 12px; }
+.widget-content > * { width: 100%; min-height: 100%; }
+.widget-frame.is-editing { cursor: grab; }
+.widget-frame.is-editing:active { cursor: grabbing; }
+.widget-frame.is-editing .widget-content { outline: 2px dashed color-mix(in srgb, var(--primary) 55%, transparent); outline-offset: 2px; user-select: none; }
+.widget-toolbar { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 2; display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 4px 4px 10px; border-radius: 8px; background: var(--surface); color: var(--text); border: 1px solid var(--border); box-shadow: 0 5px 12px rgb(23 32 51 / 10%); cursor: default; }
+.widget-toolbar-title { display: inline-flex; flex: 1; align-items: center; gap: 6px; min-width: 0; font-size: 14px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.widget-toolbar-buttons { display: flex; flex-shrink: 0; gap: 0; }
+.widget-toolbar-buttons button { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 32px; border-radius: 6px; color: var(--muted); }
+.widget-toolbar-buttons button:hover { background: var(--color-primary-soft); color: var(--primary); }
+.widget-toolbar-buttons svg { width: 16px; height: 16px; }
+.widget-edit-note { display: grid; gap: 10px; margin-bottom: 16px; padding: 12px 16px; border-radius: 12px; background: var(--color-primary-soft); color: var(--text); font-size: 14px; }
+.widget-grid .react-grid-item.react-grid-placeholder { background: var(--primary); opacity: .14; border-radius: 12px; }
+.widget-grid .react-grid-item.react-draggable-dragging .widget-content { box-shadow: 0 12px 36px rgb(18 32 53 / 20%); }
+.widget-grid .react-grid-item > .react-resizable-handle { z-index: 3; width: 24px; height: 24px; }
+.widget-grid .react-grid-item > .react-resizable-handle::after { width: 10px; height: 10px; border-color: var(--primary); border-width: 0 3px 3px 0; }
+.widget-grid:not(.is-editing) .react-grid-item { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .widget-grid .react-grid-item { transition: none; }
+}

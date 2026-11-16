@@ -2,10 +2,11 @@
 
 import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, CalendarPlus, CarFront, CheckCircle2, CircleDollarSign, Clock3, PackageCheck, Plus, Wrench } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Badge, Button, Card, CardHeader, EmptyState, Input, PageHeader, Stat } from "@/components/ui/primitives";
 import { MetricCard } from "@/components/ui/metric-card";
+import { useWidgetPrefs, type Widget, WidgetGrid, WidgetGridToolbar, type WidgetPrefs } from "@/components/ui/widget-grid";
 import { APPOINTMENT_STATUS_LABELS, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from "@/domain/labels";
 import { ROLE_LABELS } from "@/domain/permissions";
 import type { ServiceOrder } from "@/domain/types";
@@ -152,7 +153,7 @@ function RecentActivity() {
   );
 }
 
-function OperationalDashboard() {
+function OperationalDashboard({ editing, prefs }: { editing: boolean; prefs: WidgetPrefs }) {
   const { view, can, settings } = useApp();
   const [filter, setFilter] = useState<"open" | "waiting" | "in_progress" | "receivable" | "done">("open");
   const [search, setSearch] = useState("");
@@ -174,39 +175,43 @@ function OperationalDashboard() {
     return text.toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR").trim());
   });
 
+  const metric = (id: string, x: number, node: ReactNode, title: string): Widget => ({ id, title, layout: { x, y: 0, w: 3, h: 3, minW: 2, minH: 3 }, render: () => node });
+  const widgets: Widget[] = [
+    metric("m-waiting", 0, <MetricCard onSelect={() => setFilter("waiting")} selected={filter === "waiting"} appearance="waiting" icon={<Clock3 />} label="Ordens aguardando" value={open.filter((o) => o.status === "waiting").length} note="Na fila" footer={<>Ordens abertas: <strong>{open.length}</strong></>} />, "Ordens aguardando"),
+    metric("m-progress", 3, <MetricCard onSelect={() => setFilter("in_progress")} selected={filter === "in_progress"} appearance="active" icon={<Wrench />} label="Ordens em andamento" value={open.filter((o) => o.status === "in_progress").length} note="Em execução" footer={<>Responsáveis: <strong>{new Set(open.filter((o) => o.status === "in_progress" && o.mechanicId).map((o) => o.mechanicId)).size}</strong></>} />, "Ordens em andamento"),
+    metric("m-done", 6, <MetricCard onSelect={() => setFilter("done")} selected={filter === "done"} appearance="done" icon={<CheckCircle2 />} label="Ordens concluídas" value={doneWeek} note={`${doneToday} hoje`} footer={<>Período: <strong>últimos 7 dias</strong></>} />, "Ordens concluídas"),
+    metric("m-vehicles", 9, <MetricCard onSelect={() => setFilter("open")} selected={filter === "open"} appearance="neutral" icon={<CarFront />} label="Veículos com OS aberta" value={new Set(open.map((o) => o.vehicleId)).size} footer={<>Com serviço <strong>em aberto</strong></>} />, "Veículos com OS aberta"),
+    {
+      id: "services",
+      title: "Serviços da oficina",
+      layout: { x: 0, y: 3, w: 9, h: 11, minW: 5, minH: 5 },
+      render: () => (
+        <Card>
+          <CardHeader title="Serviços da oficina" subtitle={`${open.length} em aberto · acompanhe a próxima etapa`} actions={<Link href="/ordens" className="text-sm font-semibold text-primary hover:underline">Abrir quadro →</Link>} />
+          <div className="work-filter" role="group" aria-label="Filtrar serviços do início">
+            <button type="button" aria-pressed={filter === "open"} onClick={() => setFilter("open")}>Em aberto</button>
+            <button type="button" aria-pressed={filter === "waiting"} onClick={() => setFilter("waiting")}>Aguardando</button>
+            <button type="button" aria-pressed={filter === "in_progress"} onClick={() => setFilter("in_progress")}>Em execução</button>
+            {(can("finance.view") || can("finance.payment")) && <button type="button" aria-pressed={filter === "receivable"} onClick={() => setFilter("receivable")}>A receber ({receivable.length})</button>}
+            <button type="button" aria-pressed={filter === "done"} onClick={() => setFilter("done")}>Concluídas</button>
+            <Input aria-label="Buscar serviços do início" placeholder="Placa, cliente ou OS" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <OpenOrdersTable orders={visible} empty={search ? "Nenhuma OS corresponde à busca. Tente outra placa, cliente ou número." : "Nenhuma OS nesta situação."} />
+        </Card>
+      ),
+    },
+    { id: "activity", title: "Atividade recente", layout: { x: 0, y: 14, w: 9, h: 7, minW: 3, minH: 3 }, render: () => <RecentActivity /> },
+    ...(showAgenda ? [{ id: "agenda", title: "Agenda de hoje", layout: { x: 9, y: 3, w: 3, h: 7, minW: 3, minH: 3 }, render: () => <TodayAgenda /> }] : []),
+    ...(showStock ? [{ id: "stock", title: "Alertas de estoque", layout: { x: 9, y: 10, w: 3, h: 9, minW: 3, minH: 3 }, render: () => <StockAlerts /> }] : []),
+  ];
+
   return (
     <>
-      <div className="dashboard-metrics mb-3 grid grid-cols-2 gap-4 xl:grid-cols-4">
-        <MetricCard onSelect={() => setFilter("waiting")} selected={filter === "waiting"} appearance="waiting" icon={<Clock3 />} label="Ordens aguardando" value={open.filter((o) => o.status === "waiting").length} note="Na fila" footer={<>Ordens abertas: <strong>{open.length}</strong></>} />
-        <MetricCard onSelect={() => setFilter("in_progress")} selected={filter === "in_progress"} appearance="active" icon={<Wrench />} label="Ordens em andamento" value={open.filter((o) => o.status === "in_progress").length} note="Em execução" footer={<>Responsáveis: <strong>{new Set(open.filter((o) => o.status === "in_progress" && o.mechanicId).map((o) => o.mechanicId)).size}</strong></>} />
-        <MetricCard onSelect={() => setFilter("done")} selected={filter === "done"} appearance="done" icon={<CheckCircle2 />} label="Ordens concluídas" value={doneWeek} note={`${doneToday} hoje`} footer={<>Período: <strong>últimos 7 dias</strong></>} />
-        <MetricCard onSelect={() => setFilter("open")} selected={filter === "open"} appearance="neutral" icon={<CarFront />} label="Veículos com OS aberta" value={new Set(open.map((o) => o.vehicleId)).size} footer={<>Com serviço <strong>em aberto</strong></>} />
-      </div>
-      <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 py-1 text-xs text-muted">
+      <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 py-1 text-sm text-muted">
         {showAgenda && <span>Agendamentos do dia <strong className="ml-1 text-ink tabular-nums">{todayAppointments}</strong></span>}
         {showStock && <span>Peças com estoque baixo <strong className={`ml-1 tabular-nums ${lowStock ? "text-danger" : "text-ink"}`}>{lowStock}</strong></span>}
       </div>
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-4">
-          <Card>
-            <CardHeader title="Serviços da oficina" subtitle={`${open.length} em aberto · acompanhe a próxima etapa`} actions={<Link href="/ordens" className="text-xs font-semibold text-primary hover:underline">Abrir quadro →</Link>} />
-            <div className="work-filter" role="group" aria-label="Filtrar serviços do início">
-              <button type="button" aria-pressed={filter === "open"} onClick={() => setFilter("open")}>Em aberto</button>
-              <button type="button" aria-pressed={filter === "waiting"} onClick={() => setFilter("waiting")}>Aguardando</button>
-              <button type="button" aria-pressed={filter === "in_progress"} onClick={() => setFilter("in_progress")}>Em execução</button>
-              {(can("finance.view") || can("finance.payment")) && <button type="button" aria-pressed={filter === "receivable"} onClick={() => setFilter("receivable")}>A receber ({receivable.length})</button>}
-              <button type="button" aria-pressed={filter === "done"} onClick={() => setFilter("done")}>Concluídas</button>
-              <Input aria-label="Buscar serviços do início" placeholder="Placa, cliente ou OS" value={search} onChange={(e) => setSearch(e.target.value)} />
-            </div>
-            <OpenOrdersTable orders={visible} empty={search ? "Nenhuma OS corresponde à busca. Tente outra placa, cliente ou número." : "Nenhuma OS nesta situação."} />
-          </Card>
-          <RecentActivity />
-        </div>
-        <div className="space-y-4">
-          {showAgenda && <TodayAgenda />}
-          {showStock && <StockAlerts />}
-        </div>
-      </div>
+      <WidgetGrid prefs={prefs} editing={editing} widgets={widgets} />
     </>
   );
 }
@@ -263,7 +268,7 @@ function MechanicDashboard() {
   );
 }
 
-function FinanceDashboard() {
+function FinanceDashboard({ editing, prefs }: { editing: boolean; prefs: WidgetPrefs }) {
   const { view, customerOf, can, online } = useApp();
   const [payOrder, setPayOrder] = useState<string | null>(null);
   const today = todayISO();
@@ -271,15 +276,17 @@ function FinanceDashboard() {
   const receivables = listReceivables(view);
   const recent = view.transactions.filter((t) => t.status === "paid").sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
 
-  return (
-    <>
-      <div className="mb-4 grid grid-cols-4 gap-3">
-        <Stat label="Recebido no mês" value={formatBRL(summary.receivedCents)} tone="success" />
-        <Stat label="Despesas pagas no mês" value={formatBRL(summary.expensesCents)} tone="danger" />
-        <Stat label="Contas a receber" value={formatBRL(summary.receivableCents)} tone="warning" hint={`${receivables.length} em aberto`} />
-        <Stat label="Resultado de caixa do mês" value={formatBRL(summary.cashResultCents)} hint="Recebido − despesas pagas" />
-      </div>
-      <div className="grid gap-4 xl:grid-cols-2">
+  const stat = (id: string, x: number, title: string, node: ReactNode): Widget => ({ id, title, layout: { x, y: 0, w: 3, h: 2, minW: 2, minH: 2 }, render: () => node });
+  const widgets: Widget[] = [
+    stat("f-received", 0, "Recebido no mês", <Stat label="Recebido no mês" value={formatBRL(summary.receivedCents)} tone="success" />),
+    stat("f-expenses", 3, "Despesas pagas no mês", <Stat label="Despesas pagas no mês" value={formatBRL(summary.expensesCents)} tone="danger" />),
+    stat("f-receivable", 6, "Contas a receber", <Stat label="Contas a receber" value={formatBRL(summary.receivableCents)} tone="warning" hint={`${receivables.length} em aberto`} />),
+    stat("f-result", 9, "Resultado de caixa do mês", <Stat label="Resultado de caixa do mês" value={formatBRL(summary.cashResultCents)} hint="Recebido − despesas pagas" />),
+    {
+      id: "f-receivables",
+      title: "Lista de contas a receber",
+      layout: { x: 0, y: 2, w: 6, h: 10, minW: 4, minH: 4 },
+      render: () => (
         <Card>
           <CardHeader title="Contas a receber" actions={<Link href="/financeiro" className="text-sm font-medium text-primary hover:underline">Ver financeiro</Link>} />
           {receivables.length === 0 ? (
@@ -304,6 +311,13 @@ function FinanceDashboard() {
             </table>
           )}
         </Card>
+      ),
+    },
+    {
+      id: "f-moves",
+      title: "Últimas movimentações",
+      layout: { x: 6, y: 2, w: 6, h: 10, minW: 4, minH: 4 },
+      render: () => (
         <Card>
           <CardHeader title="Últimas movimentações" />
           <table className="data-table">
@@ -320,7 +334,13 @@ function FinanceDashboard() {
             </tbody>
           </table>
         </Card>
-      </div>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <WidgetGrid prefs={prefs} editing={editing} widgets={widgets} />
       {payOrder && <PaymentDialog orderId={payOrder} onClose={() => setPayOrder(null)} />}
     </>
   );
@@ -331,6 +351,9 @@ export function DashboardPage() {
   const today = todayISO();
   const variant =
     membership.role === "mechanic" ? "mechanic" : membership.role === "financial" && can("finance.view") ? "finance" : can("os.view") ? "operational" : "none";
+  const [editing, setEditing] = useState(false);
+  const prefs = useWidgetPrefs(`${variant}:${membership.workshopId}:${user.id}`);
+  const customizable = variant === "operational" || variant === "finance";
 
   return (
     <>
@@ -339,13 +362,14 @@ export function DashboardPage() {
         description={`${weekdayName(today)}, ${formatDate(today)} · ${ROLE_LABELS[membership.role]} · ${settings.displayName}`}
         actions={
           <>
-            {can("schedule.manage") && settings.activeModules.includes("schedule") && (
+            {customizable && <WidgetGridToolbar prefs={prefs} editing={editing} onEditingChange={setEditing} />}
+            {!editing && can("schedule.manage") && settings.activeModules.includes("schedule") && (
               <Link href="/agenda?novo=1" className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-surface px-3.5 text-sm font-medium hover:bg-slate-50">
                 <CalendarPlus className="size-4" aria-hidden />
                 Novo agendamento
               </Link>
             )}
-            {can("os.create") && settings.activeModules.includes("orders") && (
+            {!editing && can("os.create") && settings.activeModules.includes("orders") && (
               <Button variant="primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()}>
                 Nova OS
               </Button>
@@ -354,8 +378,8 @@ export function DashboardPage() {
         }
       />
       {variant === "mechanic" && <MechanicDashboard />}
-      {variant === "finance" && <FinanceDashboard />}
-      {variant === "operational" && <OperationalDashboard />}
+      {variant === "finance" && <FinanceDashboard editing={editing} prefs={prefs} />}
+      {variant === "operational" && <OperationalDashboard editing={editing} prefs={prefs} />}
       {variant === "none" && (
         <Card>
           <EmptyState title="Nada para exibir" description="Seu usuário ainda não possui permissões para os módulos desta oficina. Fale com o proprietário." />

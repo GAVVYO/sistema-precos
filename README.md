@@ -48,6 +48,8 @@ Os dados persistem entre recarregamentos (localStorage) até você restaurar a d
 
 ## Documentação
 
+- [Acessibilidade e preferências pessoais](docs/ACESSIBILIDADE.md)
+
 - [Ideias de interface adaptável](docs/IDEIAS-INTERFACE-ADAPTAVEL.md) — propostas, prioridades e referências; ainda não implementadas.
 
 - [Estado atual e continuidade](docs/ESTADO-ATUAL.md) — entrega visual, agenda interativa, navegação por gesto, validações e limites.

@@ -252,7 +252,7 @@ export function SchedulePage() {
                 </header>
                 <div className="flex flex-1 flex-col gap-1 p-1.5">
                   {list.map((a) => <Chip key={a.id} a={a} onOpen={setOpen} />)}
-                  {list.length === 0 && <p className="px-1 py-2 text-xs text-slate-400">Livre</p>}
+                  {list.length === 0 && <p className="px-1 py-2 text-xs text-muted">Livre</p>}
                 </div>
               </AgendaDay>
             );
@@ -274,7 +274,7 @@ export function SchedulePage() {
                   <button
                     type="button"
                     onClick={() => { setCursor(d); setMode("day"); }}
-                    className={cx("mb-0.5 flex size-6 items-center justify-center rounded-full text-xs font-medium hover:bg-slate-200", d === today && "bg-primary text-primary-fg hover:bg-primary", outside && "text-slate-400")}
+                    className={cx("mb-0.5 flex size-6 items-center justify-center rounded-full text-xs font-medium hover:bg-slate-200", d === today && "bg-primary text-primary-fg hover:bg-primary", outside && "text-muted")}
                     aria-label={formatDate(d)}
                   >
                     {Number(d.slice(8))}

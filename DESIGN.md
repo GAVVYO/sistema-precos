@@ -13,7 +13,7 @@ colors:
   text: "#172033"
   muted: "#536379"
   border: "#dee5ed"
-  success: "#15803d"
+  success: "#147a3a"
   success-soft: "#e8f5ec"
   warning: "#b45309"
   warning-soft: "#fdf3e1"
@@ -231,7 +231,7 @@ Cards e botões ficam planos em repouso, separados por fundo e borda. A profundi
 - **OS sob interação** (`0 5px 12px rgb(23 32 51 / 6%)`): resposta do card de ordem.
 - **Foco do campo** (`0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent)`): halo de foco, acompanhado de contorno visível.
 
-O contorno global de foco usa (2px), afastado (2px); métricas selecionáveis afastam o contorno (4px). O backdrop do diálogo usa `rgb(15 23 42 / 0.45)`.
+O contorno global de foco usa (3px), afastado (3px); métricas selecionáveis afastam o contorno (4px). O backdrop do diálogo usa `rgb(15 23 42 / 0.45)`.
 
 **The Flat Surface Rule.** Painéis de conteúdo permanecem planos; sombra distingue sobreposição ou resposta à interação.
 
@@ -306,3 +306,16 @@ A entrada de página usa deslocamento de (4px) e duração de (180ms), com `cubi
 - **Don't** fixar cores da oficina em componentes que devem acompanhar a personalização.
 
 Não canonizado: tamanhos auxiliares de 10–12px e eventuais limites de densidade permanecem sujeitos à revisão de legibilidade; regras CSS antigas sobrescritas e animações de seletores sem uso atual não foram promovidas a normas. A documentação não declara aprovação da implementação nem corrige esses pontos.
+
+
+## Complemento de acessibilidade — 16/11/2026
+
+As preferências pessoais têm precedência sobre as medidas compactas descritas acima. O painel no cabeçalho permite texto a 125%/150%, contraste reforçado, espaçamento, redução de movimento e leitura ampliada. Ver `docs/ACESSIBILIDADE.md` para interação, referências e limites da validação.
+
+Os tamanhos CSS de texto agora usam rem; as medidas em px deste documento descrevem o padrão com raiz de 16px. Botões e campos compartilhados têm altura mínima de 2.75rem (44px no padrão), com crescimento do conteúdo. No celular, campos usam 1rem para leitura e foco sem ampliação automática do Safari. A leitura pontual usa 2rem e entrelinha 1.6; seu tamanho maior é intencional. Não muda o conteúdo nem substitui o zoom do navegador.
+
+O verde padrão passou a #147a3a para manter o contraste sobre a superfície suave. A cor principal salva pela oficina é escurecida, preservando proporções dos canais, até contraste mínimo 5.5:1 sobre branco; no modo reforçado, 7:1. Esses limites deixam margem para links e badges sobre fundos suaves; não são declaração de conformidade de toda a aplicação.
+
+No contraste reforçado, as superfícies são brancas, texto #101827, apoio #26394f, bordas #596a7e, espera #853a04, conclusão #12662e e erro #991b1b. O foco tem 4px. Estados continuam escritos, e cores forçadas do sistema preservam contornos.
+
+O modo ampliado empilha a área de atendimento e remove truncamentos. Tabelas extensas mantêm rolagem local para preservar a leitura de nomes e valores. A navegação por clique, teclado e arraste está descrita em `docs/NAVEGACAO.md`; seu diálogo de posicionamento fica recolhido na alça.

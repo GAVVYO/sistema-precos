@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AppProvider, useDemoState } from "@/app-state/app-context";
+import { AccessibilityProvider } from "@/components/accessibility/accessibility-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import { BackendUnavailable } from "@/components/layout/backend-unavailable";
 import { Skeleton } from "@/components/ui/primitives";
@@ -39,8 +40,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     // A chave reinicia o estado de interface ao trocar de oficina ou usuário.
     <AppProvider key={`${session.workshopId}:${session.userId}`} state={state}>
-      <AppShell>{children}</AppShell>
-      <GlobalDialogs />
+      <AccessibilityProvider>
+        <AppShell>{children}</AppShell>
+        <GlobalDialogs />
+      </AccessibilityProvider>
     </AppProvider>
   );
 }

@@ -1,5 +1,7 @@
 # Navegação por gesto
 
+Atualização de acessibilidade: clicar na alça abre **Posicionar navegação**, com alternativas por clique e deslocamento em passos; setas e Home continuam disponíveis. Esse fluxo substitui o atalho de dois cliques descrito na entrega anterior abaixo. O retorno ao topo respeita a preferência pessoal de movimento, além do sistema. Veja [Acessibilidade](ACESSIBILIDADE.md).
+
 A barra é movida pela alça permanente, sem botão de configuração. Ao arrastar e aproximar o ponteiro da faixa original (topo do cabeçalho +64px), aparece a indicação Solte para encaixar no topo. Soltar nessa zona restaura a barra horizontal e apaga a posição flutuante salva. O retorno usa animação de 220 ms; o indicador entra em 140 ms. prefers-reduced-motion desativa ambos.
 
 Fora dessa zona, a barra permanece flutuante na posição escolhida. Posição e orientação são limitadas à viewport e salvas por usuário/oficina neste navegador. Dois cliques na alça ou tecla Home retornam ao topo como alternativas ao gesto; Escape cancela o arraste. Setas mantêm a alternativa de deslocamento por teclado.

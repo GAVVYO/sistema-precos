@@ -1,5 +1,9 @@
 # Estado atual e continuidade — 16/11/2026
 
+## Atualização local de acessibilidade
+
+A branch agora inclui preferências pessoais de texto, contraste, espaçamento, movimento e leitura ampliada, além de melhorias de foco e alternativas ao arraste. Uso, referências e validação em [ACESSIBILIDADE.md](ACESSIBILIDADE.md). A entrega e as verificações abaixo registram a rodada anterior; esta atualização ainda não foi enviada ao GitHub.
+
 ## Entrega
 
 Projeto: GAVYO Auto, no repositório sistema-precos. Trabalho na branch feat/visual-oficina, PR #1. As alterações de código desta rodada terminam em f43be88; este documento e os índices foram adicionados depois. O envio ao GitHub não representa deploy ou merge na main.

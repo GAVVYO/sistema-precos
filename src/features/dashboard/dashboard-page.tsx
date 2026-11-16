@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ReactNode, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Badge, Button, Card, CardHeader, EmptyState, Input, PageHeader, Stat } from "@/components/ui/primitives";
+import { ReadableText } from "@/components/accessibility/accessibility-controls";
 import { MetricCard } from "@/components/ui/metric-card";
 import { useWidgetPrefs, type Widget, WidgetGrid, WidgetGridToolbar, type WidgetPrefs } from "@/components/ui/widget-grid";
 import { APPOINTMENT_STATUS_LABELS, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from "@/domain/labels";
@@ -57,8 +58,8 @@ function OpenOrdersTable({ orders, empty }: { orders: ServiceOrder[]; empty: str
             return (
               <tr key={o.id}>
                 <td className="whitespace-nowrap"><OrderLink order={o} /><span className="mt-1 block text-xs text-muted">{dateOf(o.openedAt) === todayISO() ? `Hoje, ${formatTime(o.openedAt)}` : formatDateTime(o.openedAt)}</span></td>
-                <td><span className="block font-medium">{customerOf(o.customerId)?.name}</span><span className="mt-1 block text-xs text-muted">{vehicleLabel(v)} · <span className="vehicle-plate">{v ? formatPlate(v.plate) : "—"}</span></span></td>
-                <td><span className="block max-w-72 truncate" title={o.description}>{o.description}</span><span className="mt-1 block text-xs text-muted">{userOf(o.mechanicId)?.name ?? "Responsável a definir"}</span></td>
+                <td><span className="block font-medium">{customerOf(o.customerId)?.name}</span><span className="mt-1 block text-xs text-muted">{vehicleLabel(v)} · <ReadableText label="placa" text={v ? formatPlate(v.plate) : "—"}><span className="vehicle-plate">{v ? formatPlate(v.plate) : "—"}</span></ReadableText></span></td>
+                <td><span className="block max-w-72"><ReadableText label="descrição do serviço" text={o.description} /></span><span className="mt-1 block text-xs text-muted">{userOf(o.mechanicId)?.name ?? "Responsável a definir"}</span></td>
                 <td><StatusBadge order={o} /></td>
                 <td className="text-right"><QuickOrderAction order={o} /></td>
               </tr>

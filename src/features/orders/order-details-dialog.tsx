@@ -3,6 +3,7 @@
 import { Ban, CircleDollarSign, FileDown, MessageCircle, Pencil, RefreshCw } from "lucide-react";
 import { ReactNode, useState } from "react";
 import { useApp } from "@/app-state/app-context";
+import { ReadableText } from "@/components/accessibility/accessibility-controls";
 import { Dialog } from "@/components/ui/dialog";
 import { Button, Field, Select, Textarea } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
@@ -109,13 +110,16 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
   return (
     <>
       <Dialog
-        title={`${number} — ${order.description}`}
+        title={number}
         subtitle={
-          <span className="flex flex-wrap items-center gap-2">
-            <StatusBadge order={order} />
-            <PaymentBadge order={order} />
-            <span>Aberta em {formatDateTime(order.openedAt)}</span>
-          </span>
+          <div>
+            <p className="mb-2 text-base text-ink"><ReadableText label="descrição do serviço" text={order.description} /></p>
+            <span className="flex flex-wrap items-center gap-2">
+              <StatusBadge order={order} />
+              <PaymentBadge order={order} />
+              <span>Aberta em {formatDateTime(order.openedAt)}</span>
+            </span>
+          </div>
         }
         size="lg"
         onClose={onClose}
@@ -167,7 +171,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
               <Info label="Telefone">{customer ? formatPhone(customer.phone) : "—"}</Info>
               <Info label="Responsável">{userOf(order.mechanicId)?.name ?? "A definir"}</Info>
               <Info label="Veículo">{vehicleLabel(vehicle)}</Info>
-              <Info label="Placa">{vehicle ? formatPlate(vehicle.plate) : "—"}</Info>
+              <Info label="Placa"><ReadableText label="placa" text={vehicle ? formatPlate(vehicle.plate) : "—"} /></Info>
               <Info label="Quilometragem">{order.mileage ? `${order.mileage.toLocaleString("pt-BR")} km` : "—"}</Info>
               {order.notes && (
                 <div className="col-span-3">
@@ -243,7 +247,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
               <dl className="space-y-1 text-sm">
                 <div className="flex justify-between"><dt className="text-muted">Mão de obra</dt><dd>{formatBRLOrPending(totals.laborCents)}</dd></div>
                 <div className="flex justify-between"><dt className="text-muted">Peças</dt><dd>{formatBRL(totals.partsCents)}</dd></div>
-                <div className="flex justify-between border-t border-line pt-1.5 text-base font-semibold"><dt>Total</dt><dd>{orderTotalText(totals)}</dd></div>
+                <div className="flex justify-between border-t border-line pt-1.5 text-base font-semibold"><dt>Total</dt><dd><ReadableText label="total da OS" text={orderTotalText(totals)} /></dd></div>
               </dl>
               <p className="mt-2 text-xs text-muted">
                 {situation === "paid" && payment

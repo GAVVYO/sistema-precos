@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { ReactNode, useMemo } from "react";
 import GridLayout, { type Layout, type LayoutItem, useContainerWidth, verticalCompactor } from "react-grid-layout";
+import { useAccessibility } from "@/components/accessibility/accessibility-provider";
 import { usePref } from "@/lib/prefs";
 import { Button, cx } from "./primitives";
 
@@ -16,7 +17,7 @@ import { Button, cx } from "./primitives";
  *
  * O layout é preferência de interface (por usuário e oficina, neste navegador).
  * Todo movimento por arrasto tem alternativa por botões, também pelo teclado
- * (WCAG 2.5.7). Abaixo de 900 px os blocos voltam a ficar empilhados.
+ * (WCAG 2.5.7). Abaixo de 900 px, ou com texto ampliado, os blocos ficam empilhados.
  */
 
 const COLS = 12;
@@ -84,7 +85,9 @@ export function WidgetGrid({ prefs, widgets, editing }: { prefs: WidgetPrefs; wi
       }),
     );
 
-  const stacked = mounted && width < STACK_BELOW;
+  // Texto ampliado (preferência de acessibilidade) não cabe em linhas de altura fixa: empilha.
+  const { preferences } = useAccessibility();
+  const stacked = mounted && (width < STACK_BELOW || preferences.textSize !== "default");
   const ordered = [...layout].sort((a, b) => a.y - b.y || a.x - b.x);
 
   return (

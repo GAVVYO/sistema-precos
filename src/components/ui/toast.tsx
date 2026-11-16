@@ -115,7 +115,7 @@ export function Toaster() {
               {t.action.label}
             </button>
           )}
-          <button type="button" onClick={() => dismiss(t.id)} aria-label="Dispensar aviso" className="text-muted hover:text-ink">
+          <button type="button" onClick={() => dismiss(t.id)} aria-label="Dispensar aviso" className="inline-flex size-8 shrink-0 items-center justify-center rounded text-muted hover:text-ink">
             <X className="size-3.5" aria-hidden />
           </button>
         </div>

@@ -1,0 +1,121 @@
+import { z } from "zod";
+import { ALL_MODULES, ALL_PERMISSIONS, MODULES, ROLE_TEMPLATES } from "@/domain/permissions";
+import type { Database, ID, ModuleKey, PermissionKey, Role, WorkshopMembership } from "@/domain/types";
+import { normalizePhone } from "@/lib/format";
+import { assertCan, Ctx, DomainError, findScoped, membershipOf, newId, parse } from "./core";
+
+const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida.");
+
+const settingsSchema = z.object({
+  displayName: z.string().trim().min(2, "Informe o nome da oficina."),
+  phone: z.string().refine((v) => v.trim() === "" || normalizePhone(v) !== null, "Telefone inválido."),
+  logoDataUrl: z
+    .string()
+    .startsWith("data:image/", "Logotipo inválido.")
+    .max(400_000, "Imagem muito grande. Use um logotipo de até 250 KB.")
+    .nullable(),
+  primaryColor: hex,
+  secondaryColor: hex,
+  activeModules: z.array(z.enum(ALL_MODULES as [ModuleKey, ...ModuleKey[]])),
+});
+
+export type SettingsInput = z.input<typeof settingsSchema>;
+
+export function updateSettings(db: Database, ctx: Ctx, input: SettingsInput): void {
+  assertCan(db, ctx, "settings.manage");
+  const data = parse(settingsSchema, input);
+  const settings = db.settings.find((s) => s.workshopId === ctx.workshopId);
+  if (!settings) throw new DomainError("not_found", "Configurações da oficina não encontradas.");
+  const required = MODULES.filter((m) => m.required).map((m) => m.key);
+  Object.assign(settings, data, {
+    phone: normalizePhone(data.phone) ?? "",
+    activeModules: ALL_MODULES.filter((m) => required.includes(m) || data.activeModules.includes(m)),
+  });
+}
+
+const memberSchema = z.object({
+  role: z.enum(["owner", "receptionist", "mechanic", "financial"]),
+  active: z.boolean(),
+  permissions: z.array(z.enum(ALL_PERMISSIONS as [PermissionKey, ...PermissionKey[]])),
+});
+
+export interface MemberInput {
+  role: Role;
+  active: boolean;
+  permissions: PermissionKey[];
+}
+
+/**
+ * Regras contra elevação indevida de privilégios:
+ * - ninguém altera o próprio acesso;
+ * - só é possível conceder permissões que o próprio operador possui;
+ * - somente proprietários alteram ou criam outros proprietários;
+ * - a oficina nunca fica sem um proprietário ativo.
+ */
+function assertCanGrant(db: Database, ctx: Ctx, target: WorkshopMembership | null, next: MemberInput) {
+  const actor = membershipOf(db, ctx);
+  if (!actor) throw new DomainError("forbidden", "Você não tem acesso a esta oficina.");
+  if (target && target.userId === ctx.userId) {
+    throw new DomainError("forbidden", "Você não pode alterar o seu próprio acesso.");
+  }
+  if ((target?.role === "owner" || next.role === "owner") && actor.role !== "owner") {
+    throw new DomainError("forbidden", "Somente um proprietário pode alterar o acesso de proprietários.");
+  }
+  const previous = new Set(target?.permissions ?? []);
+  const notAllowed = next.permissions.filter(
+    (p) => !previous.has(p) && !actor.permissions.includes(p),
+  );
+  if (notAllowed.length) {
+    throw new DomainError("forbidden", "Você não pode conceder permissões que você mesmo não possui.");
+  }
+  if (target?.role === "owner" && (next.role !== "owner" || !next.active)) {
+    const otherOwners = db.memberships.some(
+      (m) => m.workshopId === ctx.workshopId && m.role === "owner" && m.active && m.id !== target.id,
+    );
+    if (!otherOwners) throw new DomainError("conflict", "A oficina precisa de ao menos um proprietário ativo.");
+  }
+}
+
+export function updateMember(db: Database, ctx: Ctx, membershipId: ID, input: MemberInput): void {
+  assertCan(db, ctx, "staff.manage");
+  const data = parse(memberSchema, input);
+  const target = findScoped(db.memberships, ctx, membershipId, "Funcionário não encontrado.");
+  assertCanGrant(db, ctx, target, data);
+  target.role = data.role;
+  target.active = data.active;
+  target.permissions = ALL_PERMISSIONS.filter((p) => data.permissions.includes(p));
+}
+
+const newMemberSchema = z.object({
+  name: z.string().trim().min(2, "Informe o nome do funcionário."),
+  email: z.string().trim().toLowerCase().email("E-mail inválido."),
+  role: z.enum(["owner", "receptionist", "mechanic", "financial"]),
+});
+
+export function addMember(db: Database, ctx: Ctx, input: z.input<typeof newMemberSchema>): WorkshopMembership {
+  assertCan(db, ctx, "staff.manage");
+  const data = parse(newMemberSchema, input);
+  const actor = membershipOf(db, ctx)!;
+  const permissions = ROLE_TEMPLATES[data.role].filter(
+    (p) => actor.role === "owner" || actor.permissions.includes(p),
+  );
+  assertCanGrant(db, ctx, null, { role: data.role, active: true, permissions });
+  let user = db.users.find((u) => u.email === data.email);
+  if (user && db.memberships.some((m) => m.workshopId === ctx.workshopId && m.userId === user!.id)) {
+    throw new DomainError("conflict", "Já existe um funcionário com este e-mail nesta oficina.");
+  }
+  if (!user) {
+    user = { id: newId(), name: data.name, email: data.email };
+    db.users.push(user);
+  }
+  const membership: WorkshopMembership = {
+    id: newId(),
+    workshopId: ctx.workshopId,
+    userId: user.id,
+    role: data.role,
+    active: true,
+    permissions,
+  };
+  db.memberships.push(membership);
+  return membership;
+}

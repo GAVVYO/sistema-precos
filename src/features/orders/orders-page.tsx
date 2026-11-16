@@ -11,7 +11,8 @@ import { Button, cx, EmptyState, Input, PageHeader, Select } from "@/components/
 import { ORDER_STATUS_LABELS, ORDER_STATUSES } from "@/domain/labels";
 import type { OrderStatus, ServiceOrder } from "@/domain/types";
 import { addDays, dateOf, formatDate, formatOrderNumber, formatPlate, todayISO } from "@/lib/format";
-import { canChangeStatus, changeOrderStatus, orderTotals } from "@/services/orders";
+import { canChangeStatus, orderTotals } from "@/services/orders";
+import { useMoveOrder } from "./move-order";
 import { QuickOrderAction } from "./quick-order-action";
 import { orderTotalText, PaymentBadge, vehicleLabel } from "./shared";
 
@@ -22,7 +23,8 @@ const COLUMN_ACCENT: Record<OrderStatus, string> = {
 };
 
 function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggable: boolean; overlay?: boolean }) {
-  const { db, view, user, online, act, customerOf, vehicleOf, userOf, openOrder } = useApp();
+  const { db, view, user, online, customerOf, vehicleOf, userOf, openOrder } = useApp();
+  const moveOrder = useMoveOrder();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: order.id, disabled: !draggable || overlay });
   const vehicle = vehicleOf(order.vehicleId);
   const totals = orderTotals(view, order);
@@ -81,7 +83,7 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
             aria-label={`Mover ${number} para outra coluna`}
             onChange={(e) => {
               const next = e.target.value as OrderStatus;
-              if (next) act((d, c) => changeOrderStatus(d, c, order.id, next), `${number} movida para ${ORDER_STATUS_LABELS[next]}.`);
+              if (next) moveOrder(order, next);
             }}
           >
             <option value="">Mover para…</option>
@@ -131,7 +133,8 @@ const PERIODS = [
 ];
 
 export function OrdersPage() {
-  const { view, act, can, online, mechanics, customerOf, vehicleOf, openOrder, openNewOrder } = useApp();
+  const { view, can, online, mechanics, customerOf, vehicleOf, openOrder, openNewOrder } = useApp();
+  const moveOrder = useMoveOrder();
   const [search, setSearch] = useState("");
   const [mechanic, setMechanic] = useState("");
   const [period, setPeriod] = useState("all");
@@ -172,7 +175,7 @@ export function OrdersPage() {
     const order = active.find((o) => o.id === e.active.id);
     const target = e.over?.id as OrderStatus | undefined;
     if (!order || !target || target === order.status) return;
-    act((d, c) => changeOrderStatus(d, c, order.id, target), `${formatOrderNumber(order.number)} movida para ${ORDER_STATUS_LABELS[target]}.`);
+    moveOrder(order, target);
   };
 
   return (

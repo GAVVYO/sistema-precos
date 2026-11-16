@@ -2,6 +2,7 @@
 
 import { ArrowLeftRight, Boxes, Pencil, Plus, Search, SearchX } from "lucide-react";
 import { useState } from "react";
+import { initialQuery } from "@/lib/query";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Segmented, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
@@ -137,7 +138,7 @@ function MoveDialog({ part, onClose }: { part: Part; onClose: () => void }) {
 export function StockPage() {
   const { view, can, online, userOf, partOf, openOrder } = useApp();
   const [tab, setTab] = useState<"parts" | "moves">("parts");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialQuery);
   const [category, setCategory] = useState("");
   const [situation, setSituation] = useState("");
   const [sort, setSort] = useState<TableSort<"name" | "quantity" | "priceCents">>({ key: "name", desc: false });

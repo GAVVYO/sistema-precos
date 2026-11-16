@@ -2,6 +2,7 @@
 
 import { Car, Pencil, Plus, Search, SearchX, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
+import { initialQuery } from "@/lib/query";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Button, Card, EmptyState, Field, Input, PageHeader, Select, Tabs } from "@/components/ui/primitives";
@@ -223,7 +224,7 @@ export function CustomersPage() {
   const [sort, setSort] = useState<TableSort<"name" | "phone">>({ key: "name", desc: false });
   const { view, can, online, customerOf } = useApp();
   const [tab, setTab] = useState<"customers" | "vehicles">("customers");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialQuery);
   const [customerId, setCustomerId] = useState<ID | "new" | null>(null);
   const [vehicleId, setVehicleId] = useState<ID | null>(null);
   const canManage = can("os.create") || can("os.edit") || can("schedule.manage");

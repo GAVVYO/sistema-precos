@@ -206,6 +206,14 @@ a { text-underline-offset: 3px; }
 .search-result-main small { color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .search-result-action { display: grid; gap: 7px; justify-items: end; }
 .order-search { z-index: 45; }
+.search-command { grid-template-columns: 1fr; }
+.search-command-title { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.search-command-icon { display: inline-flex; color: var(--muted); }
+.search-command + small, .search-command small { padding-left: 26px; }
+.search-command:disabled { opacity: .5; cursor: not-allowed; }
+.search-hint { display: flex; gap: 4px; flex-shrink: 0; }
+.order-search-results kbd { font-size: 13px; padding: 1px 6px; opacity: 1; color: var(--muted); border-color: var(--border); background: var(--bg); }
+.search-shortcuts { margin-top: 4px; padding: 10px 12px 8px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
 .app-main .grid > * { min-width: 0; }
 .app-main { padding-top: 20px; }
 .page-heading { margin-bottom: 20px; }

@@ -6,9 +6,24 @@ import { ComponentProps, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Button, cx, Field, Input } from "@/components/ui/primitives";
+import { toast } from "@/components/ui/toast";
 import type { Appointment } from "@/domain/types";
 import { formatDate } from "@/lib/format";
 import { updateAppointment } from "@/services/appointments";
+
+/** Reagenda e oferece "Desfazer" (também Ctrl/⌘+Z), voltando ao dia e horário anteriores. */
+export function useReschedule() {
+  const { act } = useApp();
+  return (a: Appointment, date: string, time: string): boolean => {
+    const r = act((db, ctx) => updateAppointment(db, ctx, a.id, { ...a, date, time }));
+    if (!r.ok) return false;
+    toast("success", `Agendamento de ${a.customerName.split(" ")[0]} alterado para ${formatDate(date)} às ${time}.`, {
+      label: "Desfazer",
+      run: () => act((db, ctx) => updateAppointment(db, ctx, a.id, { ...a, date: a.date, time: a.time }), "Reagendamento desfeito."),
+    });
+    return true;
+  };
+}
 
 export function canReschedule(a: Appointment) {
   return !a.orderId && (a.status === "scheduled" || a.status === "confirmed");
@@ -21,7 +36,8 @@ export function AgendaDay({ date, className, ...props }: ComponentProps<"div"> &
 }
 
 export function AgendaChip({ a, onOpen, compact, appearance }: { a: Appointment; onOpen: (a: Appointment) => void; compact?: boolean; appearance: string }) {
-  const { online, can, act } = useApp();
+  const { online, can } = useApp();
+  const reschedule = useReschedule();
   const editable = online && can("schedule.manage") && canReschedule(a);
   const { setNodeRef, attributes, listeners, isDragging } = useDraggable({ id: a.id, disabled: !editable });
   const [editing, setEditing] = useState(false);
@@ -42,8 +58,7 @@ export function AgendaChip({ a, onOpen, compact, appearance }: { a: Appointment;
       </button>
     </article>
     {editing && <Dialog title="Reagendar" subtitle={`${a.customerName} · ${a.model}`} size="sm" onClose={() => setEditing(false)} footer={<><Button onClick={() => setEditing(false)}>Voltar</Button><Button variant="primary" disabled={!editable || !date || !time} onClick={() => {
-      const r = act((db, ctx) => updateAppointment(db, ctx, a.id, { ...a, date, time }), `Agendamento alterado para ${formatDate(date)} às ${time}.`);
-      if (r.ok) setEditing(false);
+      if (reschedule(a, date, time)) setEditing(false);
     }}>Salvar horário</Button></>}>
       <div className="grid grid-cols-2 gap-4"><Field label="Dia">{p => <Input {...p} type="date" value={date} onChange={e => setDate(e.target.value)} />}</Field><Field label="Horário">{p => <Input {...p} type="time" value={time} onChange={e => setTime(e.target.value)} />}</Field></div>
       <p className="mt-4 text-sm text-muted">Cliente, serviço e responsável permanecem os mesmos.</p>

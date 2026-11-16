@@ -11,6 +11,7 @@ import { ConfirmDialog } from "@/components/ui/dialog";
 import { Button, cx, EmptyState } from "@/components/ui/primitives";
 import { PersonalNavigation } from "./personal-navigation";
 import { OrderSearch } from "./order-search";
+import { GlobalShortcuts } from "./global-shortcuts";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { toast } from "@/components/ui/toast";
 import { demoStore } from "@/demo/store";
@@ -358,6 +359,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <DemoBar />
       <Header />
       <ConnectionBanner />
+      <GlobalShortcuts />
       <main id="conteudo" className="app-main mx-auto w-full max-w-[1600px] flex-1 px-6 py-6">
         <div key={pathname} className="page-enter">{children}</div>
       </main>

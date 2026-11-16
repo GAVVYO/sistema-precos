@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Bell, LayoutDashboard, ClipboardList, Boxes, Users, BarChart3, Settings2, CalendarDays, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, Lock, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
+  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, Lock, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Button, cx, EmptyState } from "@/components/ui/primitives";
+import { PersonalNavigation } from "./personal-navigation";
 import { OrderSearch } from "./order-search";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { toast } from "@/components/ui/toast";
@@ -221,16 +222,11 @@ function Notifications() {
   );
 }
 
-const MODULE_ICONS = { dashboard: LayoutDashboard, orders: ClipboardList, stock: Boxes, finance: CircleDollarSign, schedule: CalendarDays, customers: Users, reports: BarChart3, settings: Settings2 };
 
 function Header() {
   const { settings, user, membership, connection, online, can, openNewOrder } = useApp();
-  const pathname = usePathname();
   const router = useRouter();
   const modules = useVisibleModules();
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  // Em telas menores, os últimos módulos vão para o menu "Mais".
-  const overflowFrom = modules.length;
 
   const conn = {
     online: { label: "Online", dot: "bg-emerald-400" },
@@ -306,47 +302,7 @@ function Header() {
         </Menu>
         </div>
       </div>
-      <div className="border-b border-line bg-surface text-ink">
-        <nav aria-label="Navegação principal" className="app-nav mx-auto flex max-w-[1600px] items-center gap-1 px-6">
-          {modules.map((m, i) => (
-            <Link
-              key={m.key}
-              href={m.href}
-              aria-current={isActive(m.href) ? "page" : undefined}
-              className={cx(
-                "nav-module relative flex items-center gap-2 border-b-2 px-3 py-3.5 text-sm font-semibold whitespace-nowrap",
-                i >= overflowFrom && "hidden xl:flex",
-                isActive(m.href) ? "border-primary bg-primary-soft text-primary" : "border-transparent text-muted hover:bg-slate-50 hover:text-ink",
-              )}
-            >
-              {(() => { const Icon = MODULE_ICONS[m.key]; return <Icon className="size-4" aria-hidden />; })()}
-              {m.label}
-            </Link>
-          ))}
-          {modules.length > overflowFrom && (
-            <div className="xl:hidden">
-              <Menu
-                label="Mais módulos"
-                align="left"
-                buttonClassName="flex items-center gap-1 rounded px-2.5 py-1.5 text-sm font-medium text-muted hover:bg-slate-50 hover:text-ink"
-                button={
-                  <>
-                    Mais <ChevronDown className="size-3.5" aria-hidden />
-                  </>
-                }
-              >
-                {(close) =>
-                  modules.slice(overflowFrom).map((m) => (
-                    <Link key={m.key} href={m.href} role="menuitem" onClick={close} className="block px-3 py-2 text-sm hover:bg-slate-50">
-                      {m.label}
-                    </Link>
-                  ))
-                }
-              </Menu>
-            </div>
-          )}
-        </nav>
-      </div>
+      <PersonalNavigation modules={modules} preferenceKey={`${membership.workshopId}:${user.id}`} />
     </header>
   );
 }

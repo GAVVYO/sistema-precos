@@ -106,8 +106,10 @@ export function WidgetGrid({ prefs, widgets, editing }: { prefs: WidgetPrefs; wi
       )}
       <div ref={containerRef as React.RefObject<HTMLDivElement>} className={cx("widget-grid", editing && "is-editing")}>
         {stacked || !mounted ? (
-          <div className="space-y-4">
-            {ordered.map((l) => <div key={l.i}>{byId.get(l.i)!.render()}</div>)}
+          <div className="grid grid-cols-2 gap-4">
+            {ordered.map((l) => (
+              <div key={l.i} className={cx("widget-stacked", l.w > 3 && "col-span-2")}>{byId.get(l.i)!.render()}</div>
+            ))}
           </div>
         ) : (
           <GridLayout

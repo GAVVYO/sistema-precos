@@ -6,7 +6,7 @@ Registro de possibilidades discutidas em 16/11/2026. São propostas para evoluç
 
 1. **Bordas magnéticas:** ao arrastar a navbar para a esquerda/direita, mostrar uma prévia do encaixe e abrir espaço no conteúdo ao soltar. O encaixe no topo já existe; as laterais ainda são proposta.
 2. **Divisão de tela:** manter uma OS aberta ao lado da agenda ou estoque, com separação redimensionável e proporção salva.
-3. **Desfazer:** permitir reverter movimentações compatíveis com as regras de negócio, como um reagendamento, com feedback próximo da ação. Pagamentos e operações irreversíveis precisam de regras próprias; não aplicar reversão genérica.
+3. **Desfazer:** ✅ entregue para reagendamento e mudança de etapa da OS (aviso com "Desfazer" e Ctrl/⌘+Z). Pagamentos e operações irreversíveis continuam sem reversão genérica.
 
 ## Outras possibilidades
 

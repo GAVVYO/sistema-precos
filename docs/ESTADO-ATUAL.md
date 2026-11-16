@@ -17,6 +17,20 @@ Continua sendo uma demonstração com dados fictícios em localStorage, sem back
 
 Os percursos prioritários são localizar OS, mudar status e receber pagamento. Não reduzir textos operacionais ou introduzir animações demoradas. Manter navegação simples e linguagem de oficina.
 
+## Complemento: interface mais interativa
+
+Commits após 548d111 (inspiração: praticidade do macOS):
+
+- **Desfazer:** após reagendar (arraste ou edição rápida) ou mudar a etapa da OS (quadro, lista, busca), o aviso traz "Desfazer"; Ctrl/⌘+Z faz o mesmo enquanto o aviso estiver visível. Só é oferecido quando a regra permite voltar.
+- **Busca Ctrl+K com comandos:** além das OS, mostra comandos (Nova OS, Novo agendamento, Ir para módulo), clientes e peças quando há texto. Clientes e peças abrem o módulo já filtrado (`?q=`).
+- **Atalhos:** `N` nova OS; `G` + letra abre módulo (I Início, O Ordens, E Estoque, F Financeiro, A Agenda, C Clientes, R Relatórios, S Configurações). Não agem em campos de texto nem com modal aberto.
+- **Painel do Início personalizável:** botão "Personalizar painel" permite arrastar, redimensionar (canto inferior direito) e ocultar blocos; "Restaurar padrão" volta ao layout original. Botões de cada bloco fazem o mesmo pelo teclado. Também no painel do financeiro. Salvo por usuário e oficina neste navegador.
+- **Tabelas ajustáveis:** Estoque, Clientes e Veículos permitem ordenar, ajustar largura pela borda do cabeçalho e ocultar colunas (menu "Colunas"), com "Restaurar colunas".
+
+Arquivos: `src/components/layout/order-search.tsx`, `src/components/layout/global-shortcuts.tsx`, `src/components/ui/widget-grid.tsx`, `src/components/ui/data-table.tsx`, `src/components/ui/toast.tsx`, `src/features/orders/move-order.ts`, `src/features/schedule/interactive-agenda.tsx`, `src/lib/prefs.ts`. Novas dependências: `react-grid-layout`, `@tanstack/react-table`.
+
+Validação: typecheck, lint, 32 testes e build aprovados. No navegador (1366 × 768 e 820 px): busca com comandos, atalhos, desfazer na agenda e no quadro (inclusive Ctrl+Z), painel arrastado/persistido, tabelas com largura e ordenação persistidas, offline bloqueando arraste e atalhos de escrita, cargo Mecânico sem personalização e segunda oficina com suas cores. Não alterados: `src/services`, `src/domain`, `src/demo`.
+
 ## Executar
 
 Requisitos e instalação estão no README. Na demo, não é necessário arquivo .env com credenciais.

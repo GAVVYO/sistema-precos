@@ -414,3 +414,4 @@ textarea.ui-control { min-height: 72px; }
 @media (prefers-reduced-motion: reduce) {
   .widget-grid .react-grid-item { transition: none; }
 }
+.widget-stacked > * { width: 100%; }

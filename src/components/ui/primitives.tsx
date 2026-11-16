@@ -10,9 +10,11 @@ import {
   TextareaHTMLAttributes,
   useId,
 } from "react";
+import { twMerge } from "tailwind-merge";
 
+/** Junta classes resolvendo conflitos do Tailwind (a última vence: "h-9" + "h-7" → "h-7"). */
 export function cx(...parts: (string | false | null | undefined)[]): string {
-  return parts.filter(Boolean).join(" ");
+  return twMerge(parts.filter(Boolean).join(" "));
 }
 
 /* ---------- Botão ---------- */
@@ -196,17 +198,19 @@ export function Stat({
   hint,
   tone = "neutral",
   icon,
+  className,
 }: {
   label: string;
   value: ReactNode;
   hint?: string;
   tone?: Tone;
   icon?: ReactNode;
+  className?: string;
 }) {
   const color =
     tone === "danger" ? "text-danger" : tone === "warning" ? "text-warning" : tone === "success" ? "text-success" : "text-ink";
   return (
-    <div className="rounded-md border border-line bg-surface px-4 py-3">
+    <div className={cx("rounded-md border border-line bg-surface px-4 py-3", className)}>
       <div className="flex items-center justify-between gap-2 text-xs font-medium text-muted">
         <span>{label}</span>
         {icon}

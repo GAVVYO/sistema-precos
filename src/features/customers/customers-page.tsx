@@ -1,8 +1,10 @@
 "use client";
 
 import { Car, Pencil, Plus, Search, SearchX, UserPlus, Users } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { takeQueryParam } from "@/components/layout/command-palette";
 import { useApp } from "@/app-state/app-context";
+import { type DataColumn, DataTable } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
 import { Button, Card, EmptyState, Field, Input, PageHeader, Select, Tabs } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
@@ -218,10 +220,14 @@ function VehicleDialog({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => 
   );
 }
 
+function lastOrderOf(orders: ServiceOrder[], filter: (o: ServiceOrder) => boolean): ServiceOrder | null {
+  return orders.filter(filter).reduce<ServiceOrder | null>((last, o) => (!last || o.openedAt > last.openedAt ? o : last), null);
+}
+
 export function CustomersPage() {
   const { view, can, online, customerOf } = useApp();
   const [tab, setTab] = useState<"customers" | "vehicles">("customers");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(takeQueryParam);
   const [customerId, setCustomerId] = useState<ID | "new" | null>(null);
   const [vehicleId, setVehicleId] = useState<ID | null>(null);
   const canManage = can("os.create") || can("os.edit") || can("schedule.manage");
@@ -229,18 +235,44 @@ export function CustomersPage() {
   const q = search.trim().toLowerCase();
   const digits = q.replace(/\D/g, "");
   const alnum = q.replace(/[^a-z0-9]/g, "");
-  const lastOrder = (filter: (o: ServiceOrder) => boolean) =>
-    view.orders.filter(filter).reduce<ServiceOrder | null>((last, o) => (!last || o.openedAt > last.openedAt ? o : last), null);
 
-  const customers = view.customers
-    .filter((c) => !q || c.name.toLowerCase().includes(q) || (digits.length >= 3 && c.phone.includes(digits)) || view.vehicles.some((v) => v.customerId === c.id && alnum && v.plate.toLowerCase().includes(alnum)))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  const vehicles = view.vehicles
-    .filter((v) => {
-      const owner = customerOf(v.customerId);
-      return !q || (alnum && v.plate.toLowerCase().includes(alnum)) || `${v.brand} ${v.model}`.toLowerCase().includes(q) || owner?.name.toLowerCase().includes(q) || (digits.length >= 3 && owner?.phone.includes(digits));
-    })
-    .sort((a, b) => a.plate.localeCompare(b.plate));
+  const customers = useMemo(
+    () => view.customers.filter((c) => !q || c.name.toLowerCase().includes(q) || (digits.length >= 3 && c.phone.includes(digits)) || view.vehicles.some((v) => v.customerId === c.id && alnum && v.plate.toLowerCase().includes(alnum))),
+    [view, q, digits, alnum],
+  );
+  const vehicles = useMemo(
+    () =>
+      view.vehicles.filter((v) => {
+        const owner = customerOf(v.customerId);
+        return !q || (alnum && v.plate.toLowerCase().includes(alnum)) || `${v.brand} ${v.model}`.toLowerCase().includes(q) || owner?.name.toLowerCase().includes(q) || (digits.length >= 3 && owner?.phone.includes(digits));
+      }),
+    [view, q, digits, alnum, customerOf],
+  );
+
+  const customerColumns = useMemo<DataColumn<Customer>[]>(() => {
+    const last = (id: ID) => lastOrderOf(view.orders, (o) => o.customerId === id);
+    return [
+      { id: "name", header: "Nome", size: 220, hideable: false, sortValue: (c) => c.name.toLowerCase(), cell: (c) => <button type="button" className="font-medium text-primary hover:underline">{c.name}</button> },
+      { id: "phone", header: "Telefone", size: 140, sortValue: (c) => c.phone, cell: (c) => formatPhone(c.phone) },
+      { id: "vehicles", header: "Veículos", size: 260, cell: (c) => view.vehicles.filter((v) => v.customerId === c.id).map((v) => `${v.model} (${formatPlate(v.plate)})`).join(", ") || "—" },
+      { id: "last", header: "Último atendimento", size: 300, sortValue: (c) => last(c.id)?.openedAt ?? "", cell: (c) => { const l = last(c.id); return l ? `${formatDate(l.openedAt)} · ${l.description}` : "—"; } },
+      { id: "orders", header: "OS", size: 70, align: "right", sortValue: (c) => view.orders.filter((o) => o.customerId === c.id).length, cell: (c) => view.orders.filter((o) => o.customerId === c.id).length },
+    ];
+  }, [view]);
+
+  const vehicleColumns = useMemo<DataColumn<Vehicle>[]>(() => {
+    const last = (id: ID) => lastOrderOf(view.orders, (o) => o.vehicleId === id);
+    const owner = (v: Vehicle) => view.customers.find((c) => c.id === v.customerId)?.name ?? "";
+    return [
+      { id: "plate", header: "Placa", size: 110, hideable: false, sortValue: (v) => v.plate, cell: (v) => <button type="button" className="font-mono font-semibold text-primary hover:underline">{formatPlate(v.plate)}</button> },
+      { id: "brand", header: "Marca", size: 120, sortValue: (v) => v.brand, cell: (v) => v.brand },
+      { id: "model", header: "Modelo", size: 140, sortValue: (v) => v.model, cell: (v) => v.model },
+      { id: "year", header: "Ano", size: 70, sortValue: (v) => v.year ?? 0, cell: (v) => v.year ?? "—" },
+      { id: "owner", header: "Proprietário atual", size: 200, sortValue: (v) => owner(v).toLowerCase(), cell: (v) => owner(v) },
+      { id: "mileage", header: "Quilometragem", size: 130, align: "right", sortValue: (v) => v.mileage ?? 0, cell: (v) => (v.mileage ? `${v.mileage.toLocaleString("pt-BR")} km` : "—") },
+      { id: "last", header: "Último serviço", size: 280, sortValue: (v) => last(v.id)?.openedAt ?? "", cell: (v) => { const l = last(v.id); return l ? `${formatDate(l.openedAt)} · ${l.description}` : "—"; } },
+    ];
+  }, [view]);
 
   const selectedCustomer = customerId && customerId !== "new" ? view.customers.find((c) => c.id === customerId) : null;
   const selectedVehicle = vehicleId ? view.vehicles.find((v) => v.id === vehicleId) : null;
@@ -267,52 +299,14 @@ export function CustomersPage() {
           ) : customers.length === 0 ? (
             <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum cliente encontrado" description="Tente buscar por outro nome, telefone ou placa." />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead><tr><th>Nome</th><th>Telefone</th><th>Veículos</th><th>Último atendimento</th><th className="num">OS</th></tr></thead>
-                <tbody>
-                  {customers.map((c) => {
-                    const last = lastOrder((o) => o.customerId === c.id);
-                    return (
-                      <tr key={c.id} className="cursor-pointer" onClick={() => setCustomerId(c.id)}>
-                        <td><button type="button" className="font-medium text-primary hover:underline">{c.name}</button></td>
-                        <td>{formatPhone(c.phone)}</td>
-                        <td>{view.vehicles.filter((v) => v.customerId === c.id).map((v) => `${v.model} (${formatPlate(v.plate)})`).join(", ") || "—"}</td>
-                        <td>{last ? `${formatDate(last.openedAt)} · ${last.description}` : "—"}</td>
-                        <td className="num">{view.orders.filter((o) => o.customerId === c.id).length}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <DataTable prefKey="clientes" label="Clientes" columns={customerColumns} data={customers} rowKey={(c) => c.id} defaultSort={{ id: "name" }} onRowClick={(c) => setCustomerId(c.id)} />
           )
         ) : view.vehicles.length === 0 ? (
           <EmptyState icon={<Car className="size-8" aria-hidden />} title="Nenhum veículo cadastrado" />
         ) : vehicles.length === 0 ? (
           <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum veículo encontrado" description="Tente buscar por outra placa, modelo ou proprietário." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead><tr><th>Placa</th><th>Marca</th><th>Modelo</th><th>Ano</th><th>Proprietário atual</th><th className="num">Quilometragem</th><th>Último serviço</th></tr></thead>
-              <tbody>
-                {vehicles.map((v) => {
-                  const last = lastOrder((o) => o.vehicleId === v.id);
-                  return (
-                    <tr key={v.id} className="cursor-pointer" onClick={() => setVehicleId(v.id)}>
-                      <td><button type="button" className="font-mono font-semibold text-primary hover:underline">{formatPlate(v.plate)}</button></td>
-                      <td>{v.brand}</td>
-                      <td>{v.model}</td>
-                      <td>{v.year ?? "—"}</td>
-                      <td>{customerOf(v.customerId)?.name}</td>
-                      <td className="num">{v.mileage ? `${v.mileage.toLocaleString("pt-BR")} km` : "—"}</td>
-                      <td>{last ? `${formatDate(last.openedAt)} · ${last.description}` : "—"}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <DataTable prefKey="veiculos" label="Veículos" columns={vehicleColumns} data={vehicles} rowKey={(v) => v.id} defaultSort={{ id: "plate" }} onRowClick={(v) => setVehicleId(v.id)} />
         )}
       </Card>
 

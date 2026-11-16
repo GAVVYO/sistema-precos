@@ -1,8 +1,10 @@
 "use client";
 
 import { ArrowLeftRight, Boxes, Pencil, Plus, Search, SearchX } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { takeQueryParam } from "@/components/layout/command-palette";
 import { useApp } from "@/app-state/app-context";
+import { type DataColumn, DataTable } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
 import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Segmented, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
@@ -136,7 +138,7 @@ function MoveDialog({ part, onClose }: { part: Part; onClose: () => void }) {
 export function StockPage() {
   const { view, can, online, userOf, partOf, openOrder } = useApp();
   const [tab, setTab] = useState<"parts" | "moves">("parts");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(takeQueryParam);
   const [category, setCategory] = useState("");
   const [situation, setSituation] = useState("");
   const [movePart, setMovePart] = useState("");
@@ -147,12 +149,48 @@ export function StockPage() {
   const low = view.parts.filter((p) => partSituation(p) === "low").length;
   const out = view.parts.filter((p) => partSituation(p) === "out").length;
   const q = search.trim().toLowerCase();
-  const parts = view.parts
-    .filter((p) => (!q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)) && (!category || p.category === category) && (!situation || partSituation(p) === situation))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const parts = useMemo(
+    () =>
+      view.parts.filter(
+        (p) => (!q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)) && (!category || p.category === category) && (!situation || partSituation(p) === situation),
+      ),
+    [view.parts, q, category, situation],
+  );
   const moves = view.stockMovements.filter((m) => !movePart || m.partId === movePart).sort((a, b) => b.at.localeCompare(a.at));
   const categories = [...new Set(view.parts.map((p) => p.category))].sort();
   const filtered = !!q || !!category || !!situation;
+
+  const partColumns = useMemo<DataColumn<Part>[]>(
+    () => [
+      { id: "code", header: "Código", size: 96, sortValue: (p) => p.code, cell: (p) => <span className="font-mono text-xs">{p.code}</span>, hideable: false },
+      { id: "name", header: "Nome", size: 240, sortValue: (p) => p.name.toLowerCase(), cell: (p) => <span className="font-medium" title={p.name}>{p.name}</span>, hideable: false },
+      { id: "category", header: "Categoria", size: 130, sortValue: (p) => p.category, cell: (p) => p.category },
+      { id: "quantity", header: "Disponível", size: 100, align: "right", sortValue: (p) => p.quantity, cell: (p) => <span className="font-semibold">{p.quantity}</span> },
+      { id: "min", header: "Mínimo", size: 84, align: "right", sortValue: (p) => p.minQuantity, cell: (p) => p.minQuantity },
+      { id: "cost", header: "Custo unit.", size: 110, align: "right", sortValue: (p) => p.costCents, cell: (p) => formatBRL(p.costCents) },
+      { id: "price", header: "Preço de venda", size: 124, align: "right", sortValue: (p) => p.priceCents, cell: (p) => formatBRL(p.priceCents) },
+      { id: "situation", header: "Situação", size: 120, sortValue: (p) => ({ out: 0, low: 1, ok: 2 })[partSituation(p)], cell: (p) => <SituationBadge part={p} /> },
+      {
+        id: "actions",
+        header: "Ações",
+        size: canMove ? 290 : 110,
+        align: "right",
+        hideable: false,
+        cell: (p) => (
+          <div className="flex justify-end gap-1.5">
+            <Button size="sm" onClick={() => { setMovePart(p.id); setTab("moves"); }}>Histórico</Button>
+            {canMove && (
+              <>
+                <Button size="sm" icon={<ArrowLeftRight className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setMoving(p)}>Movimentar</Button>
+                <Button size="sm" icon={<Pencil className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setEditing(p)} aria-label={`Editar ${p.name}`}>Editar</Button>
+              </>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [canMove, online],
+  );
 
   return (
     <>
@@ -179,11 +217,11 @@ export function StockPage() {
                 <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-slate-400" aria-hidden />
                 <Input className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou código" aria-label="Buscar peças" />
               </div>
-              <Select className="w-48" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Categoria">
+              <Select className="w-52" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Categoria">
                 <option value="">Todas as categorias</option>
                 {categories.map((c) => <option key={c}>{c}</option>)}
               </Select>
-              <Select className="w-48" value={situation} onChange={(e) => setSituation(e.target.value)} aria-label="Situação">
+              <Select className="w-52" value={situation} onChange={(e) => setSituation(e.target.value)} aria-label="Situação">
                 <option value="">Todas as situações</option>
                 <option value="ok">Normal</option>
                 <option value="low">Estoque baixo</option>
@@ -195,38 +233,7 @@ export function StockPage() {
             ) : parts.length === 0 ? (
               <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhuma peça encontrada" description={filtered ? "Revise a busca ou os filtros aplicados." : undefined} />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="data-table">
-                  <thead>
-                    <tr><th>Código</th><th>Nome</th><th>Categoria</th><th className="num">Disponível</th><th className="num">Mínimo</th><th className="num">Custo unit.</th><th className="num">Preço de venda</th><th>Situação</th><th className="text-right">Ações</th></tr>
-                  </thead>
-                  <tbody>
-                    {parts.map((p) => (
-                      <tr key={p.id}>
-                        <td className="font-mono text-xs">{p.code}</td>
-                        <td className="font-medium">{p.name}</td>
-                        <td>{p.category}</td>
-                        <td className="num font-semibold">{p.quantity}</td>
-                        <td className="num">{p.minQuantity}</td>
-                        <td className="num">{formatBRL(p.costCents)}</td>
-                        <td className="num">{formatBRL(p.priceCents)}</td>
-                        <td><SituationBadge part={p} /></td>
-                        <td>
-                          <div className="flex justify-end gap-1.5">
-                            <Button size="sm" onClick={() => { setMovePart(p.id); setTab("moves"); }}>Histórico</Button>
-                            {canMove && (
-                              <>
-                                <Button size="sm" icon={<ArrowLeftRight className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setMoving(p)}>Movimentar</Button>
-                                <Button size="sm" icon={<Pencil className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setEditing(p)} aria-label={`Editar ${p.name}`}>Editar</Button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable prefKey="estoque-pecas" label="Peças em estoque" columns={partColumns} data={parts} rowKey={(p) => p.id} defaultSort={{ id: "name" }} />
             )}
           </>
         ) : (

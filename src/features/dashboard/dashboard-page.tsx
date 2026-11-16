@@ -2,9 +2,10 @@
 
 import { CalendarDays, CalendarPlus, CheckCircle2, CircleDollarSign, PackageCheck, Plus, Wrench } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { useApp } from "@/app-state/app-context";
-import { Badge, Button, Card, CardHeader, EmptyState, PageHeader, Stat } from "@/components/ui/primitives";
+import { Badge, Button, Card, CardHeader, EmptyState, PageHeader, Stat, type Tone } from "@/components/ui/primitives";
+import { useWidgetPrefs, type Widget, WidgetGrid, WidgetGridToolbar, type WidgetPrefs } from "@/components/ui/widget-grid";
 import { APPOINTMENT_STATUS_LABELS, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from "@/domain/labels";
 import { ROLE_LABELS } from "@/domain/permissions";
 import type { ServiceOrder } from "@/domain/types";
@@ -57,12 +58,12 @@ function OpenOrdersTable({ orders, empty }: { orders: ServiceOrder[]; empty: str
   );
 }
 
-function TodayAgenda() {
+function TodayAgenda({ className }: { className?: string }) {
   const { view, userOf } = useApp();
   const today = todayISO();
   const list = view.appointments.filter((a) => a.date === today && a.status !== "cancelled").sort((a, b) => a.time.localeCompare(b.time));
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader title="Agenda de hoje" subtitle={`${list.length} ${list.length === 1 ? "atendimento previsto" : "atendimentos previstos"}`} actions={<Link href="/agenda" className="text-xs font-medium text-primary hover:underline">Ver agenda</Link>} />
       {list.length === 0 ? (
         <EmptyState icon={<CalendarDays className="size-7" aria-hidden />} title="Nenhum agendamento para hoje" />
@@ -84,11 +85,11 @@ function TodayAgenda() {
   );
 }
 
-function StockAlerts() {
+function StockAlerts({ className }: { className?: string }) {
   const { view } = useApp();
   const low = view.parts.filter((p) => partSituation(p) !== "ok").sort((a, b) => a.quantity - b.quantity);
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader title="Alertas de estoque" subtitle="Peças abaixo ou no limite mínimo" actions={<Link href="/estoque" className="text-xs font-medium text-primary hover:underline">Ver estoque</Link>} />
       {low.length === 0 ? (
         <EmptyState icon={<PackageCheck className="size-7" aria-hidden />} title="Estoque em dia" description="Nenhuma peça abaixo da quantidade mínima." />
@@ -109,14 +110,14 @@ function StockAlerts() {
   );
 }
 
-function RecentActivity() {
+function RecentActivity({ className }: { className?: string }) {
   const { view, userOf, openOrder } = useApp();
   const relevant = view.orderEvents
     .filter((e) => /^(OS aberta|Status alterado para Concluído|Pagamento|OS cancelada)/.test(e.message))
     .sort((a, b) => b.at.localeCompare(a.at))
     .slice(0, 8);
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader title="Atividade recente" />
       {relevant.length === 0 ? (
         <EmptyState title="Nenhuma atividade registrada" />
@@ -140,7 +141,14 @@ function RecentActivity() {
   );
 }
 
-function OperationalDashboard() {
+function OperationalDashboard({ editing, prefs }: { editing: boolean; prefs: WidgetPrefs }) {
+  const widgets = useOperationalWidgets();
+  return <WidgetGrid prefs={prefs} widgets={widgets} editing={editing} />;
+}
+
+const W = "h-full rounded-none border-0";
+
+function useOperationalWidgets(): Widget[] {
   const { view, can, settings } = useApp();
   const today = todayISO();
   const active = view.orders.filter((o) => !o.cancelledAt);
@@ -151,32 +159,36 @@ function OperationalDashboard() {
   const todayAppointments = view.appointments.filter((a) => a.date === today && a.status !== "cancelled").length;
   const showStock = can("stock.view") && settings.activeModules.includes("stock");
   const showAgenda = can("schedule.manage") && settings.activeModules.includes("schedule");
+  const stat = (id: string, x: number, label: string, value: ReactNode, opts: { tone?: Tone; hint?: string } = {}): Widget => ({
+    id,
+    title: label,
+    layout: { x, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+    render: () => <Stat className={W} label={label} value={value} {...opts} />,
+  });
 
-  return (
-    <>
-      <div className="mb-4 grid grid-cols-3 gap-3 xl:grid-cols-6">
-        <Stat label="Ordens aguardando" value={open.filter((o) => o.status === "waiting").length} tone="warning" />
-        <Stat label="Ordens em andamento" value={open.filter((o) => o.status === "in_progress").length} />
-        <Stat label="Ordens concluídas" value={doneWeek} hint={`${doneToday} hoje · últimos 7 dias`} tone="success" />
-        <Stat label="Veículos com serviço aberto" value={new Set(open.map((o) => o.vehicleId)).size} />
-        {showAgenda && <Stat label="Agendamentos do dia" value={todayAppointments} />}
-        {showStock && <Stat label="Peças com estoque baixo" value={lowStock} tone={lowStock ? "danger" : "neutral"} />}
-      </div>
-      <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
-        <div className="space-y-4">
-          <Card>
-            <CardHeader title="Serviços em andamento" subtitle="Ordens aguardando ou em execução" actions={<Link href="/ordens" className="text-xs font-medium text-primary hover:underline">Abrir quadro</Link>} />
-            <OpenOrdersTable orders={open} empty="Nenhum serviço aberto no momento" />
-          </Card>
-          <RecentActivity />
-        </div>
-        <div className="space-y-4">
-          {showAgenda && <TodayAgenda />}
-          {showStock && <StockAlerts />}
-        </div>
-      </div>
-    </>
-  );
+  const list: (Widget | false)[] = [
+    stat("stat-waiting", 0, "Ordens aguardando", open.filter((o) => o.status === "waiting").length, { tone: "warning" }),
+    stat("stat-progress", 2, "Ordens em andamento", open.filter((o) => o.status === "in_progress").length),
+    stat("stat-done", 4, "Ordens concluídas", doneWeek, { hint: `${doneToday} hoje · últimos 7 dias`, tone: "success" }),
+    stat("stat-vehicles", 6, "Veículos com serviço aberto", new Set(open.map((o) => o.vehicleId)).size),
+    showAgenda && stat("stat-agenda", 8, "Agendamentos do dia", todayAppointments),
+    showStock && stat("stat-stock", 10, "Peças com estoque baixo", lowStock, { tone: lowStock ? "danger" : "neutral" }),
+    {
+      id: "open-orders",
+      title: "Serviços em andamento",
+      layout: { x: 0, y: 2, w: 8, h: 9, minW: 4, minH: 4 },
+      render: () => (
+        <Card className={W}>
+          <CardHeader title="Serviços em andamento" subtitle="Ordens aguardando ou em execução" actions={<Link href="/ordens" className="text-xs font-medium text-primary hover:underline">Abrir quadro</Link>} />
+          <OpenOrdersTable orders={open} empty="Nenhum serviço aberto no momento" />
+        </Card>
+      ),
+    },
+    showAgenda && { id: "today-agenda", title: "Agenda de hoje", layout: { x: 8, y: 2, w: 4, h: 5, minW: 3, minH: 3 }, render: () => <TodayAgenda className={W} /> },
+    showStock && { id: "stock-alerts", title: "Alertas de estoque", layout: { x: 8, y: 7, w: 4, h: 6, minW: 3, minH: 3 }, render: () => <StockAlerts className={W} /> },
+    { id: "activity", title: "Atividade recente", layout: { x: 0, y: 11, w: 8, h: 6, minW: 3, minH: 3 }, render: () => <RecentActivity className={W} /> },
+  ];
+  return list.filter((w): w is Widget => w !== false);
 }
 
 function MechanicDashboard() {
@@ -231,7 +243,7 @@ function MechanicDashboard() {
   );
 }
 
-function FinanceDashboard() {
+function FinanceDashboard({ editing, prefs }: { editing: boolean; prefs: WidgetPrefs }) {
   const { view, customerOf, can, online } = useApp();
   const [payOrder, setPayOrder] = useState<string | null>(null);
   const today = todayISO();
@@ -239,16 +251,17 @@ function FinanceDashboard() {
   const receivables = listReceivables(view);
   const recent = view.transactions.filter((t) => t.status === "paid").sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
 
-  return (
-    <>
-      <div className="mb-4 grid grid-cols-4 gap-3">
-        <Stat label="Recebido no mês" value={formatBRL(summary.receivedCents)} tone="success" />
-        <Stat label="Despesas pagas no mês" value={formatBRL(summary.expensesCents)} tone="danger" />
-        <Stat label="Contas a receber" value={formatBRL(summary.receivableCents)} tone="warning" hint={`${receivables.length} em aberto`} />
-        <Stat label="Resultado de caixa do mês" value={formatBRL(summary.cashResultCents)} hint="Recebido − despesas pagas" />
-      </div>
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card>
+  const widgets: Widget[] = [
+    { id: "fin-received", title: "Recebido no mês", layout: { x: 0, y: 0, w: 3, h: 2, minW: 2, minH: 2 }, render: () => <Stat className={W} label="Recebido no mês" value={formatBRL(summary.receivedCents)} tone="success" /> },
+    { id: "fin-expenses", title: "Despesas pagas no mês", layout: { x: 3, y: 0, w: 3, h: 2, minW: 2, minH: 2 }, render: () => <Stat className={W} label="Despesas pagas no mês" value={formatBRL(summary.expensesCents)} tone="danger" /> },
+    { id: "fin-receivable", title: "Contas a receber", layout: { x: 6, y: 0, w: 3, h: 2, minW: 2, minH: 2 }, render: () => <Stat className={W} label="Contas a receber" value={formatBRL(summary.receivableCents)} tone="warning" hint={`${receivables.length} em aberto`} /> },
+    { id: "fin-result", title: "Resultado de caixa do mês", layout: { x: 9, y: 0, w: 3, h: 2, minW: 2, minH: 2 }, render: () => <Stat className={W} label="Resultado de caixa do mês" value={formatBRL(summary.cashResultCents)} hint="Recebido − despesas pagas" /> },
+    {
+      id: "fin-receivables",
+      title: "Contas a receber (lista)",
+      layout: { x: 0, y: 2, w: 6, h: 9, minW: 4, minH: 4 },
+      render: () => (
+        <Card className={W}>
           <CardHeader title="Contas a receber" actions={<Link href="/financeiro" className="text-xs font-medium text-primary hover:underline">Ver financeiro</Link>} />
           {receivables.length === 0 ? (
             <EmptyState icon={<CircleDollarSign className="size-7" aria-hidden />} title="Nada a receber" description="Todos os serviços concluídos estão pagos." />
@@ -272,7 +285,14 @@ function FinanceDashboard() {
             </table>
           )}
         </Card>
-        <Card>
+      ),
+    },
+    {
+      id: "fin-recent",
+      title: "Últimas movimentações",
+      layout: { x: 6, y: 2, w: 6, h: 9, minW: 4, minH: 4 },
+      render: () => (
+        <Card className={W}>
           <CardHeader title="Últimas movimentações" />
           <table className="data-table">
             <thead><tr><th>Data</th><th>Descrição</th><th>Forma</th><th className="num">Valor</th></tr></thead>
@@ -288,7 +308,13 @@ function FinanceDashboard() {
             </tbody>
           </table>
         </Card>
-      </div>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <WidgetGrid prefs={prefs} widgets={widgets} editing={editing} />
       {payOrder && <PaymentDialog orderId={payOrder} onClose={() => setPayOrder(null)} />}
     </>
   );
@@ -299,6 +325,9 @@ export function DashboardPage() {
   const today = todayISO();
   const variant =
     membership.role === "mechanic" ? "mechanic" : membership.role === "financial" && can("finance.view") ? "finance" : can("os.view") ? "operational" : "none";
+  const [editing, setEditing] = useState(false);
+  const prefs = useWidgetPrefs(`painel:${variant}:${membership.workshopId}:${user.id}`);
+  const customizable = variant === "operational" || variant === "finance";
 
   return (
     <>
@@ -307,13 +336,16 @@ export function DashboardPage() {
         description={`${weekdayName(today)}, ${formatDate(today)} · ${ROLE_LABELS[membership.role]} · ${settings.displayName}`}
         actions={
           <>
-            {can("schedule.manage") && settings.activeModules.includes("schedule") && (
+            {customizable && (
+              <WidgetGridToolbar prefs={prefs} editing={editing} onEditingChange={setEditing} />
+            )}
+            {!editing && can("schedule.manage") && settings.activeModules.includes("schedule") && (
               <Link href="/agenda?novo=1" className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-surface px-3.5 text-[13px] font-medium hover:bg-slate-50">
                 <CalendarPlus className="size-4" aria-hidden />
                 Novo agendamento
               </Link>
             )}
-            {can("os.create") && settings.activeModules.includes("orders") && (
+            {!editing && can("os.create") && settings.activeModules.includes("orders") && (
               <Button variant="primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()}>
                 Nova OS
               </Button>
@@ -321,9 +353,14 @@ export function DashboardPage() {
           </>
         }
       />
+      {editing && (
+        <p className="mb-2 text-[13px] text-muted" role="status">
+          Arraste os blocos pela barra azul e redimensione pelo canto inferior direito. As setas e os botões − / + fazem o mesmo pelo teclado.
+        </p>
+      )}
       {variant === "mechanic" && <MechanicDashboard />}
-      {variant === "finance" && <FinanceDashboard />}
-      {variant === "operational" && <OperationalDashboard />}
+      {variant === "finance" && <FinanceDashboard editing={editing} prefs={prefs} />}
+      {variant === "operational" && <OperationalDashboard editing={editing} prefs={prefs} />}
       {variant === "none" && (
         <Card>
           <EmptyState title="Nada para exibir" description="Seu usuário ainda não possui permissões para os módulos desta oficina. Fale com o proprietário." />

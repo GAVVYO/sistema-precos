@@ -107,3 +107,27 @@ dialog::backdrop {
     display: none !important;
   }
 }
+
+/* Painel de widgets (react-grid-layout) */
+.widget-grid .react-grid-item > section > div > section > header:first-child {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+.widget-grid .react-grid-item.react-grid-placeholder {
+  background: var(--primary);
+  opacity: 0.12;
+  border-radius: var(--radius-md);
+}
+.widget-grid .react-grid-item.react-draggable-dragging > section {
+  box-shadow: 0 12px 28px -8px rgb(15 23 42 / 0.25);
+}
+.widget-grid .react-grid-item > .react-resizable-handle::after {
+  border-color: var(--primary);
+}
+@media (prefers-reduced-motion: reduce) {
+  .widget-grid .react-grid-item {
+    transition: none;
+  }
+}

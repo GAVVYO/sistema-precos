@@ -12,6 +12,7 @@ import {
   addDays, addMonths, formatDate, formatOrderNumber, formatPhone, formatPlate, monthName, startOfMonth, startOfWeek, todayISO, weekdayName,
 } from "@/lib/format";
 import { createAppointment, setAppointmentStatus, updateAppointment } from "@/services/appointments";
+import { TimeGrid } from "./time-grid";
 
 const STATUS_TONE: Record<AppointmentStatus, Tone> = { scheduled: "info", confirmed: "success", attended: "neutral", cancelled: "danger" };
 const CHIP: Record<AppointmentStatus, string> = {
@@ -21,7 +22,7 @@ const CHIP: Record<AppointmentStatus, string> = {
   cancelled: "border-l-red-400 bg-danger-soft text-muted line-through",
 };
 
-function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment: Appointment | null; defaultDate: ISODate; onClose: () => void }) {
+function AppointmentDialog({ appointment, defaultDate, defaultTime = "09:00", defaultMechanicId = "", onClose }: { appointment: Appointment | null; defaultDate: ISODate; defaultTime?: string; defaultMechanicId?: string; onClose: () => void }) {
   const { view, act, can, online, mechanics, openNewOrder, openOrder } = useApp();
   const a = appointment;
   const [customerName, setCustomerName] = useState(a?.customerName ?? "");
@@ -31,8 +32,8 @@ function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment:
   const [model, setModel] = useState(a?.model ?? "");
   const [service, setService] = useState(a?.service ?? "");
   const [date, setDate] = useState(a?.date ?? defaultDate);
-  const [time, setTime] = useState(a?.time ?? "09:00");
-  const [mechanicId, setMechanicId] = useState(a?.mechanicId ?? "");
+  const [time, setTime] = useState(a?.time ?? defaultTime);
+  const [mechanicId, setMechanicId] = useState(a?.mechanicId ?? defaultMechanicId);
   const [notes, setNotes] = useState(a?.notes ?? "");
   const [confirmCancel, setConfirmCancel] = useState(false);
 
@@ -164,13 +165,14 @@ function Chip({ a, onOpen, compact }: { a: Appointment; onOpen: (a: Appointment)
 type View = "day" | "week" | "month" | "list";
 
 export function SchedulePage() {
-  const { view, online, userOf } = useApp();
+  const { view, online, mechanics, userOf } = useApp();
   const params = useSearchParams();
   const today = todayISO();
   const [mode, setMode] = useState<View>("week");
   const [cursor, setCursor] = useState<ISODate>(today);
   const [open, setOpen] = useState<Appointment | "new" | null>(params.has("novo") ? "new" : null);
   const [newDate, setNewDate] = useState<ISODate>(today);
+  const [newSlot, setNewSlot] = useState<{ time?: string; mechanicId?: string }>({});
 
   const byDate = (d: ISODate) => view.appointments.filter((a) => a.date === d).sort((a, b) => a.time.localeCompare(b.time));
   const move = (dir: number) => setCursor(mode === "day" ? addDays(cursor, dir) : mode === "week" ? addDays(cursor, dir * 7) : addMonths(cursor, dir));
@@ -184,14 +186,28 @@ export function SchedulePage() {
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
   const title =
     mode === "day" ? `${weekdayName(cursor)}, ${formatDate(cursor)}` : mode === "week" ? `${formatDate(weekStart)} a ${formatDate(addDays(weekStart, 6))}` : mode === "month" ? monthName(cursor) : "Próximos atendimentos";
-  const openNew = (d: ISODate) => { setNewDate(d < today ? today : d); setOpen("new"); };
+  const openNew = (d: ISODate, time?: string, mechanicId?: string | null) => {
+    setNewDate(d < today ? today : d);
+    setNewSlot({ time, mechanicId: mechanicId ?? undefined });
+    setOpen("new");
+  };
   const dayList = byDate(cursor);
+  const dayCount = (d: ISODate) => {
+    const n = byDate(d).filter((a) => a.status !== "cancelled").length;
+    const text = n === 0 ? "Livre" : `${n} ${n === 1 ? "agendamento" : "agendamentos"}`;
+    return d === today ? `Hoje · ${text}` : text;
+  };
+  const weekList = view.appointments.filter((a) => a.date >= weekStart && a.date <= addDays(weekStart, 6));
+  const mechanicCols = [
+    ...mechanics.map((m) => ({ id: m.id, date: cursor, mechanicId: m.id as string | null, label: m.name.split(" ").slice(0, 2).join(" "), sublabel: `${dayList.filter((a) => a.mechanicId === m.id && a.status !== "cancelled").length} no dia` })),
+    { id: "none", date: cursor, mechanicId: null, label: "Sem mecânico", sublabel: `${dayList.filter((a) => !a.mechanicId && a.status !== "cancelled").length} no dia` },
+  ];
 
   return (
     <>
       <PageHeader
         title="Agenda"
-        description="Atendimentos previstos. Clique em um agendamento para editar, reagendar ou converter em OS."
+        description="Arraste um agendamento para remarcar ou trocar o mecânico. Clique para editar ou converter em OS; clique em um horário livre para agendar."
         actions={<Button variant="primary" icon={<CalendarPlus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNew(mode === "list" ? today : cursor)}>Novo agendamento</Button>}
       />
       <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -207,50 +223,22 @@ export function SchedulePage() {
       </div>
 
       {mode === "day" && (
-        <Card>
-          {dayList.length === 0 ? (
-            <EmptyState icon={<CalendarDays className="size-8" aria-hidden />} title="Nenhum agendamento neste dia" action={<Button disabled={!online} onClick={() => openNew(cursor)}>Novo agendamento</Button>} />
-          ) : (
-            <table className="data-table">
-              <thead><tr><th>Horário</th><th>Cliente</th><th>Telefone</th><th>Veículo</th><th>Serviço</th><th>Mecânico</th><th>Status</th></tr></thead>
-              <tbody>
-                {dayList.map((a) => (
-                  <tr key={a.id} className="cursor-pointer" onClick={() => setOpen(a)}>
-                    <td className="font-semibold tabular-nums">{a.time}</td>
-                    <td><button type="button" className="font-medium text-primary hover:underline">{a.customerName}</button></td>
-                    <td>{formatPhone(a.phone)}</td>
-                    <td>{a.brand} {a.model}{a.plate ? ` · ${formatPlate(a.plate)}` : ""}</td>
-                    <td>{a.service}</td>
-                    <td>{userOf(a.mechanicId)?.name ?? <span className="text-muted">A definir</span>}</td>
-                    <td><Badge tone={STATUS_TONE[a.status]}>{APPOINTMENT_STATUS_LABELS[a.status]}</Badge></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Card>
+        <TimeGrid columns={mechanicCols} appointments={dayList} onOpen={setOpen} onCreate={openNew} />
       )}
 
       {mode === "week" && (
-        <div className="grid grid-cols-7 gap-2">
-          {weekDays.map((d) => {
-            const list = byDate(d);
-            return (
-              <section key={d} className={cx("flex min-h-72 flex-col rounded-md border bg-surface", d === today ? "border-primary" : "border-line")} aria-label={`${weekdayName(d)}, ${formatDate(d)}`}>
-                <header className={cx("flex items-baseline justify-between border-b border-line px-2 py-1.5", d === today && "bg-primary-soft")}>
-                  <button type="button" className="text-xs font-semibold capitalize hover:underline" onClick={() => { setCursor(d); setMode("day"); }}>
-                    {weekdayName(d, true)} {formatDate(d).slice(0, 5)}
-                  </button>
-                  {d === today && <span className="text-[10px] font-semibold text-primary uppercase">Hoje</span>}
-                </header>
-                <div className="flex flex-1 flex-col gap-1 p-1.5">
-                  {list.map((a) => <Chip key={a.id} a={a} onOpen={setOpen} />)}
-                  {list.length === 0 && <p className="px-1 py-2 text-xs text-slate-400">Livre</p>}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+        <TimeGrid
+          columns={weekDays.map((d) => ({
+            id: d,
+            date: d,
+            label: `${weekdayName(d, true)} ${formatDate(d).slice(0, 5)}`,
+            sublabel: dayCount(d),
+            highlight: d === today,
+          }))}
+          appointments={weekList}
+          onOpen={setOpen}
+          onCreate={openNew}
+        />
       )}
 
       {mode === "month" && (
@@ -313,6 +301,8 @@ export function SchedulePage() {
           key={open === "new" ? "new" : open.id}
           appointment={open === "new" ? null : (view.appointments.find((a) => a.id === open.id) ?? null)}
           defaultDate={newDate}
+          defaultTime={newSlot.time}
+          defaultMechanicId={newSlot.mechanicId}
           onClose={() => setOpen(null)}
         />
       )}

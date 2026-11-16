@@ -20,3 +20,9 @@
 | 16 | **Offline simulado não persiste ao recarregar** | Ao recarregar, vale o estado real do navegador (`navigator.onLine`). |
 | 17 | **Veículo identificado pela placa (única por oficina)** | Abrir OS com placa já cadastrada reaproveita o veículo e atualiza o proprietário atual, sem duplicar. |
 | 18 | **Receitas avulsas** | Além das receitas de OS, permite lançar receitas manuais (recebidas ou a receber), exigido por "Registrar data, cliente, OS, descrição…". |
+| 19 | **Paleta de comandos com `cmdk` dentro de `<dialog>` nativo** | Busca única (OS, cliente, placa, peça) e atalhos estilo macOS (⌘K/Ctrl+K, `N`, `G`+letra, ⌘Z). O `<dialog>` mantém a paleta na *top layer*, acima dos outros modais; o `Command.Dialog` do cmdk (Radix) ficaria por baixo deles. |
+| 20 | **Painel inicial com `react-grid-layout` v2** | Widgets arrastáveis e redimensionáveis, como os do macOS e do Grafana. O layout é preferência de interface (`src/lib/prefs.ts`, localStorage por usuário e oficina), não dado de negócio. Botões de mover e redimensionar atendem à WCAG 2.5.7. |
+| 21 | **Agenda em grade de horários com dnd-kit** | Já estava no projeto. Arrastar remarca chamando `updateAppointment`, sem regra nova na interface. O dia mostra uma coluna por mecânico. Clicar abre o formulário, que é a alternativa sem arrasto. |
+| 22 | **Tabelas com TanStack Table v9 (`DataTable`)** | Ordenação, largura ajustável pela borda do cabeçalho (com ← → no teclado) e colunas ocultáveis, tudo salvo por usuário. Estado controlado com `state` + `on*Change`. |
+| 23 | **`tailwind-merge` no `cx`** | Resolve conflitos de classes (ex.: `h-9` + `h-7`), como sugerido em CONTEXTO-VISUAL. |
+| 24 | **Desfazer após arrastar** | Remarcar um agendamento ou mover uma OS mostra "Desfazer" no aviso e aceita ⌘Z/Ctrl+Z. A volta usa o mesmo serviço e só é oferecida quando a permissão permite. |

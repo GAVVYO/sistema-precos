@@ -83,3 +83,18 @@ Observações de quem construiu; nada disso foi pedido pelo cliente ainda.
 ## Como conferir o resultado
 
 Percorra em 1366 × 768, como Proprietário na *Oficina Modelo Passaré*: Início → Ordens (abrir Nova OS e os detalhes de uma OS) → Estoque → Financeiro → Agenda (dia/semana/mês) → Clientes → Relatórios → Configurações. Depois troque para a *Auto Elétrica Castelão* (cores diferentes), para um Mecânico (menu reduzido) e simule queda de conexão na barra de demonstração.
+
+## Interações (rodada "sistema mais interativo")
+
+Referência: praticidade do macOS (Spotlight, widgets, Calendário, colunas do Finder e ⌘Z).
+
+| Recurso | Onde | Arquivo |
+| --- | --- | --- |
+| Paleta ⌘K / Ctrl+K: busca OS, cliente, placa, peça e comandos | Global (botão no cabeçalho) | `src/components/layout/command-palette.tsx` |
+| Atalhos: `N` nova OS, `G` + letra navega (I, O, E, F, A, C, R, S), `/` abre a paleta, ⌘Z desfaz | Global, fora de campos e modais | idem |
+| Painel personalizável: arrastar, redimensionar, ocultar e restaurar blocos | Início (operacional e financeiro) | `src/components/ui/widget-grid.tsx` |
+| Grade de horários com arrastar para remarcar e, no dia, colunas por mecânico | Agenda | `src/features/schedule/time-grid.tsx` |
+| Tabelas: ordenar, ajustar largura, ocultar colunas | Estoque, Clientes, Veículos | `src/components/ui/data-table.tsx` |
+| "Desfazer" depois de mover OS ou agendamento | Ordens, Agenda | `src/components/ui/toast.tsx` |
+
+Preferências de interface ficam em `localStorage` (`gavyo:prefs:*`) por usuário e oficina. Todo arrasto tem alternativa por clique ou teclado (WCAG 2.5.7).

@@ -10,6 +10,7 @@ import { useApp } from "@/app-state/app-context";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Button, cx, EmptyState } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
+import { CommandButton, CommandPalette } from "./command-palette";
 import { demoStore } from "@/demo/store";
 import { ModuleInfo, MODULES, ROLE_LABELS } from "@/domain/permissions";
 import type { ModuleKey } from "@/domain/types";
@@ -266,7 +267,7 @@ function Header() {
               aria-current={isActive(m.href) ? "page" : undefined}
               className={cx(
                 "rounded px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap",
-                i >= overflowFrom && "hidden xl:block",
+                i >= overflowFrom && "hidden 2xl:block",
                 isActive(m.href) ? "bg-primary text-primary-fg" : "opacity-80 hover:bg-white/10 hover:opacity-100",
               )}
             >
@@ -274,7 +275,7 @@ function Header() {
             </Link>
           ))}
           {modules.length > overflowFrom && (
-            <div className="xl:hidden">
+            <div className="2xl:hidden">
               <Menu
                 label="Mais módulos"
                 align="left"
@@ -297,8 +298,9 @@ function Header() {
           )}
         </nav>
 
+        <CommandButton />
         {can("os.create") && settings.activeModules.includes("orders") && (
-          <Button variant="primary" size="sm" className="h-8" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()}>
+          <Button variant="primary" size="sm" className="h-8" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()} aria-keyshortcuts="N" title="Nova OS (N)">
             Nova OS
           </Button>
         )}
@@ -404,6 +406,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main id="conteudo" className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-4">
         {children}
       </main>
+      <CommandPalette />
     </div>
   );
 }

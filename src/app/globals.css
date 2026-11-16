@@ -379,3 +379,7 @@ textarea.ui-control { min-height: 72px; }
 .nav-options-panel { max-height:min(280px,calc(100dvh - 24px)); overflow:auto; }
 .nav-menu-up .nav-options-panel { top:auto; bottom:100%; }
 .movable-nav-slot:has(.nav-floating) { min-height:0; border-bottom:0; }
+.nav-dock-target { position:absolute; top:100%; left:12px; right:12px; height:54px; display:flex; align-items:center; justify-content:center; background:var(--color-primary-soft); color:var(--primary); border:1px dashed var(--primary); border-radius:8px; pointer-events:none; font-size:14px; font-weight:600; animation:nav-target-in 140ms ease-out; }
+@keyframes nav-target-in { from { opacity:.4; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+.movable-nav-frame:not(.nav-moving) .personal-nav-item { animation:nav-target-in 160ms ease-out; }
+@media(prefers-reduced-motion:reduce) { .nav-dock-target,.movable-nav-frame .personal-nav-item { animation:none; } }

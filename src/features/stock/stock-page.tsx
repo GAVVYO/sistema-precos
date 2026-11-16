@@ -1,13 +1,13 @@
 "use client";
 
 import { ArrowLeftRight, Boxes, Pencil, Plus, Search, SearchX } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { initialQuery } from "@/lib/query";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Segmented, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
-import { SortHeader, TableSort } from "@/components/ui/sort-header";
+import { type DataColumn, DataTable } from "@/components/ui/data-table";
 import { MOVEMENT_TYPE_LABELS, PART_CATEGORIES } from "@/domain/labels";
 import type { Part } from "@/domain/types";
 import { centsToInput, formatBRL, formatDateTime, formatOrderNumber, parseBRL } from "@/lib/format";
@@ -141,7 +141,6 @@ export function StockPage() {
   const [search, setSearch] = useState(initialQuery);
   const [category, setCategory] = useState("");
   const [situation, setSituation] = useState("");
-  const [sort, setSort] = useState<TableSort<"name" | "quantity" | "priceCents">>({ key: "name", desc: false });
   const [movePart, setMovePart] = useState("");
   const [editing, setEditing] = useState<Part | null | "new">(null);
   const [moving, setMoving] = useState<Part | null>(null);
@@ -150,12 +149,43 @@ export function StockPage() {
   const low = view.parts.filter((p) => partSituation(p) === "low").length;
   const out = view.parts.filter((p) => partSituation(p) === "out").length;
   const q = search.trim().toLowerCase();
-  const parts = view.parts
-    .filter((p) => (!q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)) && (!category || p.category === category) && (!situation || partSituation(p) === situation))
-    .sort((a, b) => (sort.desc ? -1 : 1) * (sort.key === "name" ? a.name.localeCompare(b.name, "pt-BR") : a[sort.key] - b[sort.key]));
+  const parts = useMemo(
+    () => view.parts.filter((p) => (!q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)) && (!category || p.category === category) && (!situation || partSituation(p) === situation)),
+    [view.parts, q, category, situation],
+  );
   const moves = view.stockMovements.filter((m) => !movePart || m.partId === movePart).sort((a, b) => b.at.localeCompare(a.at));
   const categories = [...new Set(view.parts.map((p) => p.category))].sort();
   const filtered = !!q || !!category || !!situation;
+
+  const partColumns = useMemo<DataColumn<Part>[]>(
+    () => [
+      { id: "name", header: "Peça / código", size: 240, hideable: false, sortValue: (p) => p.name.toLocaleLowerCase("pt-BR"), cell: (p) => <><span className="block truncate font-semibold" title={p.name}>{p.name}</span><span className="text-xs text-muted">{p.code}</span></> },
+      { id: "category", header: "Categoria", size: 130, sortValue: (p) => p.category, cell: (p) => p.category },
+      { id: "quantity", header: "Disponível", size: 140, align: "right", sortValue: (p) => p.quantity, cell: (p) => <><strong className="block">{p.quantity}</strong><span className="text-xs text-muted">mín. {p.minQuantity}</span></> },
+      { id: "cost", header: "Custo unit.", size: 140, align: "right", sortValue: (p) => p.costCents, cell: (p) => formatBRL(p.costCents) },
+      { id: "price", header: "Venda", size: 130, align: "right", sortValue: (p) => p.priceCents, cell: (p) => formatBRL(p.priceCents) },
+      { id: "situation", header: "Situação", size: 140, sortValue: (p) => ({ out: 0, low: 1, ok: 2 })[partSituation(p)], cell: (p) => <SituationBadge part={p} /> },
+      {
+        id: "actions",
+        header: "Ações",
+        size: canMove ? 340 : 130,
+        align: "right",
+        hideable: false,
+        cell: (p) => (
+          <div className="flex justify-end gap-1.5">
+            <Button size="sm" onClick={() => { setMovePart(p.id); setTab("moves"); }}>Histórico</Button>
+            {canMove && (
+              <>
+                <Button size="sm" icon={<ArrowLeftRight className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setMoving(p)}>Movimentar</Button>
+                <Button size="sm" icon={<Pencil className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setEditing(p)} aria-label={`Editar ${p.name}`}>Editar</Button>
+              </>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [canMove, online],
+  );
 
   return (
     <div className="module-page module-stock">
@@ -198,36 +228,7 @@ export function StockPage() {
             ) : parts.length === 0 ? (
               <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhuma peça encontrada" description={filtered ? "Revise a busca ou os filtros aplicados." : undefined} />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="data-table">
-                  <thead>
-                    <tr><SortHeader field="name" sort={sort} onSort={setSort}>Peça / código</SortHeader><th>Categoria</th><SortHeader field="quantity" sort={sort} onSort={setSort} numeric>Disponível</SortHeader><th className="num">Custo unit.</th><SortHeader field="priceCents" sort={sort} onSort={setSort} numeric>Venda</SortHeader><th>Situação</th><th className="text-right">Ações</th></tr>
-                  </thead>
-                  <tbody>
-                    {parts.map((p) => (
-                      <tr key={p.id}>
-                        <td><span className="block font-semibold">{p.name}</span><span className="text-xs text-muted">{p.code}</span></td>
-                        <td>{p.category}</td>
-                        <td className="num"><strong className="block">{p.quantity}</strong><span className="text-xs text-muted">mín. {p.minQuantity}</span></td>
-                        <td className="num">{formatBRL(p.costCents)}</td>
-                        <td className="num">{formatBRL(p.priceCents)}</td>
-                        <td><SituationBadge part={p} /></td>
-                        <td>
-                          <div className="flex justify-end gap-1.5">
-                            <Button size="sm" onClick={() => { setMovePart(p.id); setTab("moves"); }}>Histórico</Button>
-                            {canMove && (
-                              <>
-                                <Button size="sm" icon={<ArrowLeftRight className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setMoving(p)}>Movimentar</Button>
-                                <Button size="sm" icon={<Pencil className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setEditing(p)} aria-label={`Editar ${p.name}`}>Editar</Button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable prefKey="estoque-pecas" label="Peças em estoque" columns={partColumns} data={parts} rowKey={(p) => p.id} defaultSort={{ id: "name" }} />
             )}
           </>
         ) : (

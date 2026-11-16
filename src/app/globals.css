@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+/*
+ * Tokens visuais do GAVYO Auto.
+ * --primary / --secondary são sobrescritos em tempo de execução com as cores
+ * da oficina ativa (ver AppShell), permitindo personalização sem CSS por cliente.
+ */
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --primary: #2563eb;
+  --primary-fg: #ffffff;
+  --secondary: #172033;
+  --secondary-fg: #ffffff;
+  --text: #172033;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+  --color-primary-hover: color-mix(in srgb, var(--primary) 84%, black);
+  --color-primary-soft: color-mix(in srgb, var(--primary) 9%, white);
+  --color-secondary: var(--secondary);
+  --color-secondary-fg: var(--secondary-fg);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--border);
+  --color-success: var(--success);
+  --color-success-soft: #e8f5ec;
+  --color-warning: var(--warning);
+  --color-warning-soft: #fdf3e1;
+  --color-danger: var(--danger);
+  --color-danger-soft: #fdecec;
+  --font-sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --radius-md: 6px;
+}
+
+html {
+  font-size: 14px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+button:not(:disabled),
+[role="button"],
+summary,
+select,
+label[for] {
+  cursor: pointer;
+}
+
+dialog::backdrop {
+  background: rgb(15 23 42 / 0.45);
+}
+
+/* Tabelas de dados: densas e legíveis. */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: #f8fafc;
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.data-table tbody tr:hover {
+  background: #f8fafc;
+}
+.data-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

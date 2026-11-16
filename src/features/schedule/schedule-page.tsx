@@ -1,5 +1,7 @@
 "use client";
 
+import { DndContext, DragOverlay, PointerSensor, KeyboardSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { AgendaChip, AgendaDay, canReschedule } from "./interactive-agenda";
 import { CalendarDays, CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -153,18 +155,15 @@ function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment:
 }
 
 function Chip({ a, onOpen, compact }: { a: Appointment; onOpen: (a: Appointment) => void; compact?: boolean }) {
-  return (
-    <button type="button" onClick={() => onOpen(a)} className={cx("appointment-chip block w-full rounded-lg border px-2.5 py-2 text-left text-xs hover:brightness-95", CHIP[a.status])} title={`${a.time} · ${a.customerName} · ${a.service}`}>
-      <span className="mb-1 block font-bold tabular-nums">{a.time}</span> <span className="font-semibold">{a.customerName.split(" ").slice(0, 2).join(" ")}</span>
-      {!compact && <span className="mt-1 block leading-relaxed">{a.model} · {a.service}</span>}
-    </button>
-  );
+  return <AgendaChip a={a} onOpen={onOpen} compact={compact} appearance={CHIP[a.status]} />;
 }
 
 type View = "day" | "week" | "month" | "list";
 
 export function SchedulePage() {
-  const { view, online, userOf } = useApp();
+  const { view, online, userOf, can, act } = useApp();
+  const [dragging, setDragging] = useState<Appointment | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
   const params = useSearchParams();
   const today = todayISO();
   const [mode, setMode] = useState<View>("week");
@@ -188,10 +187,17 @@ export function SchedulePage() {
   const dayList = byDate(cursor);
 
   return (
+    <DndContext sensors={sensors} onDragStart={({ active }) => setDragging(view.appointments.find(a => a.id === active.id) ?? null)} onDragCancel={() => setDragging(null)} onDragEnd={({ active, over }) => {
+      setDragging(null);
+      const a = view.appointments.find(item => item.id === active.id);
+      if (!a || !over || !online || !can("schedule.manage") || !canReschedule(a) || a.date === over.id) return;
+      const date = String(over.id);
+      act((db, ctx) => updateAppointment(db, ctx, a.id, { ...a, date }), `Reagendado para ${formatDate(date)} às ${a.time}.`);
+    }}>
     <div className="module-page module-schedule">
       <PageHeader
         title="Agenda"
-        description="Organize os atendimentos e transforme cada chegada em uma ordem de serviço."
+        description="Arraste pela alça para mudar o dia. Use o calendário do cartão para ajustar dia e horário."
         actions={<Button variant="primary" icon={<CalendarPlus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNew(mode === "list" ? today : cursor)}>Novo agendamento</Button>}
       />
       <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -236,7 +242,7 @@ export function SchedulePage() {
           {weekDays.map((d) => {
             const list = byDate(d);
             return (
-              <section key={d} className={cx("flex min-h-80 flex-col rounded-xl border bg-surface", d === today ? "border-primary" : "border-line")} aria-label={`${weekdayName(d)}, ${formatDate(d)}`}>
+              <AgendaDay key={d} date={d} className={cx("flex min-h-80 flex-col rounded-xl border bg-surface", d === today ? "border-primary" : "border-line")} aria-label={`${weekdayName(d)}, ${formatDate(d)}`}>
                 <header className={cx("flex items-baseline justify-between border-b border-line px-2 py-1.5", d === today && "bg-primary-soft")}>
                   <button type="button" className="text-xs font-semibold capitalize hover:underline" onClick={() => { setCursor(d); setMode("day"); }}>
                     {weekdayName(d, true)} {formatDate(d).slice(0, 5)}
@@ -247,7 +253,7 @@ export function SchedulePage() {
                   {list.map((a) => <Chip key={a.id} a={a} onOpen={setOpen} />)}
                   {list.length === 0 && <p className="px-1 py-2 text-xs text-slate-400">Livre</p>}
                 </div>
-              </section>
+              </AgendaDay>
             );
           })}
         </div>
@@ -263,7 +269,7 @@ export function SchedulePage() {
               const list = byDate(d).filter((a) => a.status !== "cancelled");
               const outside = d.slice(0, 7) !== cursor.slice(0, 7);
               return (
-                <div key={d} className={cx("min-h-[88px] border-r border-b border-line p-1", outside && "bg-slate-50")}>
+                <AgendaDay key={d} date={d} className={cx("min-h-[88px] border-r border-b border-line p-1", outside && "bg-slate-50")}>
                   <button
                     type="button"
                     onClick={() => { setCursor(d); setMode("day"); }}
@@ -276,7 +282,7 @@ export function SchedulePage() {
                     {list.slice(0, 2).map((a) => <Chip key={a.id} a={a} onOpen={setOpen} compact />)}
                     {list.length > 2 && <button type="button" className="px-1 text-xs font-medium text-primary hover:underline" onClick={() => { setCursor(d); setMode("day"); }}>+{list.length - 2} mais</button>}
                   </div>
-                </div>
+                </AgendaDay>
               );
             })}
           </div>
@@ -317,5 +323,7 @@ export function SchedulePage() {
         />
       )}
     </div>
+    <DragOverlay>{dragging && <div className="w-44 rounded-lg border border-primary bg-surface p-3 text-sm shadow-lg"><strong>{dragging.time} · {dragging.customerName}</strong><p className="mt-1 text-muted">Solte no dia desejado</p></div>}</DragOverlay>
+    </DndContext>
   );
 }

@@ -52,3 +52,9 @@ Validação técnica: npm run typecheck, npm run lint, npm test (32 testes) e np
 Limites: não houve bateria integral com leitor de tela, Safari/Firefox ou emulação de movimento reduzido pelo sistema. A preferência foi revisada no código. Arrastar por ponteiro não foi repetido; o controle alternativo foi exercitado. Testes existentes cobrem regras de negócio, não regressão visual. A agenda ainda não modela duração/capacidade: não foi inventada uma grade horária com dados inexistentes.
 
 `src/services`, `src/domain` e `src/demo` permanecem sem alterações. Continua sendo frontend de demonstração, sem backend ou integração de cobrança.
+
+## Agenda interativa — complemento
+
+Arraste pela alça do cartão para outro dia na semana ou no mês, mantendo o horário. O destino recebe destaque e uma prévia acompanha o ponteiro. O botão de calendário abre edição rápida de dia/horário, também acessível por teclado. As alterações usam updateAppointment, preservando validação de conflito por mecânico/horário, permissões, offline e registros somente para consulta.
+
+Validação: typecheck, lint, 32 testes e build aprovados. No navegador, Rafael foi arrastado de 18/11 para 19/11 mantendo 10:30; a edição rápida alterou o horário para 11:30. Depois foi devolvido a 18/11 às 10:30. Offline removeu alças/edição rápida; reconexão restaurou os controles. Teste feito com dados fictícios. Arraste entre meses diferentes usa a edição rápida de data; não há troca automática de página durante o arraste. A alteração não adiciona duração ou capacidade fictícia à agenda.

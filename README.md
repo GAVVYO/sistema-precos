@@ -37,14 +37,20 @@ Nenhuma variável de ambiente é necessária para a demonstração. Veja [.env.e
 3. Nos detalhes da OS: altere quantidades de peças, mude o status, **registre o pagamento via PIX**, gere o **PDF** e abra o **orçamento no WhatsApp**.
 4. **Ordens de serviço**: arraste cartões entre as colunas do Kanban.
 5. **Financeiro**: a receita aparece após o pagamento; contas a receber listam OS concluídas e não pagas.
-6. **Agenda**: crie um agendamento e use **Converter em OS**.
+6. **Agenda**: arraste um atendimento para outro dia ou use o calendário do cartão para editar dia/horário. Crie agendamentos e use **Converter em OS**.
 7. **Relatórios**: filtre e exporte em PDF e Excel.
 8. **Configurações**: troque logotipo e cores; ajuste permissões de um funcionário.
 9. Na barra amarela do topo: troque de **usuário/cargo**, troque de **oficina**, **simule queda de conexão** e **restaure a demonstração**.
 
+A barra de navegação pode ser arrastada pela alça; solte perto do topo para encaixar novamente.
+
 Os dados persistem entre recarregamentos (localStorage) até você restaurar a demonstração.
 
 ## Documentação
+
+- [Estado atual e continuidade](docs/ESTADO-ATUAL.md) — entrega visual, agenda interativa, navegação por gesto, validações e limites.
+- [Navegação por gesto](docs/NAVEGACAO.md) — arraste livre e encaixe automático no topo.
+- [Revisão visual](docs/REVISAO-VISUAL.md) — referências e percursos.
 
 - [Arquitetura](docs/ARQUITETURA.md) — camadas, pastas, multiempresa, offline.
 - [Decisões técnicas](docs/DECISOES.md)

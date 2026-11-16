@@ -1,6 +1,6 @@
 # Contexto para o trabalho de melhoria visual
 
-Documento de passagem para quem for refinar a interface do GAVYO Auto. Leia também [ARQUITETURA.md](ARQUITETURA.md) e [FUNCIONALIDADES.md](FUNCIONALIDADES.md).
+Documento de passagem para quem for refinar a interface do GAVYO Auto. **Comece por [ESTADO-ATUAL.md](ESTADO-ATUAL.md) e [NAVEGACAO.md](NAVEGACAO.md): a agenda e a barra por gesto evoluíram após o redesenho.** Leia também [ARQUITETURA.md](ARQUITETURA.md) e [FUNCIONALIDADES.md](FUNCIONALIDADES.md).
 
 > Atualização de 16/11/2026: o cliente escolheu identidade automotiva técnica e precisa, animações mais presentes e prioridade em Início/Ordens. A rodada atual substituiu a base visual e concentrou o atendimento em localizar OS, mudar status e receber pagamento. Leia [DESIGN.md](../DESIGN.md), [PRODUCT.md](../PRODUCT.md) e [REVISAO-VISUAL.md](REVISAO-VISUAL.md) para a implementação vigente, percursos e validações. As observações abaixo descrevem a base anterior a essa rodada.
 

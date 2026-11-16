@@ -15,10 +15,10 @@ import { createAppointment, setAppointmentStatus, updateAppointment } from "@/se
 
 const STATUS_TONE: Record<AppointmentStatus, Tone> = { scheduled: "info", confirmed: "success", attended: "neutral", cancelled: "danger" };
 const CHIP: Record<AppointmentStatus, string> = {
-  scheduled: "border-l-primary bg-primary-soft",
-  confirmed: "border-l-emerald-600 bg-success-soft",
-  attended: "border-l-slate-400 bg-slate-100 text-muted",
-  cancelled: "border-l-red-400 bg-danger-soft text-muted line-through",
+  scheduled: "border-primary/20 bg-primary-soft",
+  confirmed: "border-success/20 bg-success-soft",
+  attended: "border-line bg-slate-100 text-muted",
+  cancelled: "border-danger/20 bg-danger-soft text-muted line-through",
 };
 
 function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment: Appointment | null; defaultDate: ISODate; onClose: () => void }) {
@@ -105,7 +105,7 @@ function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment:
                     <li key={c.id}>
                       <button
                         type="button"
-                        className="block w-full px-3 py-1.5 text-left text-[13px] hover:bg-primary-soft"
+                        className="block w-full px-3 py-1.5 text-left text-sm hover:bg-primary-soft"
                         onClick={() => {
                           setCustomerName(c.name);
                           setPhone(formatPhone(c.phone));
@@ -154,9 +154,9 @@ function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment:
 
 function Chip({ a, onOpen, compact }: { a: Appointment; onOpen: (a: Appointment) => void; compact?: boolean }) {
   return (
-    <button type="button" onClick={() => onOpen(a)} className={cx("block w-full rounded border-l-[3px] px-1.5 py-1 text-left text-xs hover:brightness-95", CHIP[a.status])} title={`${a.time} · ${a.customerName} · ${a.service}`}>
-      <span className="font-semibold tabular-nums">{a.time}</span> <span className="font-medium">{a.customerName.split(" ").slice(0, 2).join(" ")}</span>
-      {!compact && <span className="block truncate">{a.model} · {a.service}</span>}
+    <button type="button" onClick={() => onOpen(a)} className={cx("appointment-chip block w-full rounded-lg border px-2.5 py-2 text-left text-xs hover:brightness-95", CHIP[a.status])} title={`${a.time} · ${a.customerName} · ${a.service}`}>
+      <span className="mb-1 block font-bold tabular-nums">{a.time}</span> <span className="font-semibold">{a.customerName.split(" ").slice(0, 2).join(" ")}</span>
+      {!compact && <span className="mt-1 block leading-relaxed">{a.model} · {a.service}</span>}
     </button>
   );
 }
@@ -188,10 +188,10 @@ export function SchedulePage() {
   const dayList = byDate(cursor);
 
   return (
-    <>
+    <div className="module-page module-schedule">
       <PageHeader
         title="Agenda"
-        description="Atendimentos previstos. Clique em um agendamento para editar, reagendar ou converter em OS."
+        description="Organize os atendimentos e transforme cada chegada em uma ordem de serviço."
         actions={<Button variant="primary" icon={<CalendarPlus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNew(mode === "list" ? today : cursor)}>Novo agendamento</Button>}
       />
       <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -232,16 +232,16 @@ export function SchedulePage() {
       )}
 
       {mode === "week" && (
-        <div className="grid grid-cols-7 gap-2">
+        <div className="schedule-week grid grid-cols-7 gap-3">
           {weekDays.map((d) => {
             const list = byDate(d);
             return (
-              <section key={d} className={cx("flex min-h-72 flex-col rounded-md border bg-surface", d === today ? "border-primary" : "border-line")} aria-label={`${weekdayName(d)}, ${formatDate(d)}`}>
+              <section key={d} className={cx("flex min-h-80 flex-col rounded-xl border bg-surface", d === today ? "border-primary" : "border-line")} aria-label={`${weekdayName(d)}, ${formatDate(d)}`}>
                 <header className={cx("flex items-baseline justify-between border-b border-line px-2 py-1.5", d === today && "bg-primary-soft")}>
                   <button type="button" className="text-xs font-semibold capitalize hover:underline" onClick={() => { setCursor(d); setMode("day"); }}>
                     {weekdayName(d, true)} {formatDate(d).slice(0, 5)}
                   </button>
-                  {d === today && <span className="text-[10px] font-semibold text-primary uppercase">Hoje</span>}
+                  {d === today && <span className="text-xs font-semibold text-primary uppercase">Hoje</span>}
                 </header>
                 <div className="flex flex-1 flex-col gap-1 p-1.5">
                   {list.map((a) => <Chip key={a.id} a={a} onOpen={setOpen} />)}
@@ -274,7 +274,7 @@ export function SchedulePage() {
                   </button>
                   <div className="space-y-0.5">
                     {list.slice(0, 2).map((a) => <Chip key={a.id} a={a} onOpen={setOpen} compact />)}
-                    {list.length > 2 && <button type="button" className="px-1 text-[11px] font-medium text-primary hover:underline" onClick={() => { setCursor(d); setMode("day"); }}>+{list.length - 2} mais</button>}
+                    {list.length > 2 && <button type="button" className="px-1 text-xs font-medium text-primary hover:underline" onClick={() => { setCursor(d); setMode("day"); }}>+{list.length - 2} mais</button>}
                   </div>
                 </div>
               );
@@ -316,6 +316,6 @@ export function SchedulePage() {
           onClose={() => setOpen(null)}
         />
       )}
-    </>
+    </div>
   );
 }

@@ -1,11 +1,13 @@
 "use client";
 
-import { ImageUp, Trash2, UserPlus, Wrench } from "lucide-react";
+import { ImageUp, Trash2, UserPlus } from "lucide-react";
 import { useRef, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Badge, Button, Card, CardHeader, Field, Input, PageHeader, Select, Tabs } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
+import { BrandMark } from "@/components/ui/brand-mark";
+import { contrastOn } from "@/lib/theme";
 import { ALL_PERMISSIONS, MODULES, PERMISSIONS, ROLE_LABELS, ROLE_TEMPLATES } from "@/domain/permissions";
 import type { ModuleKey, PermissionKey, Role, WorkshopMembership } from "@/domain/types";
 import { formatPhone } from "@/lib/format";
@@ -74,7 +76,7 @@ function WorkshopSettingsForm() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={logo} alt="Logotipo atual" className="max-h-full max-w-full object-contain" />
                 ) : (
-                  <Wrench className="size-6 text-slate-400" aria-hidden />
+                  <BrandMark className="size-9" />
                 )}
               </div>
               <input ref={fileRef} type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ""; }} />
@@ -86,15 +88,14 @@ function WorkshopSettingsForm() {
           <ColorField label="Cor principal (botões, destaques e links)" value={primary} onChange={setPrimary} presets={PRIMARY_PRESETS} />
           <ColorField label="Cor secundária (cabeçalho)" value={secondary} onChange={setSecondary} />
           <div className="overflow-hidden rounded-md border border-line" aria-label="Pré-visualização">
-            <div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold" style={{ background: secondary, color: "#fff" }}>
-              <span className="rounded px-2 py-1" style={{ background: primary }}>Início</span>
-              <span className="opacity-80">Ordens de serviço</span>
-              <span className="opacity-80">Estoque</span>
+            <div className="flex items-center gap-2 px-4 py-4 text-sm font-semibold" style={{ background: secondary, color: contrastOn(secondary) }}>
+              <span className="truncate">{displayName}</span>
               <span className="ml-auto opacity-80">Pré-visualização</span>
             </div>
+            <div className="flex gap-4 border-b border-line bg-white px-4 py-3 text-xs font-semibold"><span style={{ color: primary }}>Início</span><span>Ordens de serviço</span><span>Estoque</span></div>
             <div className="flex items-center gap-3 bg-bg px-3 py-3">
-              <span className="rounded-md px-3 py-1.5 text-xs font-medium text-white" style={{ background: primary }}>Botão principal</span>
-              <span className="text-xs font-semibold" style={{ color: primary }}>OS-0012</span>
+              <span className="rounded-md px-3 py-1.5 text-xs font-semibold" style={{ background: primary, color: contrastOn(primary) }}>Nova OS</span>
+              <span className="text-xs font-semibold text-ink">Serviços da oficina</span>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={() => { setPrimary(DEFAULT_COLORS.primary); setSecondary(DEFAULT_COLORS.secondary); }}>Restaurar cores padrão do GAVYO Auto</Button>
@@ -106,7 +107,7 @@ function WorkshopSettingsForm() {
         <ul className="divide-y divide-line">
           {MODULES.map((m) => (
             <li key={m.key}>
-              <label className="flex items-center gap-3 px-4 py-2.5 text-[13px]">
+              <label className="flex items-center gap-3 px-4 py-2.5 text-sm">
                 <input
                   type="checkbox"
                   className="size-4 accent-(--primary)"
@@ -191,7 +192,7 @@ function MemberDialog({ member, onClose }: { member: WorkshopMembership; onClose
             <div key={g}>
               <p className="mb-1 text-xs font-semibold text-muted uppercase">{g}</p>
               {PERMISSIONS.filter((p) => p.group === g).map((p) => (
-                <label key={p.key} className="flex items-center gap-2 py-0.5 text-[13px]">
+                <label key={p.key} className="flex items-center gap-2 py-0.5 text-sm">
                   <input type="checkbox" className="size-4 accent-(--primary)" checked={permissions.includes(p.key)} disabled={!grantable(p.key)} onChange={(e) => toggle(p.key, e.target.checked)} />
                   {p.label}
                 </label>
@@ -295,11 +296,11 @@ export function SettingsPage() {
   ];
   const [tab, setTab] = useState<"workshop" | "staff">(tabs[0]?.value ?? "workshop");
   return (
-    <>
+    <div className="module-page module-settings">
       <PageHeader title="Configurações" description={`Personalização e acessos de ${settings.displayName}.`} />
       <div className="mb-4"><Tabs label="Seções de configuração" value={tab} onChange={setTab} tabs={tabs} /></div>
       {tab === "workshop" && can("settings.manage") && <WorkshopSettingsForm key={settings.workshopId} />}
       {tab === "staff" && can("staff.manage") && <StaffPanel />}
-    </>
+    </div>
   );
 }

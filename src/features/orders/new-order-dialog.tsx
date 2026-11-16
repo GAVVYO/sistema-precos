@@ -129,7 +129,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
       onClose={onClose}
       footer={
         <>
-          <div className="mr-auto text-[13px]">
+          <div className="mr-auto text-sm">
             <span className="text-muted">Mão de obra </span>
             <strong>{laborCents === null ? "a definir" : formatBRL(laborCents)}</strong>
             <span className="mx-2 text-slate-300">|</span>
@@ -163,7 +163,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
               <div className="flex min-w-0 items-center gap-2">
                 <UserCheck className="size-4 shrink-0 text-success" aria-hidden />
                 <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold">{customer.name}</p>
+                  <p className="truncate text-sm font-semibold">{customer.name}</p>
                   <p className="text-xs text-muted">{formatPhone(customer.phone)} · cliente cadastrado</p>
                 </div>
               </div>
@@ -182,7 +182,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
                     {suggestions.map((c) => (
                       <li key={c.id}>
                         <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-primary-soft" onClick={() => selectCustomer(c.id)}>
-                          <span className="block text-[13px] font-medium">{c.name}</span>
+                          <span className="block text-sm font-medium">{c.name}</span>
                           <span className="block text-xs text-muted">
                             {formatPhone(c.phone)}
                             {view.vehicles.filter((v) => v.customerId === c.id).map((v) => ` · ${v.model} ${formatPlate(v.plate)}`)}

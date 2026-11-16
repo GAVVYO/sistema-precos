@@ -1,5 +1,6 @@
 "use client";
 
+import { twMerge } from "tailwind-merge";
 import { Loader2 } from "lucide-react";
 import {
   ButtonHTMLAttributes,
@@ -12,7 +13,7 @@ import {
 } from "react";
 
 export function cx(...parts: (string | false | null | undefined)[]): string {
-  return parts.filter(Boolean).join(" ");
+  return twMerge(parts.filter(Boolean).join(" "));
 }
 
 /* ---------- Botão ---------- */
@@ -45,7 +46,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       className={cx(
         "ui-button inline-flex items-center justify-center gap-1.5 rounded-md border font-semibold whitespace-nowrap transition-colors",
         "disabled:opacity-50 disabled:cursor-not-allowed",
-        size === "sm" ? "h-7 px-2.5 text-xs" : "h-9 px-3.5 text-[13px]",
+        size === "sm" ? "h-9 px-3 text-sm" : "h-10 px-4 text-sm",
         VARIANTS[variant],
         className,
       )}
@@ -63,7 +64,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 const control = (className?: string) => cx(/(^|\s)w-/.test(className ?? "") ? "" : "w-full", CONTROL, className);
 
 const CONTROL =
-  "ui-control h-9 rounded-md border border-line bg-surface px-2.5 text-[13px] text-ink placeholder:text-slate-400 " +
+  "ui-control h-10 rounded-md border border-line bg-surface px-3 text-sm text-ink placeholder:text-slate-500 " +
   "disabled:bg-slate-50 disabled:text-muted aria-[invalid=true]:border-danger";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
@@ -108,7 +109,7 @@ export function Field({
   const descId = `${id}-desc`;
   return (
     <div className={cx("flex flex-col gap-1", className)}>
-      <label htmlFor={id} className="text-xs font-medium text-ink">
+      <label htmlFor={id} className="text-sm font-medium text-ink">
         {label}
         {optional && <span className="ml-1 font-normal text-muted">(opcional)</span>}
       </label>
@@ -118,7 +119,7 @@ export function Field({
         "aria-describedby": error || hint ? descId : undefined,
       })}
       {(error || hint) && (
-        <p id={descId} className={cx("text-xs", error ? "text-danger" : "text-muted")}>
+        <p id={descId} className={cx(error ? "text-sm text-danger" : "text-xs text-muted")}>
           {error ?? hint}
         </p>
       )}
@@ -142,7 +143,7 @@ export function CardHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
+    <header className="card-heading flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
       <div className="min-w-0">
         <h2 className="text-sm font-semibold text-ink">{title}</h2>
         {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
@@ -162,10 +163,10 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+    <div className="page-heading mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-[24px] leading-tight font-semibold tracking-tight text-ink">{title}</h1>
-        {description && <p className="mt-0.5 text-[13px] text-muted">{description}</p>}
+        <h1 className="text-[28px] leading-tight font-bold tracking-tight text-ink">{title}</h1>
+        {description && <p className="mt-1.5 text-sm text-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -184,7 +185,7 @@ const TONES: Record<Tone, string> = {
 
 export function Badge({ tone = "neutral", children }: { tone?: Tone; children: ReactNode }) {
   return (
-    <span className={cx("inline-flex items-center rounded px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap", TONES[tone])}>
+    <span className={cx("inline-flex items-center rounded-full px-2.5 py-1 text-sm font-semibold whitespace-nowrap", TONES[tone])}>
       {children}
     </span>
   );
@@ -234,7 +235,7 @@ export function EmptyState({
     <div className="flex flex-col items-center justify-center gap-1.5 px-6 py-10 text-center">
       {icon && <div className="mb-1 text-slate-400">{icon}</div>}
       <p className="text-sm font-semibold text-ink">{title}</p>
-      {description && <p className="max-w-sm text-[13px] text-muted">{description}</p>}
+      {description && <p className="max-w-sm text-sm text-muted">{description}</p>}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );
@@ -244,7 +245,7 @@ export function Skeleton({ className }: { className?: string }) {
   return <div className={cx("animate-pulse rounded-md bg-slate-200", className)} aria-hidden />;
 }
 
-/** Abas simples com semântica de tablist. */
+/** Filtros de conteúdo com estado pressionado e navegação nativa por Tab. */
 export function Tabs<T extends string>({
   value,
   onChange,
@@ -257,22 +258,21 @@ export function Tabs<T extends string>({
   label: string;
 }) {
   return (
-    <div role="tablist" aria-label={label} className="flex gap-1 border-b border-line">
+    <div role="group" aria-label={label} className="flex gap-1 border-b border-line">
       {tabs.map((t) => (
         <button
           key={t.value}
-          role="tab"
           type="button"
-          aria-selected={value === t.value}
+          aria-pressed={value === t.value}
           onClick={() => onChange(t.value)}
           className={cx(
-            "-mb-px border-b-2 px-3 py-2 text-[13px] font-medium",
+            "-mb-px border-b-2 px-4 py-3 text-sm font-semibold transition-colors",
             value === t.value ? "border-primary text-primary" : "border-transparent text-muted hover:text-ink",
           )}
         >
           {t.label}
           {t.count !== undefined && (
-            <span className="ml-1.5 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">{t.count}</span>
+            <span className="ml-1.5 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">{t.count}</span>
           )}
         </button>
       ))}
@@ -301,7 +301,7 @@ export function Segmented<T extends string>({
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
           className={cx(
-            "h-7 rounded px-2.5 text-xs font-medium",
+            "h-9 rounded px-3 text-sm font-semibold",
             value === o.value ? "bg-primary text-primary-fg" : "text-muted hover:text-ink",
           )}
         >

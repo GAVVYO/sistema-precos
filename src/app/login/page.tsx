@@ -32,8 +32,8 @@ export default function LoginPage() {
   const selectedUser = members.some((m) => m.userId === userId) ? userId : (members[0]?.userId ?? null);
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="page-enter w-full max-w-lg">
+    <main className="login-screen flex min-h-screen items-center justify-center p-6">
+      <div className="login-panel page-enter w-full max-w-lg">
         <div className="mb-5 flex items-center justify-center gap-2.5">
           <BrandMark className="size-11" />
           <div>

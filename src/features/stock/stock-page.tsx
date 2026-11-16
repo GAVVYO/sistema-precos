@@ -6,6 +6,7 @@ import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Segmented, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
+import { SortHeader, TableSort } from "@/components/ui/sort-header";
 import { MOVEMENT_TYPE_LABELS, PART_CATEGORIES } from "@/domain/labels";
 import type { Part } from "@/domain/types";
 import { centsToInput, formatBRL, formatDateTime, formatOrderNumber, parseBRL } from "@/lib/format";
@@ -139,6 +140,7 @@ export function StockPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [situation, setSituation] = useState("");
+  const [sort, setSort] = useState<TableSort<"name" | "quantity" | "priceCents">>({ key: "name", desc: false });
   const [movePart, setMovePart] = useState("");
   const [editing, setEditing] = useState<Part | null | "new">(null);
   const [moving, setMoving] = useState<Part | null>(null);
@@ -149,13 +151,13 @@ export function StockPage() {
   const q = search.trim().toLowerCase();
   const parts = view.parts
     .filter((p) => (!q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)) && (!category || p.category === category) && (!situation || partSituation(p) === situation))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => (sort.desc ? -1 : 1) * (sort.key === "name" ? a.name.localeCompare(b.name, "pt-BR") : a[sort.key] - b[sort.key]));
   const moves = view.stockMovements.filter((m) => !movePart || m.partId === movePart).sort((a, b) => b.at.localeCompare(a.at));
   const categories = [...new Set(view.parts.map((p) => p.category))].sort();
   const filtered = !!q || !!category || !!situation;
 
   return (
-    <>
+    <div className="module-page module-stock">
       <PageHeader
         title="Estoque"
         description="Peças cadastradas, quantidades disponíveis e histórico de movimentações."
@@ -198,16 +200,14 @@ export function StockPage() {
               <div className="overflow-x-auto">
                 <table className="data-table">
                   <thead>
-                    <tr><th>Código</th><th>Nome</th><th>Categoria</th><th className="num">Disponível</th><th className="num">Mínimo</th><th className="num">Custo unit.</th><th className="num">Preço de venda</th><th>Situação</th><th className="text-right">Ações</th></tr>
+                    <tr><SortHeader field="name" sort={sort} onSort={setSort}>Peça / código</SortHeader><th>Categoria</th><SortHeader field="quantity" sort={sort} onSort={setSort} numeric>Disponível</SortHeader><th className="num">Custo unit.</th><SortHeader field="priceCents" sort={sort} onSort={setSort} numeric>Venda</SortHeader><th>Situação</th><th className="text-right">Ações</th></tr>
                   </thead>
                   <tbody>
                     {parts.map((p) => (
                       <tr key={p.id}>
-                        <td className="font-mono text-xs">{p.code}</td>
-                        <td className="font-medium">{p.name}</td>
+                        <td><span className="block font-semibold">{p.name}</span><span className="text-xs text-muted">{p.code}</span></td>
                         <td>{p.category}</td>
-                        <td className="num font-semibold">{p.quantity}</td>
-                        <td className="num">{p.minQuantity}</td>
+                        <td className="num"><strong className="block">{p.quantity}</strong><span className="text-xs text-muted">mín. {p.minQuantity}</span></td>
                         <td className="num">{formatBRL(p.costCents)}</td>
                         <td className="num">{formatBRL(p.priceCents)}</td>
                         <td><SituationBadge part={p} /></td>
@@ -278,6 +278,6 @@ export function StockPage() {
 
       {editing && <PartDialog part={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
       {moving && <MoveDialog part={view.parts.find((p) => p.id === moving.id) ?? moving} onClose={() => setMoving(null)} />}
-    </>
+    </div>
   );
 }

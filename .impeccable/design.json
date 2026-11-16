@@ -1,0 +1,573 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-16T18:41:41.280Z",
+  "title": "Design System: GAVYO Auto",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Azul de execução",
+        "canonical": "#2563eb",
+        "tonalRamp": [
+          "oklch(15% 0.0717 262.88)",
+          "oklch(25% 0.1196 262.88)",
+          "oklch(35% 0.1674 262.88)",
+          "oklch(45% 0.2152 262.88)",
+          "oklch(60% 0.2152 262.88)",
+          "oklch(73% 0.2152 262.88)",
+          "oklch(85% 0.2152 262.88)",
+          "oklch(95% 0.0717 262.88)"
+        ]
+      },
+      "primary-fg": {
+        "role": "neutral",
+        "displayName": "Contraste da ação",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.00)",
+          "oklch(25% 0.0000 0.00)",
+          "oklch(35% 0.0000 0.00)",
+          "oklch(45% 0.0000 0.00)",
+          "oklch(60% 0.0000 0.00)",
+          "oklch(73% 0.0000 0.00)",
+          "oklch(85% 0.0000 0.00)",
+          "oklch(95% 0.0000 0.00)"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Execução escurecida",
+        "canonical": "color-mix(in srgb, var(--primary) 84%, black)",
+        "tonalRamp": [
+          "oklch(15% 0.0717 262.88)",
+          "oklch(25% 0.1196 262.88)",
+          "oklch(35% 0.1674 262.88)",
+          "oklch(45% 0.2152 262.88)",
+          "oklch(60% 0.2152 262.88)",
+          "oklch(73% 0.2152 262.88)",
+          "oklch(85% 0.2152 262.88)",
+          "oklch(95% 0.0717 262.88)"
+        ]
+      },
+      "primary-soft": {
+        "role": "primary",
+        "displayName": "Seleção suave",
+        "canonical": "color-mix(in srgb, var(--primary) 9%, white)",
+        "tonalRamp": [
+          "oklch(15% 0.0717 262.88)",
+          "oklch(25% 0.1196 262.88)",
+          "oklch(35% 0.1674 262.88)",
+          "oklch(45% 0.2152 262.88)",
+          "oklch(60% 0.2152 262.88)",
+          "oklch(73% 0.2152 262.88)",
+          "oklch(85% 0.2152 262.88)",
+          "oklch(95% 0.0717 262.88)"
+        ]
+      },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "Grafite de estrutura",
+        "canonical": "#172033",
+        "tonalRamp": [
+          "oklch(15% 0.0129 264.35)",
+          "oklch(25% 0.0215 264.35)",
+          "oklch(35% 0.0302 264.35)",
+          "oklch(45% 0.0388 264.35)",
+          "oklch(60% 0.0388 264.35)",
+          "oklch(73% 0.0388 264.35)",
+          "oklch(85% 0.0388 264.35)",
+          "oklch(95% 0.0129 264.35)"
+        ]
+      },
+      "secondary-fg": {
+        "role": "neutral",
+        "displayName": "Contraste de estrutura",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.00)",
+          "oklch(25% 0.0000 0.00)",
+          "oklch(35% 0.0000 0.00)",
+          "oklch(45% 0.0000 0.00)",
+          "oklch(60% 0.0000 0.00)",
+          "oklch(73% 0.0000 0.00)",
+          "oklch(85% 0.0000 0.00)",
+          "oklch(95% 0.0000 0.00)"
+        ]
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Fundo frio",
+        "canonical": "#f2f4f7",
+        "tonalRamp": [
+          "oklch(15% 0.0015 258.32)",
+          "oklch(25% 0.0025 258.32)",
+          "oklch(35% 0.0035 258.32)",
+          "oklch(45% 0.0045 258.32)",
+          "oklch(60% 0.0045 258.32)",
+          "oklch(73% 0.0045 258.32)",
+          "oklch(85% 0.0045 258.32)",
+          "oklch(95% 0.0015 258.32)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Superfície branca",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.00)",
+          "oklch(25% 0.0000 0.00)",
+          "oklch(35% 0.0000 0.00)",
+          "oklch(45% 0.0000 0.00)",
+          "oklch(60% 0.0000 0.00)",
+          "oklch(73% 0.0000 0.00)",
+          "oklch(85% 0.0000 0.00)",
+          "oklch(95% 0.0000 0.00)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Tinta grafite",
+        "canonical": "#172033",
+        "tonalRamp": [
+          "oklch(15% 0.0129 264.35)",
+          "oklch(25% 0.0215 264.35)",
+          "oklch(35% 0.0302 264.35)",
+          "oklch(45% 0.0388 264.35)",
+          "oklch(60% 0.0388 264.35)",
+          "oklch(73% 0.0388 264.35)",
+          "oklch(85% 0.0388 264.35)",
+          "oklch(95% 0.0129 264.35)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Texto de apoio",
+        "canonical": "#536379",
+        "tonalRamp": [
+          "oklch(15% 0.0135 256.42)",
+          "oklch(25% 0.0225 256.42)",
+          "oklch(35% 0.0315 256.42)",
+          "oklch(45% 0.0405 256.42)",
+          "oklch(60% 0.0405 256.42)",
+          "oklch(73% 0.0405 256.42)",
+          "oklch(85% 0.0405 256.42)",
+          "oklch(95% 0.0135 256.42)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Linha fria",
+        "canonical": "#dee5ed",
+        "tonalRamp": [
+          "oklch(15% 0.0044 251.56)",
+          "oklch(25% 0.0074 251.56)",
+          "oklch(35% 0.0103 251.56)",
+          "oklch(45% 0.0132 251.56)",
+          "oklch(60% 0.0132 251.56)",
+          "oklch(73% 0.0132 251.56)",
+          "oklch(85% 0.0132 251.56)",
+          "oklch(95% 0.0044 251.56)"
+        ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Verde de conclusão",
+        "canonical": "#15803d",
+        "tonalRamp": [
+          "oklch(15% 0.0457 150.07)",
+          "oklch(25% 0.0762 150.07)",
+          "oklch(35% 0.1066 150.07)",
+          "oklch(45% 0.1371 150.07)",
+          "oklch(60% 0.1371 150.07)",
+          "oklch(73% 0.1371 150.07)",
+          "oklch(85% 0.1371 150.07)",
+          "oklch(95% 0.0457 150.07)"
+        ]
+      },
+      "success-soft": {
+        "role": "tertiary",
+        "displayName": "Conclusão suave",
+        "canonical": "#e8f5ec",
+        "tonalRamp": [
+          "oklch(15% 0.0061 155.81)",
+          "oklch(25% 0.0101 155.81)",
+          "oklch(35% 0.0141 155.81)",
+          "oklch(45% 0.0182 155.81)",
+          "oklch(60% 0.0182 155.81)",
+          "oklch(73% 0.0182 155.81)",
+          "oklch(85% 0.0182 155.81)",
+          "oklch(95% 0.0061 155.81)"
+        ]
+      },
+      "warning": {
+        "role": "tertiary",
+        "displayName": "Âmbar de espera",
+        "canonical": "#b45309",
+        "tonalRamp": [
+          "oklch(15% 0.0485 49.00)",
+          "oklch(25% 0.0808 49.00)",
+          "oklch(35% 0.1132 49.00)",
+          "oklch(45% 0.1455 49.00)",
+          "oklch(60% 0.1455 49.00)",
+          "oklch(73% 0.1455 49.00)",
+          "oklch(85% 0.1455 49.00)",
+          "oklch(95% 0.0485 49.00)"
+        ]
+      },
+      "warning-soft": {
+        "role": "tertiary",
+        "displayName": "Espera suave",
+        "canonical": "#fdf3e1",
+        "tonalRamp": [
+          "oklch(15% 0.0087 82.39)",
+          "oklch(25% 0.0145 82.39)",
+          "oklch(35% 0.0203 82.39)",
+          "oklch(45% 0.0260 82.39)",
+          "oklch(60% 0.0260 82.39)",
+          "oklch(73% 0.0260 82.39)",
+          "oklch(85% 0.0260 82.39)",
+          "oklch(95% 0.0087 82.39)"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Vermelho de intervenção",
+        "canonical": "#b91c1c",
+        "tonalRamp": [
+          "oklch(15% 0.0635 27.52)",
+          "oklch(25% 0.1058 27.52)",
+          "oklch(35% 0.1482 27.52)",
+          "oklch(45% 0.1905 27.52)",
+          "oklch(60% 0.1905 27.52)",
+          "oklch(73% 0.1905 27.52)",
+          "oklch(85% 0.1905 27.52)",
+          "oklch(95% 0.0635 27.52)"
+        ]
+      },
+      "danger-soft": {
+        "role": "tertiary",
+        "displayName": "Intervenção suave",
+        "canonical": "#fdecec",
+        "tonalRamp": [
+          "oklch(15% 0.0062 17.48)",
+          "oklch(25% 0.0103 17.48)",
+          "oklch(35% 0.0144 17.48)",
+          "oklch(45% 0.0185 17.48)",
+          "oklch(60% 0.0185 17.48)",
+          "oklch(73% 0.0185 17.48)",
+          "oklch(85% 0.0185 17.48)",
+          "oklch(95% 0.0062 17.48)"
+        ]
+      },
+      "table-header": {
+        "role": "neutral",
+        "displayName": "Cabeçalho de tabela",
+        "canonical": "#f8fafc",
+        "tonalRamp": [
+          "oklch(15% 0.0011 247.86)",
+          "oklch(25% 0.0019 247.86)",
+          "oklch(35% 0.0027 247.86)",
+          "oklch(45% 0.0034 247.86)",
+          "oklch(60% 0.0034 247.86)",
+          "oklch(73% 0.0034 247.86)",
+          "oklch(85% 0.0034 247.86)",
+          "oklch(95% 0.0011 247.86)"
+        ]
+      },
+      "slate-50": {
+        "role": "neutral",
+        "displayName": "Neutro de hover",
+        "canonical": "oklch(98.4% 0.003 247.858)",
+        "tonalRamp": [
+          "oklch(15% 0.0010 247.86)",
+          "oklch(25% 0.0017 247.86)",
+          "oklch(35% 0.0023 247.86)",
+          "oklch(45% 0.0030 247.86)",
+          "oklch(60% 0.0030 247.86)",
+          "oklch(73% 0.0030 247.86)",
+          "oklch(85% 0.0030 247.86)",
+          "oklch(95% 0.0010 247.86)"
+        ]
+      },
+      "slate-100": {
+        "role": "neutral",
+        "displayName": "Neutro de apoio",
+        "canonical": "oklch(96.8% 0.007 247.896)",
+        "tonalRamp": [
+          "oklch(15% 0.0023 247.90)",
+          "oklch(25% 0.0039 247.90)",
+          "oklch(35% 0.0054 247.90)",
+          "oklch(45% 0.0070 247.90)",
+          "oklch(60% 0.0070 247.90)",
+          "oklch(73% 0.0070 247.90)",
+          "oklch(85% 0.0070 247.90)",
+          "oklch(95% 0.0023 247.90)"
+        ]
+      },
+      "slate-700": {
+        "role": "neutral",
+        "displayName": "Texto do chip neutro",
+        "canonical": "oklch(37.2% 0.044 257.287)",
+        "tonalRamp": [
+          "oklch(15% 0.0147 257.29)",
+          "oklch(25% 0.0244 257.29)",
+          "oklch(35% 0.0342 257.29)",
+          "oklch(45% 0.0440 257.29)",
+          "oklch(60% 0.0440 257.29)",
+          "oklch(73% 0.0440 257.29)",
+          "oklch(85% 0.0440 257.29)",
+          "oklch(95% 0.0147 257.29)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Valor de métrica",
+        "purpose": "Leitura destacada de contagens operacionais; números tabulares."
+      },
+      "headline": {
+        "displayName": "Título de página",
+        "purpose": "Título principal; reduz para 24px no mobile."
+      },
+      "title": {
+        "displayName": "Título de painel",
+        "purpose": "Cabeçalhos das superfícies de conteúdo."
+      },
+      "body": {
+        "displayName": "Conteúdo",
+        "purpose": "Texto principal e controles de formulário."
+      },
+      "table": {
+        "displayName": "Dados tabulares",
+        "purpose": "Linhas de tabela e busca global."
+      },
+      "label": {
+        "displayName": "Rótulo compacto",
+        "purpose": "Badges, rótulos e filtros de atendimento com 14px."
+      },
+      "plate": {
+        "displayName": "Placa",
+        "purpose": "Identificador veicular monoespaçado."
+      },
+      "metadata": {
+        "displayName": "Metadados",
+        "purpose": "Datas, responsável, dicas e conteúdo auxiliar em text-xs; não define mínimo de legibilidade."
+      }
+    },
+    "shadows": [
+      {
+        "name": "search-overlay",
+        "value": "0 12px 36px rgb(18 32 53 / 20%)",
+        "purpose": "Painel flutuante da busca global."
+      },
+      {
+        "name": "dialog",
+        "value": "0 24px 60px rgb(18 32 53 / 22%)",
+        "purpose": "Diálogo modal."
+      },
+      {
+        "name": "order-interaction",
+        "value": "0 5px 12px rgb(23 32 51 / 6%)",
+        "purpose": "Card de OS em hover ou com foco interno."
+      },
+      {
+        "name": "field-focus",
+        "value": "0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent)",
+        "purpose": "Halo do campo focado, acompanhado de contorno visível."
+      }
+    ],
+    "motion": [
+      {
+        "name": "button-state",
+        "value": "140ms",
+        "purpose": "Mudanças de fundo, borda e pressão do botão; active usa scale(.98)."
+      },
+      {
+        "name": "field-state",
+        "value": "150ms",
+        "purpose": "Borda e halo do campo."
+      },
+      {
+        "name": "card-state",
+        "value": "160ms",
+        "purpose": "Borda e sombra de OS; deslocamento da métrica."
+      },
+      {
+        "name": "page-entry",
+        "value": "180ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "Opacity .72→1 e translateY(4px)→0."
+      },
+      {
+        "name": "dialog-entry",
+        "value": "220ms ease-out",
+        "purpose": "Opacity e translateY(12px) scale(.985)→repouso."
+      },
+      {
+        "name": "backdrop-entry",
+        "value": "180ms ease-out",
+        "purpose": "Entrada por opacidade."
+      },
+      {
+        "name": "toast-order-entry",
+        "value": "220ms ease-out",
+        "purpose": "Entrada por opacidade e translateY(8px)."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: reduce",
+        "purpose": "Remove animações, transições e rolagem suave."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-header",
+        "value": "1150px"
+      },
+      {
+        "name": "mobile-max",
+        "value": "767px"
+      },
+      {
+        "name": "xl",
+        "value": "80rem"
+      }
+    ],
+    "sourceFingerprints": {
+      "src/features/orders/order-dialogs.tsx": {
+        "algorithm": "sha256",
+        "value": "c7569646503c46b2aa180a2b8d7938e2534658ab97778ced1baa6e82f7f9d317"
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "Botão principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Executa a ação principal usando a cor e o contraste da oficina.",
+      "html": "<button type=\"button\" class=\"ds-btn-primary\">Nova OS</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);height:40px;padding:0 16px;font-size:14px;line-height:20px;font-weight:600;white-space:nowrap;border:1px solid transparent;border-radius:7px;cursor:pointer;transition:background-color 140ms,border-color 140ms,transform 140ms;}.ds-btn-primary:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:2px;}.ds-btn-primary:active:not(:disabled){transform:scale(.98);}.ds-btn-primary:disabled{opacity:.5;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-btn-primary{animation:none;transition:none;}}.ds-btn-primary{background:var(--primary,#2563eb);color:var(--primary-fg,#fff);}.ds-btn-primary:hover:not(:disabled){background:color-mix(in srgb,var(--primary,#2563eb) 84%,black);}"
+    },
+    {
+      "name": "Botão secundário",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Ação de apoio em superfície branca com contorno.",
+      "html": "<button type=\"button\" class=\"ds-btn-secondary\">Cancelar</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);height:40px;padding:0 16px;font-size:14px;line-height:20px;font-weight:600;white-space:nowrap;border:1px solid transparent;border-radius:7px;cursor:pointer;transition:background-color 140ms,border-color 140ms,transform 140ms;}.ds-btn-secondary:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:2px;}.ds-btn-secondary:active:not(:disabled){transform:scale(.98);}.ds-btn-secondary:disabled{opacity:.5;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-btn-secondary{animation:none;transition:none;}}.ds-btn-secondary{background:var(--surface,#fff);color:var(--text,#172033);border-color:var(--border,#dee5ed);}.ds-btn-secondary:hover:not(:disabled){background:var(--color-slate-50,oklch(98.4% .003 247.858));}"
+    },
+    {
+      "name": "Botão discreto",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Ação de baixa ênfase, com hover neutro.",
+      "html": "<button type=\"button\" class=\"ds-btn-ghost\">Ver detalhes</button>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);height:40px;padding:0 16px;font-size:14px;line-height:20px;font-weight:600;white-space:nowrap;border:1px solid transparent;border-radius:7px;cursor:pointer;transition:background-color 140ms,border-color 140ms,transform 140ms;}.ds-btn-ghost:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:2px;}.ds-btn-ghost:active:not(:disabled){transform:scale(.98);}.ds-btn-ghost:disabled{opacity:.5;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-btn-ghost{animation:none;transition:none;}}.ds-btn-ghost{background:transparent;color:var(--text,#172033);}.ds-btn-ghost:hover:not(:disabled){background:var(--color-slate-100,oklch(96.8% .007 247.896));}"
+    },
+    {
+      "name": "Botão de intervenção",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Ação destrutiva com texto e contorno vermelhos.",
+      "html": "<button type=\"button\" class=\"ds-btn-danger\">Cancelar OS</button>",
+      "css": ".ds-btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);height:40px;padding:0 16px;font-size:14px;line-height:20px;font-weight:600;white-space:nowrap;border:1px solid transparent;border-radius:7px;cursor:pointer;transition:background-color 140ms,border-color 140ms,transform 140ms;}.ds-btn-danger:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:2px;}.ds-btn-danger:active:not(:disabled){transform:scale(.98);}.ds-btn-danger:disabled{opacity:.5;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-btn-danger{animation:none;transition:none;}}.ds-btn-danger{background:var(--surface,#fff);color:var(--danger,#b91c1c);border-color:color-mix(in oklab,var(--danger,#b91c1c) 40%,transparent);}.ds-btn-danger:hover:not(:disabled){background:var(--color-danger-soft,#fdecec);}"
+    },
+    {
+      "name": "Campo de texto",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo regular com contorno, halo de foco e estado de erro.",
+      "html": "<label class=\"ds-field-label\" for=\"ds-order-search\">Buscar serviços</label><input class=\"ds-input\" id=\"ds-order-search\" placeholder=\"Placa, cliente ou OS\" />",
+      "css": ".ds-field-label{display:block;margin-bottom:4px;line-height:20px;font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);font-size:14px;font-weight:500;color:var(--text,#172033);}.ds-input{width:100%;height:40px;min-height:38px;padding:0 12px;border:1px solid var(--border,#dee5ed);border-radius:var(--radius-md,8px);background:var(--surface,#fff);color:var(--text,#172033);font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);font-size:14px;line-height:20px;transition:border-color 150ms,box-shadow 150ms;}.ds-input::placeholder{color:var(--color-slate-500,oklch(55.4% .046 257.417));}.ds-input:hover:not(:disabled){border-color:color-mix(in srgb,var(--muted,#536379) 55%,var(--border,#dee5ed));}.ds-input:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:2px;}.ds-input:focus-visible{border-color:var(--primary,#2563eb);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary,#2563eb) 12%,transparent);}.ds-input[aria-invalid=\"true\"]{border-color:var(--danger,#b91c1c);}.ds-input:disabled{background:var(--color-slate-50,oklch(98.4% .003 247.858));color:var(--muted,#536379);}@media(prefers-reduced-motion:reduce){.ds-input{animation:none;transition:none;}}"
+    },
+    {
+      "name": "Navegação superior",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "Faixa superior com seleção principal e rolagem horizontal quando os módulos excedem a largura.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Navegação principal\"><a class=\"ds-nav-link\" href=\"#inicio\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/></svg>Início</a><a class=\"ds-nav-link\" href=\"#ordens\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"M12 11h4M12 16h4M8 11h.01M8 16h.01\"/></svg>Ordens de serviço</a></nav>",
+      "css": ".ds-nav{display:flex;gap:4px;overflow-x:auto;padding:0 24px;border-bottom:1px solid var(--border,#dee5ed);background:var(--surface,#fff);scrollbar-width:none;}.ds-nav-link{position:relative;display:flex;flex-shrink:0;align-items:center;gap:8px;padding:14px 12px;border-bottom:2px solid transparent;color:var(--muted,#536379);font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);font-size:14px;line-height:20px;font-weight:600;white-space:nowrap;text-decoration:none;transition:color 160ms,background-color 160ms;}.ds-nav-link:hover{background:var(--color-slate-50,oklch(98.4% .003 247.858));color:var(--text,#172033);}.ds-nav-link[aria-current=\"page\"]{background:transparent;color:var(--primary,#2563eb);border-bottom-color:var(--primary,#2563eb);}.ds-nav-link[aria-current=\"page\"]::after{content:\"\";position:absolute;left:12px;right:12px;bottom:-2px;height:3px;background:var(--primary,#2563eb);border-radius:4px 4px 0 0;}.ds-nav-link:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:2px;}@media(max-width:767px){.ds-nav{padding:0 12px;}.ds-nav-link{font-size:14px;padding:12px 10px;}}@media(prefers-reduced-motion:reduce){.ds-nav-link{animation:none;transition:none;}}"
+    },
+    {
+      "name": "Badge de situação",
+      "kind": "chip",
+      "refersTo": "status-warning",
+      "description": "Situação escrita com fundo suave; cor nunca substitui o rótulo.",
+      "html": "<span class=\"ds-badge\">Aguardando</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);font-size:14px;line-height:20px;font-weight:600;white-space:nowrap;padding:4px 10px;border-radius:9999px;background:var(--color-warning-soft,#fdf3e1);color:var(--warning,#b45309);}"
+    },
+    {
+      "name": "Painel de conteúdo",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Superfície plana com borda e cabeçalho; o conteúdo define o respiro interno.",
+      "html": "<section class=\"ds-card\"><header class=\"ds-card-heading\"><h2 class=\"ds-card-title\">Serviços da oficina</h2><p class=\"ds-card-subtitle\">Acompanhe a próxima etapa</p></header><div class=\"ds-card-body\">Nenhuma OS nesta situação.</div></section>",
+      "css": ".ds-card{border:1px solid var(--border,#dee5ed);border-radius:12px;background:var(--surface,#fff);color:var(--text,#172033);box-shadow:none;font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);}.ds-card-heading{padding:12px 20px;border-bottom:1px solid var(--border,#dee5ed);}.ds-card-title{margin:0;font-size:15px;line-height:20px;font-weight:750;}.ds-card-subtitle{margin:0;color:var(--muted,#536379);font-size:12px;line-height:16px;}.ds-card-body{padding:24px;font-size:14px;line-height:20px;color:var(--muted,#536379);text-align:center;}"
+    },
+    {
+      "name": "Métrica sólida selecionável",
+      "kind": "custom",
+      "refersTo": "metric-active",
+      "description": "Indicador e filtro da etapa em execução. Travessões são placeholders, não métricas reais.",
+      "html": "<button type=\"button\" class=\"ds-metric\" aria-label=\"Filtrar: Ordens em andamento\" aria-pressed=\"false\"><span class=\"ds-metric-label\">Ordens em andamento</span><span class=\"ds-metric-reading\"><span class=\"ds-metric-value\">—</span><span class=\"ds-metric-note\">Em execução</span></span><span class=\"ds-metric-footer\">Responsáveis: <strong>—</strong></span></button>",
+      "css": ".ds-metric{display:block;min-width:0;min-height:146px;width:100%;padding:20px 22px 18px;border:0;border-radius:12px;background:var(--primary,#2563eb);color:var(--primary-fg,#fff);text-align:left;font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);cursor:pointer;transition:transform 160ms cubic-bezier(.16,1,.3,1);}.ds-metric-label{display:block;font-size:14px;font-weight:500;line-height:1.4;}.ds-metric-reading{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:18px;}.ds-metric-value{font-size:34px;font-weight:750;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;}.ds-metric-note{padding:4px 7px;border-radius:4px;background:rgb(0 0 0 / 16%);font-size:12px;font-weight:600;line-height:1.2;}.ds-metric-footer{display:block;margin-top:14px;font-size:12px;line-height:1.4;}.ds-metric-footer strong{font-weight:600;}.ds-metric:hover{transform:translateY(-2px);}.ds-metric:focus-visible{outline:2px solid var(--text,#172033);outline-offset:4px;}@media(max-width:767px){.ds-metric{padding:16px;}.ds-metric-label{min-height:36px;}.ds-metric-note,.ds-metric-footer{font-size:11px;}}@media(prefers-reduced-motion:reduce){.ds-metric{animation:none;transition:none;}}"
+    },
+    {
+      "name": "Resultado da busca com próxima ação",
+      "kind": "custom",
+      "refersTo": "search-result",
+      "description": "Agrupa OS, placa, cliente, estado e ação. Traços representam dados preenchidos em tempo de execução.",
+      "html": "<div class=\"ds-search-result\"><button type=\"button\" class=\"ds-search-main\"><span><strong>OS —</strong> <span class=\"ds-search-plate\">PLACA</span></span><span>Cliente</span><small>Veículo</small></button><div class=\"ds-search-actions\"><span class=\"ds-search-status\">Aguardando</span><button type=\"button\" class=\"ds-search-action\">Iniciar</button></div></div>",
+      "css": ".ds-search-result{display:flex;align-items:center;gap:12px;padding:12px;border-radius:8px;background:var(--surface,#fff);color:var(--text,#172033);font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);font-size:14px;line-height:1.5;}.ds-search-result:hover,.ds-search-result:focus-within{background:color-mix(in srgb,var(--primary,#2563eb) 9%,white);}.ds-search-main{display:grid;flex:1;min-width:0;gap:3px;padding:0;border:0;background:transparent;color:inherit;font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);font-size:inherit;line-height:inherit;text-align:left;cursor:pointer;}.ds-search-main>span{overflow-wrap:anywhere;}.ds-search-main strong{margin-right:6px;color:var(--primary,#2563eb);font-weight:700;}.ds-search-main small{font-size:80%;color:var(--muted,#536379);}.ds-search-main:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:2px;}.ds-search-plate{display:inline-block;padding:2px 5px;border:1px solid var(--border,#dee5ed);border-radius:4px;background:var(--surface,#fff);color:var(--text,#172033);font:600 14px ui-monospace,Consolas,monospace;letter-spacing:.035em;white-space:nowrap;}.ds-search-actions{display:grid;gap:7px;justify-items:end;}.ds-search-status{display:inline-flex;padding:4px 10px;border-radius:9999px;background:var(--color-warning-soft,#fdf3e1);color:var(--warning,#b45309);font-size:14px;line-height:20px;font-weight:600;white-space:nowrap;}.ds-search-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:var(--font-sans,\"Manrope Variable\",\"Segoe UI\",system-ui,sans-serif);height:36px;padding:0 12px;font-size:14px;line-height:20px;font-weight:600;white-space:nowrap;border:1px solid transparent;border-radius:7px;cursor:pointer;transition:background-color 140ms,border-color 140ms,transform 140ms;}.ds-search-action:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:2px;}.ds-search-action:active:not(:disabled){transform:scale(.98);}.ds-search-action:disabled{opacity:.5;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-search-action{animation:none;transition:none;}}.ds-search-action{background:var(--primary,#2563eb);color:var(--primary-fg,#fff);}.ds-search-action:hover:not(:disabled){background:color-mix(in srgb,var(--primary,#2563eb) 84%,black);}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Balcão de serviços",
+    "overview": "Uma área de trabalho clara para a recepção da oficina. Manrope, superfícies frias, cabeçalho escuro e cartões sólidos dão identidade sem competir com o serviço. Número da OS, placa, situação e próxima ação são âncoras recorrentes de leitura.\n\nA aparência é profissional e objetiva: áreas agrupadas por bordas, texto direto em pt-BR e cor com significado operacional. O usuário rejeitou texto pequeno, excesso de informação e animações demoradas. A implementação atual é a fonte deste registro; a revisão independente e a avaliação final do usuário permanecem pendentes.",
+    "keyCharacteristics": [
+      "Cards sólidos e cores vinculadas à função.",
+      "Manrope local e números tabulares nas leituras operacionais.",
+      "Menu superior com busca global acessível por teclado.",
+      "Estado e próxima ação próximos à OS.",
+      "Feedback curto, com suporte a movimento reduzido."
+    ],
+    "rules": [
+      {
+        "name": "The Functional Color Rule",
+        "body": "A cor reforça uma situação escrita; nenhum estado depende apenas da cor.",
+        "section": "colors"
+      },
+      {
+        "name": "The Workshop Color Rule",
+        "body": "Ação e estrutura usam os tokens da oficina, inclusive seus contrastes calculados.",
+        "section": "colors"
+      },
+      {
+        "name": "The Readable Action Rule",
+        "body": "Ações usam verbos escritos; ícones SVG acompanham o rótulo ou recebem nome acessível quando o controle é somente um ícone.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Surface Rule",
+        "body": "Painéis de conteúdo permanecem planos; sombra distingue sobreposição ou resposta à interação.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** usar os tokens ativos da oficina para ação, estrutura e contraste.",
+      "**Do** combinar a cor de situação com um rótulo escrito.",
+      "**Do** manter a ação pertinente próxima à OS, respeitando permissões e estado offline.",
+      "**Do** conservar Manrope local, números tabulares e hierarquia explícita.",
+      "**Do** preservar foco visível e respeitar movimento reduzido.",
+      "**Do** verificar leitura em notebook e mobile antes de repetir um tamanho compacto."
+    ],
+    "donts": [
+      "**Don't** introduzir percentuais, comparações ou métricas sem origem nos dados.",
+      "**Don't** usar a cor como única informação de estado.",
+      "**Don't** acrescentar textura, ornamentação ou movimento que atrase o atendimento.",
+      "**Don't** multiplicar controles concorrentes ou reduzir texto para acomodar mais conteúdo.",
+      "**Don't** transformar os tamanhos auxiliares pequenos existentes em padrão mínimo de legibilidade.",
+      "**Don't** fixar cores da oficina em componentes que devem acompanhar a personalização."
+    ]
+  }
+}

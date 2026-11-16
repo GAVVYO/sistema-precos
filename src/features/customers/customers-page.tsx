@@ -6,6 +6,7 @@ import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Button, Card, EmptyState, Field, Input, PageHeader, Select, Tabs } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
+import { SortHeader, TableSort } from "@/components/ui/sort-header";
 import type { Customer, ID, ServiceOrder, Vehicle } from "@/domain/types";
 import { orderTotalText, StatusBadge, vehicleLabel } from "@/features/orders/shared";
 import { formatDate, formatOrderNumber, formatPhone, formatPlate } from "@/lib/format";
@@ -16,7 +17,7 @@ import { orderTotals } from "@/services/orders";
 function OrderHistory({ orders, showVehicle, onOpen }: { orders: ServiceOrder[]; showVehicle?: boolean; onOpen: (id: ID) => void }) {
   const { view, vehicleOf, userOf, partOf, can } = useApp();
   if (orders.length === 0) {
-    return <p className="rounded-md border border-dashed border-line px-3 py-5 text-center text-[13px] text-muted">Nenhum atendimento registrado ainda.</p>;
+    return <p className="rounded-md border border-dashed border-line px-3 py-5 text-center text-sm text-muted">Nenhum atendimento registrado ainda.</p>;
   }
   return (
     <div className="overflow-x-auto rounded-md border border-line">
@@ -157,12 +158,12 @@ function CustomerDialog({ customer, onClose }: { customer: Customer | null; onCl
               {vehicleForm ? (
                 <VehicleForm key={vehicleForm === "new" ? "new" : vehicleForm.id} customerId={customer.id} vehicle={vehicleForm === "new" ? null : vehicleForm} onDone={() => setVehicleForm(null)} />
               ) : vehicles.length === 0 ? (
-                <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-[13px] text-muted">Nenhum veículo vinculado.</p>
+                <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-sm text-muted">Nenhum veículo vinculado.</p>
               ) : (
                 <ul className="grid gap-2 sm:grid-cols-2">
                   {vehicles.map((v) => (
                     <li key={v.id} className="flex items-center justify-between gap-2 rounded-md border border-line px-3 py-2">
-                      <span className="min-w-0 text-[13px]">
+                      <span className="min-w-0 text-sm">
                         <span className="block font-medium">{vehicleLabel(v)}</span>
                         <span className="text-xs text-muted"><span className="font-mono">{formatPlate(v.plate)}</span>{v.mileage ? ` · ${v.mileage.toLocaleString("pt-BR")} km` : ""}</span>
                       </span>
@@ -219,6 +220,7 @@ function VehicleDialog({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => 
 }
 
 export function CustomersPage() {
+  const [sort, setSort] = useState<TableSort<"name" | "phone">>({ key: "name", desc: false });
   const { view, can, online, customerOf } = useApp();
   const [tab, setTab] = useState<"customers" | "vehicles">("customers");
   const [search, setSearch] = useState("");
@@ -234,7 +236,7 @@ export function CustomersPage() {
 
   const customers = view.customers
     .filter((c) => !q || c.name.toLowerCase().includes(q) || (digits.length >= 3 && c.phone.includes(digits)) || view.vehicles.some((v) => v.customerId === c.id && alnum && v.plate.toLowerCase().includes(alnum)))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => (sort.desc ? -1 : 1) * a[sort.key].localeCompare(b[sort.key], "pt-BR"));
   const vehicles = view.vehicles
     .filter((v) => {
       const owner = customerOf(v.customerId);
@@ -246,10 +248,10 @@ export function CustomersPage() {
   const selectedVehicle = vehicleId ? view.vehicles.find((v) => v.id === vehicleId) : null;
 
   return (
-    <>
+    <div className="module-page module-customers">
       <PageHeader
         title="Clientes e veículos"
-        description="Cadastro básico e histórico de manutenção derivado das ordens de serviço."
+        description="Encontre o cliente, consulte seus veículos e veja os serviços realizados."
         actions={canManage && <Button variant="primary" icon={<UserPlus className="size-4" aria-hidden />} disabled={!online} onClick={() => setCustomerId("new")}>Novo cliente</Button>}
       />
       <Card>
@@ -269,7 +271,7 @@ export function CustomersPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="data-table">
-                <thead><tr><th>Nome</th><th>Telefone</th><th>Veículos</th><th>Último atendimento</th><th className="num">OS</th></tr></thead>
+                <thead><tr><SortHeader field="name" sort={sort} onSort={setSort}>Nome</SortHeader><SortHeader field="phone" sort={sort} onSort={setSort}>Telefone</SortHeader><th>Veículos</th><th>Último atendimento</th><th className="num">OS</th></tr></thead>
                 <tbody>
                   {customers.map((c) => {
                     const last = lastOrder((o) => o.customerId === c.id);
@@ -319,6 +321,6 @@ export function CustomersPage() {
       {customerId === "new" && <CustomerDialog customer={null} onClose={() => setCustomerId(null)} />}
       {selectedCustomer && <CustomerDialog key={selectedCustomer.id} customer={selectedCustomer} onClose={() => setCustomerId(null)} />}
       {selectedVehicle && <VehicleDialog key={selectedVehicle.id} vehicle={selectedVehicle} onClose={() => setVehicleId(null)} />}
-    </>
+    </div>
   );
 }

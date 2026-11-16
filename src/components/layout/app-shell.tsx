@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, Lock, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
+  Bell, LayoutDashboard, ClipboardList, Boxes, Users, BarChart3, Settings2, CalendarDays, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, Lock, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -9,24 +9,16 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Button, cx, EmptyState } from "@/components/ui/primitives";
+import { OrderSearch } from "./order-search";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { toast } from "@/components/ui/toast";
 import { demoStore } from "@/demo/store";
 import { ModuleInfo, MODULES, ROLE_LABELS } from "@/domain/permissions";
 import type { ModuleKey } from "@/domain/types";
 import { formatDateTime, todayISO } from "@/lib/format";
+import { contrastOn } from "@/lib/theme";
 import { listReceivables } from "@/services/finance";
 import { partSituation } from "@/services/stock";
-
-/** Escolhe texto claro ou escuro conforme a luminância da cor de fundo. */
-function readableOn(hex: string): string {
-  const n = parseInt(hex.slice(1), 16);
-  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((c) => {
-    const s = c / 255;
-    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.4 ? "#172033" : "#ffffff";
-}
 
 export function useVisibleModules(): ModuleInfo[] {
   const { settings, can } = useApp();
@@ -104,7 +96,7 @@ function DemoBar() {
   };
 
   return (
-    <div className="no-print flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-amber-200 bg-amber-50 px-4 py-1 text-xs text-amber-900">
+    <div className="demo-bar no-print flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-amber-200 bg-amber-50 px-6 py-1.5 text-xs text-amber-900">
       <span className="flex items-center gap-1.5 font-semibold">
         <FlaskConical className="size-3.5" aria-hidden />
         Ambiente de demonstração — dados fictícios
@@ -206,7 +198,7 @@ function Notifications() {
         <>
           <Bell className="size-4" aria-hidden />
           {items.length > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-danger text-[10px] font-bold text-white">
+            <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-danger text-xs font-bold text-white">
               {items.length}
             </span>
           )}
@@ -215,10 +207,10 @@ function Notifications() {
     >
       {(close) =>
         items.length === 0 ? (
-          <p className="px-3 py-3 text-[13px] text-muted">Nenhuma notificação no momento.</p>
+          <p className="px-3 py-3 text-sm text-muted">Nenhuma notificação no momento.</p>
         ) : (
           items.map((it) => (
-            <Link key={it.href} href={it.href} role="menuitem" onClick={close} className="flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-slate-50">
+            <Link key={it.href} href={it.href} role="menuitem" onClick={close} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50">
               {it.icon}
               {it.text}
             </Link>
@@ -229,6 +221,8 @@ function Notifications() {
   );
 }
 
+const MODULE_ICONS = { dashboard: LayoutDashboard, orders: ClipboardList, stock: Boxes, finance: CircleDollarSign, schedule: CalendarDays, customers: Users, reports: BarChart3, settings: Settings2 };
+
 function Header() {
   const { settings, user, membership, connection, online, can, openNewOrder } = useApp();
   const pathname = usePathname();
@@ -236,7 +230,7 @@ function Header() {
   const modules = useVisibleModules();
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   // Em telas menores, os últimos módulos vão para o menu "Mais".
-  const overflowFrom = 6;
+  const overflowFrom = modules.length;
 
   const conn = {
     online: { label: "Online", dot: "bg-emerald-400" },
@@ -245,8 +239,8 @@ function Header() {
   }[connection];
 
   return (
-    <header className="no-print bg-secondary text-secondary-fg">
-      <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-4 px-4">
+    <header className="app-header no-print bg-secondary text-secondary-fg">
+      <div className="app-topbar mx-auto flex min-h-20 max-w-[1600px] items-center gap-6 px-6">
         <Link href="/inicio" className="flex min-w-0 shrink-0 items-center gap-2 rounded">
           {settings.logoDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -254,12 +248,13 @@ function Header() {
           ) : (
             <BrandMark className="size-8 shrink-0" />
           )}
-          <span className="min-w-0"><span className="block text-[10px] font-semibold tracking-[0.18em] opacity-65">GAVYO AUTO</span><span className="block max-w-80 truncate text-sm font-semibold" title={settings.displayName}>{settings.displayName}</span></span>
+          <span className="min-w-0"><span className="block text-lg font-extrabold tracking-tight">GAVYO Auto</span><span className="block max-w-64 truncate text-xs opacity-80" title={settings.displayName}>{settings.displayName}</span></span>
         </Link>
 
 
 
-        <div className="ml-auto flex shrink-0 items-center gap-4">
+        <OrderSearch />
+        <div className="account-controls ml-auto flex shrink-0 items-center gap-4">
         {can("os.create") && settings.activeModules.includes("orders") && (
           <Button variant="primary" size="sm" className="h-8" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()}>
             Nova OS
@@ -280,7 +275,7 @@ function Header() {
               </span>
               <span className="hidden leading-tight lg:block">
                 <span className="block max-w-36 truncate text-xs font-semibold">{user.name}</span>
-                <span className="block text-[11px] opacity-70">{ROLE_LABELS[membership.role]}</span>
+                <span className="block text-xs opacity-70">{ROLE_LABELS[membership.role]}</span>
               </span>
               <ChevronDown className="size-3.5 opacity-70" aria-hidden />
             </>
@@ -289,14 +284,14 @@ function Header() {
           {(close) => (
             <>
               <div className="border-b border-line px-3 py-2">
-                <p className="text-[13px] font-semibold">{user.name}</p>
+                <p className="text-sm font-semibold">{user.name}</p>
                 <p className="text-xs text-muted">{user.email}</p>
                 <p className="text-xs text-muted">{ROLE_LABELS[membership.role]}</p>
               </div>
               <button
                 type="button"
                 role="menuitem"
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-slate-50"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
                 onClick={() => {
                   close();
                   demoStore.logout();
@@ -312,18 +307,19 @@ function Header() {
         </div>
       </div>
       <div className="border-b border-line bg-surface text-ink">
-        <nav aria-label="Navegação principal" className="mx-auto flex max-w-[1440px] items-center gap-1 px-4">
+        <nav aria-label="Navegação principal" className="app-nav mx-auto flex max-w-[1600px] items-center gap-1 px-6">
           {modules.map((m, i) => (
             <Link
               key={m.key}
               href={m.href}
               aria-current={isActive(m.href) ? "page" : undefined}
               className={cx(
-                "nav-module relative flex items-center gap-2 border-b-2 px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap",
-                i >= overflowFrom && "hidden xl:block",
+                "nav-module relative flex items-center gap-2 border-b-2 px-3 py-3.5 text-sm font-semibold whitespace-nowrap",
+                i >= overflowFrom && "hidden xl:flex",
                 isActive(m.href) ? "border-primary bg-primary-soft text-primary" : "border-transparent text-muted hover:bg-slate-50 hover:text-ink",
               )}
             >
+              {(() => { const Icon = MODULE_ICONS[m.key]; return <Icon className="size-4" aria-hidden />; })()}
               {m.label}
             </Link>
           ))}
@@ -332,7 +328,7 @@ function Header() {
               <Menu
                 label="Mais módulos"
                 align="left"
-                buttonClassName="flex items-center gap-1 rounded px-2.5 py-1.5 text-[13px] font-medium text-muted hover:bg-slate-50 hover:text-ink"
+                buttonClassName="flex items-center gap-1 rounded px-2.5 py-1.5 text-sm font-medium text-muted hover:bg-slate-50 hover:text-ink"
                 button={
                   <>
                     Mais <ChevronDown className="size-3.5" aria-hidden />
@@ -341,7 +337,7 @@ function Header() {
               >
                 {(close) =>
                   modules.slice(overflowFrom).map((m) => (
-                    <Link key={m.key} href={m.href} role="menuitem" onClick={close} className="block px-3 py-2 text-[13px] hover:bg-slate-50">
+                    <Link key={m.key} href={m.href} role="menuitem" onClick={close} className="block px-3 py-2 text-sm hover:bg-slate-50">
                       {m.label}
                     </Link>
                   ))
@@ -359,7 +355,7 @@ function ConnectionBanner() {
   const { connection, lastSyncAt } = useApp();
   if (connection === "online") return null;
   return (
-    <div role="alert" className="no-print flex items-center justify-center gap-2 border-b border-red-200 bg-danger-soft px-4 py-1.5 text-[13px] text-danger">
+    <div role="alert" className="no-print flex items-center justify-center gap-2 border-b border-red-200 bg-danger-soft px-4 py-1.5 text-sm text-danger">
       <WifiOff className="size-4" aria-hidden />
       {connection === "offline" ? (
         <span>
@@ -379,9 +375,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = document.documentElement.style;
     root.setProperty("--primary", settings.primaryColor);
-    root.setProperty("--primary-fg", readableOn(settings.primaryColor));
+    root.setProperty("--primary-fg", contrastOn(settings.primaryColor));
     root.setProperty("--secondary", settings.secondaryColor);
-    root.setProperty("--secondary-fg", readableOn(settings.secondaryColor));
+    root.setProperty("--secondary-fg", contrastOn(settings.secondaryColor));
     return () => {
       for (const v of ["--primary", "--primary-fg", "--secondary", "--secondary-fg"]) root.removeProperty(v);
     };
@@ -406,7 +402,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <DemoBar />
       <Header />
       <ConnectionBanner />
-      <main id="conteudo" className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-4">
+      <main id="conteudo" className="app-main mx-auto w-full max-w-[1600px] flex-1 px-6 py-6">
         <div key={pathname} className="page-enter">{children}</div>
       </main>
     </div>

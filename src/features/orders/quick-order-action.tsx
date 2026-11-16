@@ -1,0 +1,26 @@
+"use client";
+
+import { Check, CircleDollarSign, Play } from "lucide-react";
+import { useState } from "react";
+import { useApp } from "@/app-state/app-context";
+import { Button } from "@/components/ui/primitives";
+import type { ServiceOrder } from "@/domain/types";
+import { formatOrderNumber } from "@/lib/format";
+import { canChangeStatus, changeOrderStatus, orderTotals, paymentSituation } from "@/services/orders";
+import { PaymentDialog } from "./order-dialogs";
+
+/** A próxima ação usa as mesmas permissões e regras dos detalhes da OS. */
+export function QuickOrderAction({ order }: { order: ServiceOrder }) {
+  const { db, view, user, can, act, online } = useApp();
+  const [pay, setPay] = useState(false);
+  if (order.cancelledAt) return null;
+  const next = order.status === "waiting" ? "in_progress" : order.status === "in_progress" ? "done" : null;
+  const allowed = next && canChangeStatus(db, { workshopId: order.workshopId, userId: user.id }, order.status, next);
+  const receivable = can("finance.payment") && paymentSituation(order, orderTotals(view, order)) === "pending";
+  return (
+    <>
+      {allowed ? <Button size="sm" variant="primary" disabled={!online} icon={next === "done" ? <Check className="size-3.5" aria-hidden /> : <Play className="size-3.5" aria-hidden />} onClick={() => act((d, c) => changeOrderStatus(d, c, order.id, next), `${formatOrderNumber(order.number)} ${next === "done" ? "concluída" : "em andamento"}.`)}>{next === "done" ? "Concluir" : "Iniciar"}</Button> : receivable ? <Button size="sm" variant="primary" disabled={!online} icon={<CircleDollarSign className="size-3.5" aria-hidden />} onClick={() => setPay(true)}>Receber</Button> : null}
+      {pay && <PaymentDialog orderId={order.id} onClose={() => setPay(false)} />}
+    </>
+  );
+}

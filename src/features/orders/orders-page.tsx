@@ -12,12 +12,13 @@ import { ORDER_STATUS_LABELS, ORDER_STATUSES } from "@/domain/labels";
 import type { OrderStatus, ServiceOrder } from "@/domain/types";
 import { addDays, dateOf, formatDate, formatOrderNumber, formatPlate, todayISO } from "@/lib/format";
 import { canChangeStatus, changeOrderStatus, orderTotals } from "@/services/orders";
+import { QuickOrderAction } from "./quick-order-action";
 import { orderTotalText, PaymentBadge, vehicleLabel } from "./shared";
 
 const COLUMN_ACCENT: Record<OrderStatus, string> = {
-  waiting: "border-t-amber-500",
-  in_progress: "border-t-primary",
-  done: "border-t-emerald-600",
+  waiting: "kanban-waiting",
+  in_progress: "kanban-active",
+  done: "kanban-done",
 };
 
 function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggable: boolean; overlay?: boolean }) {
@@ -33,7 +34,7 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
     <article
       ref={overlay ? undefined : setNodeRef}
       className={cx(
-        "order-card rounded-md border border-line bg-surface p-3 text-[13px]",
+        "order-card rounded-md border border-line bg-surface p-3 text-sm",
         !overlay && "order-enter",
         isDragging && !overlay && "opacity-40",
         overlay && "rotate-1 shadow-xl",
@@ -63,10 +64,10 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
           <p className="mt-1 truncate text-xs text-muted">
             {vehicleLabel(vehicle)} · <span className="vehicle-plate">{vehicle ? formatPlate(vehicle.plate) : ""}</span>
           </p>
-          <p className="mt-1 line-clamp-2 text-xs">{order.description}</p>
+          <p className="mt-1 line-clamp-2 text-sm">{order.description}</p>
         </button>
       </div>
-      <div className="mt-2 flex items-center justify-between gap-2 border-t border-line pt-2">
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-2">
         <span className="flex min-w-0 items-center gap-1 text-xs text-muted">
           <User className="size-3.5 shrink-0" aria-hidden />
           <span className="truncate">{userOf(order.mechanicId)?.name.split(" ").slice(0, 2).join(" ") ?? "Sem responsável"}</span>
@@ -74,7 +75,7 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
         </span>
         {!overlay && targets.length > 0 && (
           <select
-            className="h-7 w-[110px] shrink-0 rounded border border-transparent bg-slate-50 px-1 text-xs font-medium text-primary hover:border-line disabled:opacity-50"
+            className="h-9 w-[130px] shrink-0 rounded border border-transparent bg-slate-50 px-2 text-sm font-medium text-primary hover:border-line disabled:opacity-50"
             value=""
             disabled={!online}
             aria-label={`Mover ${number} para outra coluna`}
@@ -90,6 +91,7 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
           </select>
         )}
       </div>
+      {!overlay && <div className="order-card-actions"><button type="button" className="text-sm font-semibold text-primary hover:underline" onClick={() => openOrder(order.id)}>Ver detalhes</button><QuickOrderAction order={order} /></div>}
     </article>
   );
 }
@@ -101,7 +103,7 @@ function Column({ status, orders, canDrag, filtered }: { status: OrderStatus; or
       ref={setNodeRef}
       aria-label={`${ORDER_STATUS_LABELS[status]}: ${orders.length} OS`}
       className={cx(
-        "kanban-column flex min-h-64 flex-col rounded-md border border-t-[3px] border-line bg-slate-100/70",
+        "kanban-column flex min-h-64 flex-col rounded-xl border border-line bg-slate-100/70",
         COLUMN_ACCENT[status],
         isOver && "ring-2 ring-primary/50",
       )}
@@ -110,7 +112,7 @@ function Column({ status, orders, canDrag, filtered }: { status: OrderStatus; or
         <h2 className="text-sm font-semibold">{ORDER_STATUS_LABELS[status]}</h2>
         <span className="rounded bg-surface px-2 py-0.5 text-xs font-semibold text-muted tabular-nums">{orders.length}</span>
       </header>
-      <div className="flex max-h-[calc(100vh-310px)] min-h-40 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
+      <div className="flex max-h-[calc(100vh-390px)] min-h-40 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
         {orders.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-muted">{filtered ? "Nenhuma OS encontrada com os filtros atuais." : "Nenhuma OS nesta etapa."}</p>
         ) : (
@@ -177,7 +179,7 @@ export function OrdersPage() {
     <>
       <PageHeader
         title="Ordens de serviço"
-        description="Arraste os cartões entre as colunas ou use “Mover para…” para atualizar o status."
+        description="Acompanhe cada serviço e execute a próxima etapa direto no cartão."
         actions={
           <>
             {cancelled.length > 0 && (
@@ -231,7 +233,7 @@ export function OrdersPage() {
         </div>
       ) : (
         <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="kanban-board grid grid-cols-3 gap-4">
             {ORDER_STATUSES.map((s) => (
               <Column key={s} status={s} orders={visible.filter((o) => o.status === s)} canDrag={canDrag} filtered={filtered} />
             ))}

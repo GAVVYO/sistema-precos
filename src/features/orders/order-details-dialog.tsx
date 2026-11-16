@@ -21,7 +21,7 @@ function Info({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <dt className="text-xs text-muted">{label}</dt>
-      <dd className="text-[13px] font-medium">{children}</dd>
+      <dd className="text-sm font-medium">{children}</dd>
     </div>
   );
 }
@@ -155,7 +155,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
         }
       >
         {cancelled && (
-          <div className="mb-4 rounded-md border border-red-200 bg-danger-soft px-3 py-2 text-[13px] text-danger">
+          <div className="mb-4 rounded-md border border-red-200 bg-danger-soft px-3 py-2 text-sm text-danger">
             <strong>OS cancelada</strong> em {formatDateTime(order.cancelledAt!)}. Motivo: {order.cancelReason}
           </div>
         )}
@@ -172,7 +172,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
               {order.notes && (
                 <div className="col-span-3">
                   <dt className="text-xs text-muted">Observações</dt>
-                  <dd className="text-[13px]">{order.notes}</dd>
+                  <dd className="text-sm">{order.notes}</dd>
                 </div>
               )}
             </dl>
@@ -201,7 +201,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
                   </div>
                 </div>
               ) : items.length === 0 ? (
-                <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-[13px] text-muted">Nenhuma peça adicionada a esta OS.</p>
+                <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-sm text-muted">Nenhuma peça adicionada a esta OS.</p>
               ) : (
                 <div className="overflow-x-auto rounded-md border border-line">
                   <table className="data-table">
@@ -227,7 +227,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
               <h3 className="mb-2 text-sm font-semibold">Histórico de alterações</h3>
               <ol className="space-y-1.5 border-l-2 border-line pl-3">
                 {events.map((e) => (
-                  <li key={e.id} className="text-[13px]">
+                  <li key={e.id} className="text-sm">
                     <span className="text-xs text-muted">{formatDateTime(e.at)} · {userOf(e.userId)?.name ?? "Usuário"}</span>
                     <br />
                     {e.message}
@@ -240,7 +240,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
           <aside className="space-y-3">
             <div className="rounded-md border border-line p-3">
               <h3 className="mb-2 text-sm font-semibold">Valores</h3>
-              <dl className="space-y-1 text-[13px]">
+              <dl className="space-y-1 text-sm">
                 <div className="flex justify-between"><dt className="text-muted">Mão de obra</dt><dd>{formatBRLOrPending(totals.laborCents)}</dd></div>
                 <div className="flex justify-between"><dt className="text-muted">Peças</dt><dd>{formatBRL(totals.partsCents)}</dd></div>
                 <div className="flex justify-between border-t border-line pt-1.5 text-base font-semibold"><dt>Total</dt><dd>{orderTotalText(totals)}</dd></div>

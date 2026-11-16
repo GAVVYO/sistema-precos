@@ -10,7 +10,7 @@ export function BackendUnavailable() {
       <div className="max-w-md rounded-md border border-line bg-surface p-8 text-center">
         <ServerOff className="mx-auto mb-3 size-10 text-slate-400" aria-hidden />
         <h1 className="text-lg font-semibold">Ambiente indisponível</h1>
-        <p className="mt-2 text-[13px] leading-relaxed text-muted">
+        <p className="mt-2 text-sm leading-relaxed text-muted">
           O ambiente de produção do GAVYO Auto ainda não está configurado. O banco de dados e a
           autenticação reais serão ativados em uma próxima etapa. Nenhum dado de demonstração é
           exibido neste modo.

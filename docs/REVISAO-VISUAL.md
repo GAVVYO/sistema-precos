@@ -1,42 +1,54 @@
 # Revisão visual — 16/11/2026
 
-## Direção escolhida pelo cliente
+## Direção implementada
 
-Identidade automotiva técnica e precisa, com azul e grafite, mantendo interface clara e menu superior. Animações mais presentes em telas e gráficos. Prioridade: Início e Ordens de serviço. Estas escolhas atualizam a direção mais conservadora de `CONTEXTO-VISUAL.md`; os limites de arquitetura, personalização, permissões e offline continuam valendo.
+Atendimento de oficina com identidade técnica: cabeçalho grafite, Manrope local, superfícies claras, quatro cards sólidos e cores por função. Espera usa âmbar; execução usa a cor principal da oficina; conclusão usa verde; veículos usam a cor de estrutura. Os números vêm dos dados atuais, sem percentuais decorativos.
 
-## Diagnóstico e primeira implementação
+A escolha `atendimento` foi confirmada na comparação de direções em HTML (caminho code-first). O cliente priorizou localizar OS, mudar status e receber pagamento, rejeitando textos pequenos, excesso de elementos e animações demoradas.
 
-| Superfície | Problema observado | Mudança realizada |
-| --- | --- | --- |
-| Cabeçalho | Marca, oito módulos, criação de OS, conexão e conta disputavam a mesma linha em 1366 × 768. | Identidade e controles na primeira faixa; navegação clara na segunda, mantendo o menu superior e o menu Mais em larguras menores. |
-| Início | Seis indicadores com peso idêntico; tabela operacional comprimida em oito colunas. | Três etapas da OS em destaque e três indicadores auxiliares compactos. Tabela com quatro grupos, mantendo as informações, e ordenação ascendente/descendente por abertura, cliente, serviço e status. |
-| Identidade | Ícone genérico de chave inglesa no acesso e no cabeçalho. | Monograma vetorial G inspirado em um instrumento, adaptado aos tokens da oficina, com ícone SVG para o navegador. Logotipo enviado pela oficina continua tendo prioridade. |
-| Kanban | Seletor de movimentação competia com os dados em todos os cartões. | Controle mais discreto, placas destacadas, mais respiro, foco e hover claros; entrada de cartão ao mudar de coluna. Alternativa ao arrastar preservada. |
-| Detalhes da OS | Cinco tipos de ação concorrendo no rodapé. | Rodapé com status, edição e pagamento; PDF e cancelamento agrupados no painel lateral. Confirmação de cancelamento preservada. |
-| Formulários | Sugestões de cliente dependiam de um deslocamento fixo em pixels. | Posicionamento relativo ao campo em Nova OS e na agenda. |
-| Movimento | Somente algumas transições de cor e carregamento; gráfico com animação desativada. | Entrada de telas, indicadores, modais, cartões e avisos; animação do gráfico financeiro. Sem dependência nova e sem atrasar a execução das ações. |
-| Acessibilidade | Modal não estava explicitamente associado ao título por aria-labelledby. | Associação do título adicionada. Movimento CSS e Recharts respeitam prefers-reduced-motion. |
+## Mudanças
 
-## O que realmente continua básico
+| Superfície | Resultado |
+| --- | --- |
+| Cabeçalho | Marca e busca global na primeira faixa; menu superior separado, com rolagem local nas larguras menores. Busca por placa, cliente ou número; atalho Ctrl/Cmd+K. |
+| Início | Quatro cards aprovados como referência de composição. Cards e filtros selecionam a lista de serviços. Próxima ação aparece junto à OS. Agenda e estoque ficam como apoio. |
+| Ordens | Serviço, placa e responsável mais claros. Iniciar, Concluir ou Receber junto ao registro; detalhes e alternativa ao arrastar preservados. |
+| Pagamento | Confirmação do valor preservada. Formas em duas colunas no modal compacto, tanto no celular quanto no desktop, com alvos de pelo menos 44px. |
+| Estoque e clientes | Ordenação nas colunas relevantes. Código da peça e mínimo agrupados com nome e quantidade para reduzir largura. |
+| Financeiro | Visão semanal padrão e alternância diária, conservando totais, período e par azul/âmbar do gráfico. Animação curta. |
+| Agenda | Semana mais legível, textos de serviço com quebra e horário separado. Rolagem dentro da semana em telas estreitas. |
+| Configurações | Prévia acompanha o cabeçalho novo; contraste preto/branco calculado para as cores personalizadas. |
+| Componentes | Manrope servida localmente, base rem de 16px, texto operacional de 14px, mesclagem de classes com tailwind-merge, foco e feedback consistentes. |
+| Movimento | Entrada de tela em 180ms, diálogo em 220ms e gráfico em 360ms. Respeita prefers-reduced-motion e não atrasa a execução das ações. |
 
-1. **Agenda:** os cartões semanais truncam nomes/serviços e não comunicam ocupação ao longo do dia. A grade horária depende de esclarecer se o horário representa chegada ou execução, duração dos serviços e capacidade por mecânico/box. O modelo atual tem horário de início, sem duração. Não atribuir durações fictícias para desenhar uma grade.
-2. **Tabelas dos demais módulos:** ainda não têm ordenação interativa/paginação. Priorizar estoque e clientes quando houver volume real; uma paginação arbitrária não melhora as pequenas listas da demo. Relatórios têm rolagem horizontal, necessária para o conjunto atual de colunas; pode-se evoluir para escolha de colunas.
-3. **Financeiro:** dias sem movimentação produzem bastante espaço no gráfico. Uma visão semanal/mensal agregada pode melhorar a leitura, mas deve mostrar claramente a unidade e preservar os valores e as cores azul/âmbar já validadas.
-4. **Configurações:** a pequena prévia de cores ainda representa o cabeçalho anterior em uma faixa. Atualizá-la junto com uma revisão da edição de temas e do contraste das cores personalizadas.
-5. **Componentes:** combinações de classes conflitantes ainda não têm tailwind-merge. Centralizar variantes de tamanho e densidade antes de ampliar a família de controles.
+## Percursos prioritários
 
-Não considero ausência de tema escuro, ilustrações grandes, 3D ou fotografias uma deficiência para esta fase. Estados vazios precisam orientar a próxima ação; os existentes já fazem isso em boa parte dos fluxos. Esses recursos não foram adicionados automaticamente.
+A partir de qualquer módulo com acesso a OS:
+
+- Localizar: focar a busca (1), digitar placa/cliente/número, abrir resultado (2).
+- Mudar para a próxima etapa: focar a busca (1), digitar, Iniciar ou Concluir (2).
+- Receber OS concluída: focar a busca (1), digitar, Receber (2), confirmar PIX (3). Trocar a forma de pagamento acrescenta uma seleção.
+
+A contagem mede cliques, sem tratar digitação como clique. Não elimina revisão do valor, confirmação de pagamento ou informações necessárias de um cadastro novo.
+
+## Referências pesquisadas
+
+Foram aproveitados padrões de operação, sem copiar marcas ou telas:
+
+- [Shopmonkey — workflow](https://www.shopmonkey.io/product/workflow): localização e acompanhamento do serviço.
+- [Tekmetric — painel em tempo real](https://support.tekmetric.com/hc/en-us/articles/360042280134-Shop-Dashboard-Real-Time-Reporting): leitura de situação e indicadores úteis ao trabalho.
+- [Oficina Integrada — funcionalidades](https://comofunciona.oficinaintegrada.com.br/mais-funcionalidades): consulta por OS, cliente e placa no contexto brasileiro.
 
 ## Verificação
 
-- Inspeção no navegador em 1366 × 768: Início, Ordens, Nova OS, detalhes da OS, Estoque, Financeiro, Agenda (semana/mês/dia), Clientes, Relatórios e Configurações.
-- Ordenação por cliente conferida pela sequência dos registros e por aria-sort.
-- OS-0010 movida para Em andamento e devolvida a Aguardando; conferidos coluna e aviso de sucesso. Apenas dados fictícios da cópia local foram alterados; o histórico da demo local registra as duas movimentações.
-- Busca sem resultado e sugestões de cliente na Nova OS conferidas; nenhuma nova OS salva nesta revisão.
-- Offline: aviso e botão Nova OS desativado; reconexão conferida.
-- Perfil Mecânico: navegação reduzida e ausência de Nova OS; dashboard dos serviços atribuídos conferido.
-- Segunda oficina: cores verde-azuladas e dados próprios preservados.
-- `npm run typecheck`, `npm run lint`, `npm test` (32 testes): aprovados.
-- `npm run build`: aprovado, com geração das 14 páginas. Duas tentativas iniciais falharam no processo de CSS do Turbopack; a compilação concluiu com servidor parado e cache limpo, preservando o cache anterior fora do repositório.
+Conferência visual em 1366 × 768 dos oito módulos, Nova OS, busca global e pagamento; início e pagamento também em 390px. Testados busca sem resultado, Ctrl+K/Escape, ordenação de estoque/clientes, agrupamento diário/semanal, próxima etapa, recebimento integral em PIX, offline, perfil Mecânico e segunda oficina.
 
-Não houve validação integral por teclado, com leitor de tela, em Safari/Firefox, nem teste de movimento reduzido por emulação do sistema. A implementação da preferência foi revisada no código. Arrastar com ponteiro não foi repetido nesta rodada; a alternativa acessível de movimentação foi exercitada. Os testes existentes cobrem regras de negócio, não regressão visual. `src/services`, `src/domain` e `src/demo` não foram alterados.
+A OS-0010 da cópia local foi iniciada, concluída e recebida por R$ 202 em PIX. Apenas dados fictícios do localStorage foram usados; não houve cobrança real. A OS-0008 foi usada para abrir o pagamento sem confirmar.
+
+A revisão independente pediu maior texto operacional e reorganização das formas de pagamento mobile. Os ajustes foram aplicados e recapturados. Veredito final independente: ship, com os dois ajustes e a regressão desktop pontuados como resolvidos; a aprovação cobre esse lote de correções.
+
+Validação técnica: npm run typecheck, npm run lint, npm test (32 testes) e npm run build aprovados. A última alteração foi somente a grade CSS do pagamento; a compilação final também passou. Foram geradas as 14 páginas estáticas.
+
+Limites: não houve bateria integral com leitor de tela, Safari/Firefox ou emulação de movimento reduzido pelo sistema. A preferência foi revisada no código. Arrastar por ponteiro não foi repetido; o controle alternativo foi exercitado. Testes existentes cobrem regras de negócio, não regressão visual. A agenda ainda não modela duração/capacidade: não foi inventada uma grade horária com dados inexistentes.
+
+`src/services`, `src/domain` e `src/demo` permanecem sem alterações. Continua sendo frontend de demonstração, sem backend ou integração de cobrança.

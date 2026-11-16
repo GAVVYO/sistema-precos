@@ -6,7 +6,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Period, PeriodPicker, usePeriod } from "@/components/ui/period";
-import { Badge, Button, Card, CardHeader, EmptyState, Field, Input, PageHeader, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
+import { Badge, Button, Card, CardHeader, EmptyState, Field, Input, PageHeader, Segmented, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
 import { useReducedMotion } from "@/components/ui/use-reduced-motion";
 import { toast } from "@/components/ui/toast";
 import { EXPENSE_CATEGORIES, PAYMENT_METHOD_LABELS } from "@/domain/labels";
@@ -21,10 +21,10 @@ const SERIES = { received: "#2563EB", expenses: "#D97706" };
 
 function CashChart({ period, transactions }: { period: Period; transactions: FinancialTransaction[] }) {
   const reducedMotion = useReducedMotion();
+  const [grouping, setGrouping] = useState<"day" | "week">("week");
   const data = useMemo(() => {
     const to = period.to > todayISO() ? todayISO() : period.to;
-    const days = Math.round((Date.parse(to) - Date.parse(period.from)) / 86_400_000) + 1;
-    const weekly = days > 31;
+    const weekly = grouping === "week";
     const buckets = new Map<string, { label: string; received: number; expenses: number }>();
     for (let d = weekly ? startOfWeek(period.from) : period.from; d <= to; d = addDays(d, weekly ? 7 : 1)) {
       buckets.set(d, { label: weekly ? `Sem. ${formatDate(d).slice(0, 5)}` : formatDate(d).slice(0, 5), received: 0, expenses: 0 });
@@ -37,14 +37,16 @@ function CashChart({ period, transactions }: { period: Period; transactions: Fin
       else b.expenses += t.amountCents / 100;
     }
     return [...buckets.values()];
-  }, [period, transactions]);
+  }, [period, transactions, grouping]);
 
   if (!data.some((d) => d.received || d.expenses)) {
     return <EmptyState title="Sem movimentações no período" description="Registre pagamentos ou despesas para ver o fluxo de caixa." />;
   }
   const brl = (v: number) => formatBRL(Math.round(v * 100));
   return (
-    <div className="h-52 px-2 pt-3 pb-1">
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-4"><p className="text-xs text-muted">{grouping === "week" ? "Totais por semana dentro do período selecionado" : "Movimentações por dia"}</p><Segmented label="Agrupar fluxo de caixa" value={grouping} onChange={setGrouping} options={[{ value: "day", label: "Por dia" }, { value: "week", label: "Por semana" }]} /></div>
+      <div className="h-56 px-2 pt-3 pb-1">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} barGap={2} barCategoryGap="25%">
           <CartesianGrid vertical={false} stroke="#E2E8F0" />
@@ -57,10 +59,11 @@ function CashChart({ period, transactions }: { period: Period; transactions: Fin
             itemStyle={{ color: "#172033" }}
           />
           <Legend iconType="square" iconSize={10} wrapperStyle={{ fontSize: 12 }} formatter={(v) => <span style={{ color: "#172033" }}>{v}</span>} />
-          <Bar dataKey="received" name="Receitas recebidas" fill={SERIES.received} radius={[4, 4, 0, 0]} maxBarSize={22} isAnimationActive={!reducedMotion} animationDuration={650} animationEasing="ease-out" />
-          <Bar dataKey="expenses" name="Despesas pagas" fill={SERIES.expenses} radius={[4, 4, 0, 0]} maxBarSize={22} isAnimationActive={!reducedMotion} animationDuration={650} animationEasing="ease-out" />
+          <Bar dataKey="received" name="Receitas recebidas" fill={SERIES.received} radius={[4, 4, 0, 0]} maxBarSize={grouping === "week" ? 52 : 22} isAnimationActive={!reducedMotion} animationDuration={360} animationEasing="ease-out" />
+          <Bar dataKey="expenses" name="Despesas pagas" fill={SERIES.expenses} radius={[4, 4, 0, 0]} maxBarSize={grouping === "week" ? 52 : 22} isAnimationActive={!reducedMotion} animationDuration={360} animationEasing="ease-out" />
         </BarChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }
@@ -182,7 +185,7 @@ export function FinancePage() {
   const expenses = inPeriod.filter((t) => t.kind === "expense");
 
   return (
-    <>
+    <div className="module-page module-finance">
       <PageHeader
         title="Financeiro"
         description="Quanto a oficina recebeu, gastou e ainda tem a receber."
@@ -324,6 +327,6 @@ export function FinancePage() {
       {dialog && <TransactionDialog kind={dialog} onClose={() => setDialog(null)} />}
       {payOrder && <PaymentDialog orderId={payOrder} onClose={() => setPayOrder(null)} />}
       {settle && <SettleDialog tx={settle} onClose={() => setSettle(null)} />}
-    </>
+    </div>
   );
 }

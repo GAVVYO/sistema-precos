@@ -15,16 +15,15 @@ import { vehicleLabel } from "./shared";
 
 export function PaymentMethodPicker({ value, onChange }: { value: PaymentMethod; onChange: (m: PaymentMethod) => void }) {
   return (
-    <div role="radiogroup" aria-label="Forma de pagamento" className="grid grid-cols-4 gap-2">
+    <div role="group" aria-label="Forma de pagamento" className="grid grid-cols-2 gap-2">
       {PAYMENT_METHODS.map((m) => (
         <button
           key={m}
           type="button"
-          role="radio"
-          aria-checked={value === m}
+          aria-pressed={value === m}
           onClick={() => onChange(m)}
           className={cx(
-            "h-9 rounded-md border text-[13px] font-medium",
+            "min-h-11 rounded-md border px-2 text-sm font-medium",
             value === m ? "border-primary bg-primary-soft text-primary" : "border-line hover:bg-slate-50",
           )}
         >
@@ -70,12 +69,12 @@ export function PaymentDialog({ orderId, onClose }: { orderId: ID; onClose: () =
         </>
       }
     >
-      <dl className="mb-4 space-y-1 text-[13px]">
+      <dl className="mb-4 space-y-1 text-sm">
         <div className="flex justify-between"><dt className="text-muted">Mão de obra</dt><dd>{formatBRL(totals.laborCents ?? 0)}</dd></div>
         <div className="flex justify-between"><dt className="text-muted">Peças</dt><dd>{formatBRL(totals.partsCents)}</dd></div>
         <div className="flex justify-between border-t border-line pt-1 text-base font-semibold"><dt>Total a receber</dt><dd>{formatBRL(totals.totalCents)}</dd></div>
       </dl>
-      <p className="mb-1 text-xs font-medium">Forma de pagamento</p>
+      <p className="mb-2 text-sm font-medium">Forma de pagamento</p>
       <PaymentMethodPicker value={method} onChange={setMethod} />
       <p className="mt-3 text-xs text-muted">O pagamento é integral e registrado manualmente. Não há cobrança automática nem pagamento parcial.</p>
     </Dialog>
@@ -226,12 +225,12 @@ export function CancelOrderDialog({ order, hasParts, onClose }: { order: Service
         </>
       }
     >
-      <p className="mb-3 text-[13px]">A OS sairá do quadro e ficará disponível apenas para consulta. Esta ação não pode ser desfeita.</p>
+      <p className="mb-3 text-sm">A OS sairá do quadro e ficará disponível apenas para consulta. Esta ação não pode ser desfeita.</p>
       <Field label="Motivo do cancelamento">
         {(p) => <Textarea {...p} rows={2} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />}
       </Field>
       {hasParts && (
-        <label className="mt-3 flex items-start gap-2 text-[13px]">
+        <label className="mt-3 flex items-start gap-2 text-sm">
           <input type="checkbox" className="mt-0.5 accent-(--primary)" checked={returnParts} onChange={(e) => setReturnParts(e.target.checked)} />
           <span>
             Devolver as peças ao estoque

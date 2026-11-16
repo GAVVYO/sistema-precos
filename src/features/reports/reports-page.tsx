@@ -57,9 +57,9 @@ export function ReportsPage() {
   const canExport = can("reports.export");
 
   return (
-    <>
+    <div className="module-page module-reports">
       <PageHeader title="Relatórios" description="Consulte, filtre e exporte os registros da oficina em PDF ou Excel." />
-      <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
+      <div className="report-layout grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
         <Card className="self-start">
           <CardHeader title="Tipo de relatório" />
           <div role="radiogroup" aria-label="Tipo de relatório" className="p-1.5">
@@ -72,7 +72,7 @@ export function ReportsPage() {
                 onClick={() => { setKind(r.kind); setOption(""); setMechanicId(""); setText(""); }}
                 className={cx("block w-full rounded-md px-3 py-2 text-left", r.kind === info.kind ? "bg-primary-soft" : "hover:bg-slate-50")}
               >
-                <span className={cx("block text-[13px] font-semibold", r.kind === info.kind && "text-primary")}>{r.label}</span>
+                <span className={cx("block text-sm font-semibold", r.kind === info.kind && "text-primary")}>{r.label}</span>
                 <span className="block text-xs text-muted">{r.description}</span>
               </button>
             ))}
@@ -113,7 +113,7 @@ export function ReportsPage() {
           </div>
 
           {report.summary && (
-            <dl className="flex flex-wrap gap-x-8 gap-y-1 border-b border-line px-4 py-2 text-[13px]">
+            <dl className="flex flex-wrap gap-x-8 gap-y-1 border-b border-line px-4 py-2 text-sm">
               {report.summary.map((s) => (
                 <div key={s.label} className="flex gap-2"><dt className="text-muted">{s.label}:</dt><dd className="font-semibold">{s.value}</dd></div>
               ))}
@@ -123,7 +123,7 @@ export function ReportsPage() {
           {report.rows.length === 0 ? (
             <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum registro encontrado" description="Ajuste o período ou os filtros para ver resultados." />
           ) : (
-            <div className="max-h-[calc(100vh-330px)] overflow-auto">
+            <div className="max-h-[calc(100vh-390px)] overflow-auto">
               <table className="data-table">
                 <thead className="sticky top-0">
                   <tr>{report.columns.map((c) => <th key={c.key} className={c.type === "money" || c.type === "number" ? "num" : undefined}>{c.label}</th>)}</tr>
@@ -158,6 +158,6 @@ export function ReportsPage() {
           )}
         </Card>
       </div>
-    </>
+    </div>
   );
 }

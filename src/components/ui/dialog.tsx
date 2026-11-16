@@ -42,12 +42,12 @@ export function Dialog({
         onClose();
       }}
       className={cx(
-        "m-auto w-[calc(100vw-2rem)] rounded-lg border border-line bg-surface p-0 text-ink shadow-xl",
+        "app-dialog m-auto w-[calc(100vw-2rem)] rounded-xl border border-line bg-surface p-0 text-ink shadow-xl",
         "max-h-[calc(100vh-2rem)] open:flex open:flex-col",
         SIZES[size],
       )}
     >
-      <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-3">
+      <header className="flex items-start justify-between gap-4 border-b border-line px-6 py-5">
         <div className="min-w-0">
           <h2 id={titleId} className="text-base font-semibold break-words">{title}</h2>
           {subtitle && <div className="mt-0.5 text-xs text-muted">{subtitle}</div>}
@@ -61,9 +61,9 @@ export function Dialog({
           <X className="size-4" aria-hidden />
         </button>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
       {footer && (
-        <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-line bg-slate-50 px-5 py-3">
+        <footer className="dialog-actions flex flex-wrap items-center justify-end gap-3 border-t border-line bg-slate-50 px-6 py-4">
           {footer}
         </footer>
       )}
@@ -113,7 +113,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <div className="text-[13px] leading-relaxed text-ink">{message}</div>
+      <div className="text-sm leading-relaxed text-ink">{message}</div>
       {children}
     </Dialog>
   );

@@ -161,9 +161,12 @@ function WidgetFrame({ widget, editing, onNudge, onHide }: { widget: Widget; edi
 
 /** Botões do cabeçalho: Personalizar painel / Restaurar padrão / Concluir. */
 export function WidgetGridToolbar({ prefs, editing, onEditingChange }: { prefs: WidgetPrefs; editing: boolean; onEditingChange: (editing: boolean) => void }) {
+  // Com texto ampliado os blocos ficam empilhados: personalizar não teria efeito.
+  const { preferences } = useAccessibility();
+  if (preferences.textSize !== "default") return null;
   if (!editing) {
     return (
-      <Button icon={<LayoutDashboard className="size-4" aria-hidden />} onClick={() => onEditingChange(true)}>
+      <Button className="widget-customize" icon={<LayoutDashboard className="size-4" aria-hidden />} onClick={() => onEditingChange(true)}>
         Personalizar painel
       </Button>
     );

@@ -135,7 +135,7 @@ export function DataTable<T extends object>({
         />
       </div>
       <div className="overflow-auto" style={maxHeight ? { maxHeight } : undefined}>
-        <table className="data-table" style={{ tableLayout: "fixed", width: table.getTotalSize(), minWidth: "100%" }} aria-label={label}>
+        <table className="data-table data-table-sized" style={{ tableLayout: "fixed", width: table.getTotalSize(), minWidth: "100%" }} aria-label={label}>
           <colgroup>
             {headers.map((h) => <col key={h.id} style={{ width: h.getSize() }} />)}
           </colgroup>

@@ -514,3 +514,9 @@ html:not([data-text-size="default"])[data-text-size] .truncate { white-space: no
 @media (prefers-reduced-motion: reduce) {
   :is(.metric-select:hover, .appointment-chip:hover, .personal-nav-item:hover .personal-nav-icon, .ui-button:active:not(:disabled)) { transform: none; }
 }
+
+/* DataTable controla a própria largura (colunas redimensionáveis) e já rola no contêiner. */
+.data-table.data-table-sized { display: table; }
+.data-table.data-table-sized th, .data-table.data-table-sized td { min-width: 0; }
+/* Abaixo de 900 px os blocos do Início ficam empilhados: personalizar não se aplica. */
+@media (max-width: 899px) { .widget-customize { display: none; } }

@@ -48,6 +48,8 @@ Os dados persistem entre recarregamentos (localStorage) até você restaurar a d
 
 ## Documentação
 
+- [Ideias de interface adaptável](docs/IDEIAS-INTERFACE-ADAPTAVEL.md) — propostas, prioridades e referências; ainda não implementadas.
+
 - [Estado atual e continuidade](docs/ESTADO-ATUAL.md) — entrega visual, agenda interativa, navegação por gesto, validações e limites.
 - [Navegação por gesto](docs/NAVEGACAO.md) — arraste livre e encaixe automático no topo.
 - [Revisão visual](docs/REVISAO-VISUAL.md) — referências e percursos.

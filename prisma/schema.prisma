@@ -1,0 +1,336 @@
+// GAVYO Auto — schema previsto para a Fase 2 (MySQL da Hostinger, InnoDB, utf8mb4).
+//
+// ESTE ARQUIVO AINDA NÃO É EXECUTADO: a Fase 1 roda sem banco. Ele espelha
+// src/domain/types.ts para que a troca dos serviços simulados por Prisma não
+// exija remodelagem. O Prisma será adicionado às dependências na Fase 2.
+//
+// Convenções:
+// - Dinheiro em centavos (Int). Nunca Float.
+// - Toda entidade de negócio tem workshopId + índice iniciando por ele.
+// - Unicidades de negócio são sempre por oficina (@@unique([workshopId, ...])).
+// - Chaves compostas [workshopId, id] permitem FKs compostas, impedindo que um
+//   registro referencie cliente/veículo/peça/OS de outra oficina.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  RECEPTIONIST
+  MECHANIC
+  FINANCIAL
+}
+
+enum OrderStatus {
+  WAITING
+  IN_PROGRESS
+  DONE
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  ADJUST
+  ORDER_OUT
+  RETURN
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  ATTENDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  PIX
+  CARD
+  TRANSFER
+}
+
+enum TransactionKind {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionStatus {
+  PAID
+  PENDING
+}
+
+model Workshop {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(120)
+  slug      String   @unique @db.VarChar(80)
+  /// Próximo número de OS; incrementado na mesma transação que cria a OS.
+  nextOrderNumber Int @default(1)
+  createdAt DateTime @default(now())
+
+  settings     WorkshopSettings?
+  memberships  WorkshopMembership[]
+  customers    Customer[]
+  vehicles     Vehicle[]
+  orders       ServiceOrder[]
+  parts        Part[]
+  appointments Appointment[]
+  transactions FinancialTransaction[]
+}
+
+model WorkshopSettings {
+  workshopId     String   @id
+  displayName    String   @db.VarChar(120)
+  phone          String   @default("") @db.VarChar(11)
+  /// Caminho do arquivo de logotipo (na demonstração é um data URL local).
+  logoPath       String?  @db.VarChar(255)
+  primaryColor   String   @default("#2563EB") @db.Char(7)
+  secondaryColor String   @default("#172033") @db.Char(7)
+  /// Lista de ModuleKey ativos.
+  activeModules  Json
+  workshop       Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String   @db.VarChar(120)
+  email        String   @unique @db.VarChar(190)
+  /// Hash Argon2id/bcrypt. Nunca a senha em texto puro.
+  passwordHash String   @db.VarChar(255)
+  createdAt    DateTime @default(now())
+
+  memberships WorkshopMembership[]
+  sessions    Session[]
+}
+
+/// Sessão no servidor (cookie httpOnly + Secure + SameSite=Lax guarda apenas o id).
+model Session {
+  id         String   @id @db.VarChar(64)
+  userId     String
+  /// Oficina ativa da sessão; validada contra WorkshopMembership a cada requisição.
+  workshopId String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model WorkshopMembership {
+  id          String   @id @default(cuid())
+  workshopId  String
+  userId      String
+  role        Role
+  active      Boolean  @default(true)
+  /// Lista de PermissionKey efetivas (o cargo é apenas o modelo inicial).
+  permissions Json
+  workshop    Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workshopId, userId])
+  @@index([userId])
+}
+
+model Customer {
+  id         String   @id @default(cuid())
+  workshopId String
+  name       String   @db.VarChar(120)
+  phone      String   @db.VarChar(11)
+  createdAt  DateTime @default(now())
+  workshop   Workshop @relation(fields: [workshopId], references: [id])
+
+  vehicles Vehicle[]
+  orders   ServiceOrder[]
+
+  @@unique([workshopId, id])
+  @@index([workshopId, name])
+  @@index([workshopId, phone])
+}
+
+model Vehicle {
+  id         String   @id @default(cuid())
+  workshopId String
+  customerId String
+  plate      String   @db.VarChar(7)
+  brand      String   @db.VarChar(60)
+  model      String   @db.VarChar(60)
+  year       Int?     @db.SmallInt
+  mileage    Int?
+  workshop   Workshop @relation(fields: [workshopId], references: [id])
+  customer   Customer @relation(fields: [workshopId, customerId], references: [workshopId, id])
+
+  orders ServiceOrder[]
+
+  @@unique([workshopId, id])
+  @@unique([workshopId, plate])
+  @@index([workshopId, customerId])
+}
+
+model ServiceOrder {
+  id            String      @id @default(cuid())
+  workshopId    String
+  number        Int
+  customerId    String
+  vehicleId     String
+  description   String      @db.VarChar(255)
+  notes         String      @db.Text
+  mechanicId    String?
+  /// NULL = valor ainda não informado; 0 = mão de obra gratuita.
+  laborCents    Int?
+  mileage       Int?
+  status        OrderStatus @default(WAITING)
+  openedAt      DateTime    @default(now())
+  completedAt   DateTime?
+  cancelledAt   DateTime?
+  cancelReason  String?     @db.VarChar(255)
+  appointmentId String?     @unique
+  workshop      Workshop    @relation(fields: [workshopId], references: [id])
+  customer      Customer    @relation(fields: [workshopId, customerId], references: [workshopId, id])
+  vehicle       Vehicle     @relation(fields: [workshopId, vehicleId], references: [workshopId, id])
+
+  items   ServiceOrderItem[]
+  events  ServiceOrderEvent[]
+  payment Payment?
+
+  @@unique([workshopId, id])
+  @@unique([workshopId, number])
+  @@index([workshopId, status, cancelledAt])
+  @@index([workshopId, customerId])
+  @@index([workshopId, vehicleId])
+  @@index([workshopId, openedAt])
+}
+
+model ServiceOrderItem {
+  id             String       @id @default(cuid())
+  workshopId     String
+  orderId        String
+  partId         String
+  quantity       Int
+  unitPriceCents Int
+  unitCostCents  Int
+  order          ServiceOrder @relation(fields: [workshopId, orderId], references: [workshopId, id], onDelete: Cascade)
+  part           Part         @relation(fields: [workshopId, partId], references: [workshopId, id])
+
+  @@unique([orderId, partId])
+  @@index([workshopId, partId])
+}
+
+model ServiceOrderEvent {
+  id         String       @id @default(cuid())
+  workshopId String
+  orderId    String
+  at         DateTime     @default(now())
+  userId     String
+  message    String       @db.VarChar(500)
+  order      ServiceOrder @relation(fields: [workshopId, orderId], references: [workshopId, id], onDelete: Cascade)
+
+  @@index([workshopId, orderId, at])
+}
+
+model Part {
+  id          String   @id @default(cuid())
+  workshopId  String
+  code        String   @db.VarChar(40)
+  name        String   @db.VarChar(120)
+  category    String   @db.VarChar(60)
+  description String   @db.Text
+  /// Alterado apenas dentro de transação com SELECT ... FOR UPDATE.
+  /// Recomendado: CHECK (quantity >= 0) na migration.
+  quantity    Int      @default(0)
+  minQuantity Int      @default(0)
+  costCents   Int
+  priceCents  Int
+  workshop    Workshop @relation(fields: [workshopId], references: [id])
+
+  movements StockMovement[]
+  items     ServiceOrderItem[]
+
+  @@unique([workshopId, id])
+  @@unique([workshopId, code])
+  @@index([workshopId, name])
+}
+
+model StockMovement {
+  id           String            @id @default(cuid())
+  workshopId   String
+  partId       String
+  type         StockMovementType
+  /// Variação com sinal.
+  delta        Int
+  balanceAfter Int
+  reason       String            @db.VarChar(255)
+  userId       String
+  orderId      String?
+  /// Chave de idempotência da operação que originou a movimentação.
+  operationKey String?           @db.VarChar(64)
+  at           DateTime          @default(now())
+  part         Part              @relation(fields: [workshopId, partId], references: [workshopId, id])
+
+  @@unique([workshopId, operationKey, partId])
+  @@index([workshopId, partId, at])
+  @@index([workshopId, orderId])
+}
+
+model Appointment {
+  id           String            @id @default(cuid())
+  workshopId   String
+  customerName String            @db.VarChar(120)
+  phone        String            @db.VarChar(11)
+  plate        String            @default("") @db.VarChar(7)
+  brand        String            @default("") @db.VarChar(60)
+  model        String            @db.VarChar(60)
+  service      String            @db.VarChar(255)
+  date         DateTime          @db.Date
+  time         String            @db.Char(5)
+  mechanicId   String?
+  notes        String            @db.Text
+  status       AppointmentStatus @default(SCHEDULED)
+  workshop     Workshop          @relation(fields: [workshopId], references: [id])
+
+  @@index([workshopId, date, time])
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  workshopId  String
+  /// Único: uma OS tem no máximo um pagamento (integral).
+  orderId     String        @unique
+  amountCents Int
+  method      PaymentMethod
+  paidAt      DateTime      @default(now())
+  userId      String
+  order       ServiceOrder  @relation(fields: [orderId], references: [id])
+
+  transaction FinancialTransaction?
+
+  @@index([workshopId, paidAt])
+}
+
+model FinancialTransaction {
+  id          String            @id @default(cuid())
+  workshopId  String
+  kind        TransactionKind
+  description String            @db.VarChar(255)
+  category    String            @db.VarChar(60)
+  amountCents Int
+  date        DateTime          @db.Date
+  method      PaymentMethod
+  status      TransactionStatus
+  customerId  String?
+  orderId     String?
+  /// Único: um pagamento gera exatamente uma receita.
+  paymentId   String?           @unique
+  notes       String            @db.Text
+  userId      String
+  workshop    Workshop          @relation(fields: [workshopId], references: [id])
+  payment     Payment?          @relation(fields: [paymentId], references: [id])
+
+  @@index([workshopId, date])
+  @@index([workshopId, kind, status])
+}

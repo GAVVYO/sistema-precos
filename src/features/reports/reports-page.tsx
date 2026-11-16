@@ -4,7 +4,7 @@ import { FileSpreadsheet, FileText, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { PeriodPicker, usePeriod } from "@/components/ui/period";
-import { Button, Card, CardHeader, cx, EmptyState, Input, PageHeader, Select } from "@/components/ui/primitives";
+import { Button, Card, CardHeader, EmptyState, Input, PageHeader, Select } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { MOVEMENT_TYPE_LABELS, ORDER_STATUS_LABELS } from "@/domain/labels";
 import { exportReportPdf, exportReportXlsx, formatCell } from "@/lib/export";
@@ -59,25 +59,22 @@ export function ReportsPage() {
   return (
     <div className="module-page module-reports">
       <PageHeader title="Relatórios" description="Consulte, filtre e exporte os registros da oficina em PDF ou Excel." />
-      <div className="report-layout grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <Card className="self-start">
-          <CardHeader title="Tipo de relatório" />
-          <div role="group" aria-label="Tipo de relatório" className="p-1.5">
-            {available.map((r) => (
-              <button
-                key={r.kind}
-                type="button"
-                aria-pressed={r.kind === info.kind}
-                onClick={() => { setKind(r.kind); setOption(""); setMechanicId(""); setText(""); }}
-                className={cx("block w-full rounded-md px-3 py-2 text-left", r.kind === info.kind ? "bg-primary-soft" : "hover:bg-slate-50")}
-              >
-                <span className={cx("block text-sm font-semibold", r.kind === info.kind && "text-primary")}>{r.label}</span>
-                <span className="block text-xs text-muted">{r.description}</span>
-              </button>
-            ))}
-          </div>
-        </Card>
-
+      {/* Tipo de relatório em faixa horizontal: a tabela ganha a largura toda (referência: Metabase, Stripe Reports). */}
+      <div role="group" aria-label="Tipo de relatório" className="report-kinds">
+        {available.map((r) => (
+          <button
+            key={r.kind}
+            type="button"
+            aria-pressed={r.kind === info.kind}
+            title={r.description}
+            onClick={() => { setKind(r.kind); setOption(""); setMechanicId(""); setText(""); }}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+      <p className="mb-4 text-sm text-muted">{info.description}</p>
+      <div className="report-layout">
         <Card className="min-w-0">
           <CardHeader
             title={report.title}
@@ -123,7 +120,7 @@ export function ReportsPage() {
             <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum registro encontrado" description="Ajuste o período ou os filtros para ver resultados." />
           ) : (
             <div className="max-h-[calc(100vh-390px)] overflow-auto">
-              <table tabIndex={0} aria-label={report.title} className="data-table">
+              <table tabIndex={0} aria-label={report.title} className="data-table report-table">
                 <thead className="sticky top-0">
                   <tr>{report.columns.map((c) => <th key={c.key} className={c.type === "money" || c.type === "number" ? "num" : undefined}>{c.label}</th>)}</tr>
                 </thead>
@@ -131,7 +128,7 @@ export function ReportsPage() {
                   {report.rows.slice(0, PREVIEW_LIMIT).map((r, i) => (
                     <tr key={i}>
                       {report.columns.map((c) => (
-                        <td key={c.key} className={c.type === "money" || c.type === "number" ? "num" : c.key === "service" || c.key === "parts" || c.key === "reason" || c.key === "description" ? "min-w-48" : "whitespace-nowrap"}>
+                        <td key={c.key} className={c.type === "money" || c.type === "number" ? "num" : c.key === "service" || c.key === "parts" || c.key === "reason" || c.key === "description" ? "min-w-48" : c.type === "date" || c.key === "plate" || c.key === "number" ? "whitespace-nowrap" : undefined}>
                           {formatCell(r[c.key] ?? null, c.type)}
                         </td>
                       ))}

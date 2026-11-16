@@ -35,6 +35,13 @@ Arquivos: `src/components/layout/order-search.tsx`, `src/components/layout/globa
 
 Validação: typecheck, lint, 32 testes e build aprovados. No navegador (1366 × 768 e 820 px): busca com comandos, atalhos, desfazer na agenda e no quadro (inclusive Ctrl+Z), painel arrastado/persistido, tabelas com largura e ordenação persistidas, offline bloqueando arraste e atalhos de escrita, cargo Mecânico sem personalização e segunda oficina com suas cores. Não alterados: `src/services`, `src/domain`, `src/demo`.
 
+## Revisão de uso (densidade e largura)
+
+- **Ordens:** cartão compacto; mover de etapa e abrir detalhes ficam no menu "⋯"; a próxima ação (Iniciar/Concluir/Receber) continua visível.
+- **Estoque:** "Movimentar" visível; "Ver histórico" e "Editar peça" no "⋯".
+- **Tabelas:** ocupam a largura do cartão em Estoque, Financeiro, Clientes e Relatórios.
+- **Relatórios:** tipos em faixa horizontal; tabela de OS cabe inteira em 1366 px.
+
 ## Executar
 
 Requisitos e instalação estão no README. Na demo, não é necessário arquivo .env com credenciais.

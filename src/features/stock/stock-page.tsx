@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowLeftRight, Boxes, Pencil, Plus, Search, SearchX } from "lucide-react";
+import { ArrowLeftRight, Boxes, History, Pencil, Plus, Search, SearchX } from "lucide-react";
 import { useState } from "react";
 import { initialQuery } from "@/lib/query";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
+import { MoreMenu } from "@/components/ui/more-menu";
 import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Segmented, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { SortHeader, TableSort } from "@/components/ui/sort-header";
@@ -201,7 +202,7 @@ export function StockPage() {
               <div className="overflow-x-auto">
                 <table className="data-table">
                   <thead>
-                    <tr><SortHeader field="name" sort={sort} onSort={setSort}>Peça / código</SortHeader><th>Categoria</th><SortHeader field="quantity" sort={sort} onSort={setSort} numeric>Disponível</SortHeader><th className="num">Custo unit.</th><SortHeader field="priceCents" sort={sort} onSort={setSort} numeric>Venda</SortHeader><th>Situação</th><th className="text-right">Ações</th></tr>
+                    <tr><SortHeader field="name" sort={sort} onSort={setSort}>Peça / código</SortHeader><th>Categoria</th><SortHeader field="quantity" sort={sort} onSort={setSort} numeric>Disponível</SortHeader><th className="num">Custo unit.</th><SortHeader field="priceCents" sort={sort} onSort={setSort} numeric>Venda</SortHeader><th>Situação</th><th className="text-right"><span className="sr-only">Ações</span></th></tr>
                   </thead>
                   <tbody>
                     {parts.map((p) => (
@@ -213,13 +214,21 @@ export function StockPage() {
                         <td className="num">{formatBRL(p.priceCents)}</td>
                         <td><SituationBadge part={p} /></td>
                         <td>
-                          <div className="flex justify-end gap-1.5">
-                            <Button size="sm" onClick={() => { setMovePart(p.id); setTab("moves"); }}>Histórico</Button>
-                            {canMove && (
+                          {/* Uma ação principal visível; as demais no "⋯" (referência: Stripe e Shopify Admin). */}
+                          <div className="flex items-center justify-end gap-1">
+                            {canMove ? (
                               <>
-                                <Button size="sm" icon={<ArrowLeftRight className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setMoving(p)}>Movimentar</Button>
-                                <Button size="sm" icon={<Pencil className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setEditing(p)} aria-label={`Editar ${p.name}`}>Editar</Button>
+                                <MoreMenu
+                                  label={`Mais ações de ${p.name}`}
+                                  items={[
+                                    { label: "Ver histórico", icon: <History className="size-4" />, onSelect: () => { setMovePart(p.id); setTab("moves"); } },
+                                    { label: "Editar peça", icon: <Pencil className="size-4" />, disabled: !online, onSelect: () => setEditing(p) },
+                                  ]}
+                                />
+                                <Button size="sm" icon={<ArrowLeftRight className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setMoving(p)} aria-label={`Movimentar ${p.name}`}>Movimentar</Button>
                               </>
+                            ) : (
+                              <Button size="sm" icon={<History className="size-3.5" aria-hidden />} onClick={() => { setMovePart(p.id); setTab("moves"); }}>Histórico</Button>
                             )}
                           </div>
                         </td>

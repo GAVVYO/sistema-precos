@@ -3,11 +3,12 @@
 import {
   DndContext, DragEndEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors,
 } from "@dnd-kit/core";
-import { ClipboardList, GripVertical, Plus, Search, SearchX, User } from "lucide-react";
+import { ArrowRight, ClipboardList, ExternalLink, GripVertical, Plus, Search, SearchX, User } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Button, cx, EmptyState, Input, PageHeader, Select } from "@/components/ui/primitives";
+import { MoreMenu, type MoreMenuItem } from "@/components/ui/more-menu";
 import { ORDER_STATUS_LABELS, ORDER_STATUSES } from "@/domain/labels";
 import type { OrderStatus, ServiceOrder } from "@/domain/types";
 import { addDays, dateOf, formatDate, formatOrderNumber, formatPlate, todayISO } from "@/lib/format";
@@ -32,21 +33,36 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
   const ctx = { workshopId: order.workshopId, userId: user.id };
   const targets = ORDER_STATUSES.filter((s) => s !== order.status && canChangeStatus(db, ctx, order.status, s));
 
+  const customer = customerOf(order.customerId)?.name;
+  const mechanic = userOf(order.mechanicId)?.name.split(" ").slice(0, 2).join(" ") ?? "Sem responsável";
+  const menuItems: MoreMenuItem[] = [
+    { label: "Abrir detalhes", icon: <ExternalLink className="size-4" />, onSelect: () => openOrder(order.id) },
+    ...targets.map((s, i) => ({
+      label: ORDER_STATUS_LABELS[s],
+      group: i === 0 ? "Mover para" : undefined,
+      icon: <ArrowRight className="size-4" />,
+      disabled: !online,
+      onSelect: () => moveOrder(order, s),
+    })),
+  ];
+
+  // Cartão enxuto (referência: Linear/GitHub Projects): identificação, cliente, veículo e
+  // serviço; uma ação principal visível; mover e detalhes no menu "⋯". Clicar no cartão abre a OS.
   return (
     <article
       ref={overlay ? undefined : setNodeRef}
       className={cx(
-        "order-card rounded-md border border-line bg-surface p-3 text-sm",
+        "order-card order-card-compact rounded-md border border-line bg-surface text-sm",
         !overlay && "order-enter",
         isDragging && !overlay && "opacity-40",
         overlay && "rotate-1 shadow-xl",
       )}
     >
-      <div className="flex items-start gap-1.5">
+      <div className="flex items-start gap-1">
         {draggable && (
           <button
             type="button"
-            className="mt-0.5 -ml-1 cursor-grab touch-none rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-ink active:cursor-grabbing"
+            className="-ml-1.5 flex h-6 w-5 shrink-0 cursor-grab touch-none items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-ink active:cursor-grabbing"
             aria-label={`Arrastar ${number}`}
             {...listeners}
             {...attributes}
@@ -54,46 +70,33 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
             <GripVertical className="size-4" aria-hidden />
           </button>
         )}
-        <button type="button" className="min-w-0 flex-1 rounded text-left" aria-label={`Abrir ${number}, ${customerOf(order.customerId)?.name}`} onClick={() => openOrder(order.id)}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="flex flex-wrap items-center gap-1.5">
-              <span className="font-semibold text-primary">{number}</span>
-              <PaymentBadge order={order} />
-            </span>
+        <button type="button" className="min-w-0 flex-1 rounded text-left" aria-label={`Abrir ${number}, ${customer}`} onClick={() => openOrder(order.id)}>
+          <span className="flex items-baseline justify-between gap-2">
+            <span className="font-semibold text-primary">{number}</span>
             <span className="font-semibold tabular-nums">{orderTotalText(totals)}</span>
-          </div>
-          <p className="mt-0.5 truncate font-medium">{customerOf(order.customerId)?.name}</p>
-          <p className="mt-1 truncate text-xs text-muted">
-            {vehicleLabel(vehicle)} · <span className="vehicle-plate">{vehicle ? formatPlate(vehicle.plate) : ""}</span>
-          </p>
-          <p className="mt-1 line-clamp-2 text-sm">{order.description}</p>
+          </span>
+          <span className="mt-0.5 block truncate font-medium">{customer}</span>
+          <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted">
+            <span className="truncate">{vehicleLabel(vehicle)}</span>
+            <span className="vehicle-plate shrink-0">{vehicle ? formatPlate(vehicle.plate) : ""}</span>
+          </span>
+          <span className="mt-1.5 block truncate" title={order.description}>{order.description}</span>
         </button>
       </div>
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-2">
-        <span className="flex min-w-0 items-center gap-1 text-xs text-muted">
+      <div className="mt-2 flex items-center gap-2">
+        <PaymentBadge order={order} />
+        <span className="flex min-w-0 flex-1 items-center gap-1 text-xs text-muted">
           <User className="size-3.5 shrink-0" aria-hidden />
-          <span className="truncate">{userOf(order.mechanicId)?.name.split(" ").slice(0, 2).join(" ") ?? "Sem responsável"}</span>
+          <span className="truncate">{mechanic}</span>
           <span className="shrink-0">· {formatDate(order.openedAt).slice(0, 5)}</span>
         </span>
-        {!overlay && targets.length > 0 && (
-          <select
-            className="h-9 w-[130px] shrink-0 rounded border border-transparent bg-slate-50 px-2 text-sm font-medium text-primary hover:border-line disabled:opacity-50"
-            value=""
-            disabled={!online}
-            aria-label={`Mover ${number} para outra coluna`}
-            onChange={(e) => {
-              const next = e.target.value as OrderStatus;
-              if (next) moveOrder(order, next);
-            }}
-          >
-            <option value="">Mover para…</option>
-            {targets.map((s) => (
-              <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>
-            ))}
-          </select>
-        )}
       </div>
-      {!overlay && <div className="order-card-actions"><button type="button" className="text-sm font-semibold text-primary hover:underline" onClick={() => openOrder(order.id)}>Ver detalhes</button><QuickOrderAction order={order} /></div>}
+      {!overlay && (
+        <div className="order-card-actions">
+          <MoreMenu label={`Mais ações de ${number}`} items={menuItems} />
+          <QuickOrderAction order={order} />
+        </div>
+      )}
     </article>
   );
 }
@@ -182,7 +185,7 @@ export function OrdersPage() {
     <>
       <PageHeader
         title="Ordens de serviço"
-        description="Acompanhe cada serviço e execute a próxima etapa direto no cartão."
+        description="Arraste o cartão para mudar a etapa ou use o botão de ação. No ⋯ estão as outras opções."
         actions={
           <>
             {cancelled.length > 0 && (

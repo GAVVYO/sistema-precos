@@ -430,9 +430,12 @@ html[data-text-size="larger"] { font-size: 150%; }
 .ui-control { min-height: 2.75rem; height: auto; max-width: 100%; min-width: 0; padding-block: .5rem; }
 .app-topbar .ui-button { min-height: 2.75rem; height: auto; }
 .dialog-close, .reading-trigger, .nav-move-handle { min-width: 44px; min-height: 44px; }
-.data-table { display: block; overflow-x: auto; }
+/* A tabela ocupa a largura do cartão; quem rola na horizontal é o contêiner (UI UX Pro Max, regra 71). */
+.data-table { display: table; width: 100%; }
+:where(div, section):has(> .data-table) { overflow-x: auto; }
 .data-table th, .data-table td { overflow-wrap: normal; }
-.data-table:not(.service-table) th, .data-table:not(.service-table) td { min-width: 8rem; }
+/* Largura mínima das colunas só com texto ampliado, para não espremer o conteúdo. */
+html[data-text-size]:not([data-text-size="default"]) .data-table:not(.service-table):not(.data-table-sized) :is(th, td) { min-width: 8rem; }
 .data-table .ui-button { overflow-wrap: normal; white-space: nowrap; }
 .card-heading > div { max-width: 100%; }
 .card-heading .whitespace-nowrap { white-space: normal; }
@@ -516,7 +519,30 @@ html:not([data-text-size="default"])[data-text-size] .truncate { white-space: no
 }
 
 /* DataTable controla a própria largura (colunas redimensionáveis) e já rola no contêiner. */
-.data-table.data-table-sized { display: table; }
-.data-table.data-table-sized th, .data-table.data-table-sized td { min-width: 0; }
 /* Abaixo de 900 px os blocos do Início ficam empilhados: personalizar não se aplica. */
 @media (max-width: 899px) { .widget-customize { display: none; } }
+
+/* Cartão de OS compacto (Kanban). */
+.order-card.order-card-compact { padding: 12px 14px; }
+.order-card-compact .order-card-actions { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); flex-wrap: nowrap; }
+.order-card-compact .order-card-actions .ui-button { min-height: 2.25rem; }
+
+/* Menu "⋯" (Popover API: fica acima de colunas e tabelas com rolagem). */
+.more-menu-trigger { display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.25rem; flex-shrink: 0; border-radius: 7px; color: var(--muted); border: 1px solid transparent; }
+.more-menu-trigger:hover, .more-menu-trigger:focus-visible { background: var(--bg); color: var(--primary); border-color: var(--border); }
+.more-menu { position: fixed; inset: auto; margin: 0; min-width: 220px; max-width: calc(100vw - 16px); padding: 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); box-shadow: 0 12px 36px rgb(18 32 53 / 20%); }
+.more-menu-group { padding: 8px 10px 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.more-menu-item { display: flex; width: 100%; align-items: center; gap: 10px; min-height: 2.5rem; padding: 8px 10px; border-radius: 7px; font-size: 14px; text-align: left; }
+.more-menu-item:hover:not(:disabled), .more-menu-item:focus-visible { background: var(--color-primary-soft); color: var(--primary); outline: none; }
+.more-menu-item:disabled { opacity: .5; cursor: not-allowed; }
+.more-menu-item.is-danger { color: var(--danger); }
+.more-menu-icon { display: inline-flex; color: var(--muted); }
+
+/* Relatórios: tipos em faixa horizontal e tabela densa com primeira coluna fixa ao rolar. */
+.report-kinds { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.report-kinds button { min-height: 2.5rem; padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font-size: 14px; font-weight: 600; color: var(--text); }
+.report-kinds button:hover { border-color: var(--primary); color: var(--primary); }
+.report-kinds button[aria-pressed="true"] { background: var(--color-primary-soft); border-color: var(--primary); color: var(--primary); }
+.report-table th, .report-table td { padding: 10px 12px; }
+.report-table :is(th, td):first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: 1px 0 0 var(--border); }
+.report-table th:first-child { background: #f8fafc; z-index: 2; }

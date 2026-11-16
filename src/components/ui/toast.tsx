@@ -80,7 +80,7 @@ export function Toaster() {
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
           )}
           <span className="flex-1">{t.message}</span>
-          <button type="button" onClick={() => dismiss(t.id)} aria-label="Dispensar aviso" className="text-muted hover:text-ink">
+          <button type="button" onClick={() => dismiss(t.id)} aria-label="Dispensar aviso" className="inline-flex size-8 shrink-0 items-center justify-center rounded text-muted hover:text-ink">
             <X className="size-3.5" aria-hidden />
           </button>
         </div>

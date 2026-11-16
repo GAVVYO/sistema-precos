@@ -21,11 +21,11 @@ function ColorField({ label, value, onChange, presets }: { label: string; value:
   return (
     <Field label={label}>
       {(p) => (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <input {...p} type="color" value={value} onChange={(e) => onChange(e.target.value.toUpperCase())} className="h-9 w-12 cursor-pointer rounded-md border border-line bg-surface p-1" />
           <span className="font-mono text-xs text-muted">{value}</span>
           {presets?.map((c) => (
-            <button key={c} type="button" aria-label={`Usar a cor ${c}`} aria-pressed={c === value} onClick={() => onChange(c)} className="size-6 rounded-full border-2 border-white ring-1 ring-line aria-pressed:ring-2 aria-pressed:ring-ink" style={{ background: c }} />
+            <button key={c} type="button" aria-label={`Usar a cor ${c}`} aria-pressed={c === value} onClick={() => onChange(c)} className="size-11 shrink-0 rounded-full border-2 border-white ring-1 ring-line aria-pressed:ring-2 aria-pressed:ring-ink" style={{ background: c }} />
           ))}
         </div>
       )}
@@ -64,13 +64,13 @@ function WorkshopSettingsForm() {
       <Card>
         <CardHeader title="Identidade da oficina" subtitle="Aparece no cabeçalho, nos PDFs e nas mensagens de WhatsApp." />
         <div className="space-y-4 p-4">
-          <div className="grid grid-cols-5 gap-3">
-            <Field label="Nome da oficina" className="col-span-3">{(p) => <Input {...p} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />}</Field>
-            <Field label="Telefone" optional className="col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />}</Field>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+            <Field label="Nome da oficina" className="sm:col-span-3">{(p) => <Input {...p} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />}</Field>
+            <Field label="Telefone" optional className="sm:col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />}</Field>
           </div>
           <div>
             <p className="mb-1 text-xs font-medium">Logotipo</p>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <div className="flex size-14 items-center justify-center rounded-md border border-line bg-slate-50">
                 {logo ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -123,7 +123,7 @@ function WorkshopSettingsForm() {
         </ul>
       </Card>
 
-      <div className="flex items-center gap-3 lg:col-span-2">
+      <div className="flex flex-wrap items-center gap-3 lg:col-span-2">
         <Button variant="primary" disabled={!online} onClick={save}>Salvar configurações</Button>
         <span className="text-xs text-muted">As alterações valem apenas para esta oficina.</span>
       </div>

@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Button, cx, EmptyState } from "@/components/ui/primitives";
@@ -17,7 +17,9 @@ import { demoStore } from "@/demo/store";
 import { ModuleInfo, MODULES, ROLE_LABELS } from "@/domain/permissions";
 import type { ModuleKey } from "@/domain/types";
 import { formatDateTime, todayISO } from "@/lib/format";
-import { contrastOn } from "@/lib/theme";
+import { AccessibilityControls } from "@/components/accessibility/accessibility-controls";
+import { useAccessibility } from "@/components/accessibility/accessibility-provider";
+import { contrastOn, readableAccent } from "@/lib/theme";
 import { listReceivables } from "@/services/finance";
 import { partSituation } from "@/services/stock";
 
@@ -43,12 +45,14 @@ function Menu({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const id = useId();
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
       if (!ref.current?.contains(e.target as Node)) setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); trigger.current?.focus(); } };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     return () => {
@@ -57,11 +61,12 @@ function Menu({
     };
   }, [open]);
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
       <button
         type="button"
         aria-label={label}
-        aria-haspopup="menu"
+        ref={trigger}
+        aria-controls={open ? id : undefined}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={buttonClassName}
@@ -70,7 +75,9 @@ function Menu({
       </button>
       {open && (
         <div
-          role="menu"
+          id={id}
+          role="region"
+          aria-label={label}
           className={cx(
             "absolute top-full z-40 mt-1.5 min-w-56 rounded-md border border-line bg-surface py-1 text-ink shadow-lg",
             align === "right" ? "right-0" : "left-0",
@@ -104,7 +111,7 @@ function DemoBar() {
       </span>
       <label className="flex items-center gap-1.5">
         Oficina
-        <select className={selectClass} value={view.workshop?.id} onChange={(e) => switchWorkshop(e.target.value)}>
+        <select aria-label="Oficina" className={selectClass} value={view.workshop?.id} onChange={(e) => switchWorkshop(e.target.value)}>
           {db.workshops.map((w) => (
             <option key={w.id} value={w.id}>
               {db.settings.find((s) => s.workshopId === w.id)?.displayName ?? w.name}
@@ -115,6 +122,7 @@ function DemoBar() {
       <label className="flex items-center gap-1.5">
         Entrar como
         <select
+          aria-label="Entrar como"
           className={selectClass}
           value={user.id}
           onChange={(e) => {
@@ -211,7 +219,7 @@ function Notifications() {
           <p className="px-3 py-3 text-sm text-muted">Nenhuma notificação no momento.</p>
         ) : (
           items.map((it) => (
-            <Link key={it.href} href={it.href} role="menuitem" onClick={close} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50">
+            <Link key={it.href} href={it.href} onClick={close} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50">
               {it.icon}
               {it.text}
             </Link>
@@ -260,6 +268,7 @@ function Header() {
           <span className={cx("size-2 rounded-full", conn.dot)} aria-hidden />
           {conn.label}
         </span>
+        <AccessibilityControls />
         <Notifications />
         <Menu
           label="Menu do usuário"
@@ -286,7 +295,6 @@ function Header() {
               </div>
               <button
                 type="button"
-                role="menuitem"
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
                 onClick={() => {
                   close();
@@ -326,18 +334,22 @@ function ConnectionBanner() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { settings } = useApp();
+  const { preferences } = useAccessibility();
   const pathname = usePathname();
+  const main = useRef<HTMLElement>(null);
+
+  useEffect(() => { main.current?.focus({ preventScroll: true }); }, [pathname]);
 
   useEffect(() => {
     const root = document.documentElement.style;
-    root.setProperty("--primary", settings.primaryColor);
-    root.setProperty("--primary-fg", contrastOn(settings.primaryColor));
+    root.setProperty("--primary", readableAccent(settings.primaryColor, preferences.contrast ? 7 : 5.5));
+    root.setProperty("--primary-fg", contrastOn(readableAccent(settings.primaryColor, preferences.contrast ? 7 : 5.5)));
     root.setProperty("--secondary", settings.secondaryColor);
     root.setProperty("--secondary-fg", contrastOn(settings.secondaryColor));
     return () => {
       for (const v of ["--primary", "--primary-fg", "--secondary", "--secondary-fg"]) root.removeProperty(v);
     };
-  }, [settings.primaryColor, settings.secondaryColor]);
+  }, [settings.primaryColor, settings.secondaryColor, preferences.contrast]);
 
   useEffect(() => {
     const on = () => demoStore.setOnline(true);
@@ -352,13 +364,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2">
+      <a href="#conteudo" className="skip-link">
         Pular para o conteúdo
       </a>
       <DemoBar />
       <Header />
       <ConnectionBanner />
-      <main id="conteudo" className="app-main mx-auto w-full max-w-[1600px] flex-1 px-6 py-6">
+      <main ref={main} tabIndex={-1} id="conteudo" className="app-main mx-auto w-full max-w-[1600px] flex-1 px-6 py-6">
         <div key={pathname} className="page-enter">{children}</div>
       </main>
     </div>

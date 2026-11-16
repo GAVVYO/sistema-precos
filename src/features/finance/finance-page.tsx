@@ -8,6 +8,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { Period, PeriodPicker, usePeriod } from "@/components/ui/period";
 import { Badge, Button, Card, CardHeader, EmptyState, Field, Input, PageHeader, Segmented, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
 import { useReducedMotion } from "@/components/ui/use-reduced-motion";
+import { useAccessibility } from "@/components/accessibility/accessibility-provider";
 import { toast } from "@/components/ui/toast";
 import { EXPENSE_CATEGORIES, PAYMENT_METHOD_LABELS } from "@/domain/labels";
 import type { FinancialTransaction, PaymentMethod } from "@/domain/types";
@@ -21,6 +22,8 @@ const SERIES = { received: "#2563EB", expenses: "#D97706" };
 
 function CashChart({ period, transactions }: { period: Period; transactions: FinancialTransaction[] }) {
   const reducedMotion = useReducedMotion();
+  const { preferences } = useAccessibility();
+  const textScale = preferences.textSize === "larger" ? 1.5 : preferences.textSize === "large" ? 1.25 : 1;
   const [grouping, setGrouping] = useState<"day" | "week">("week");
   const data = useMemo(() => {
     const to = period.to > todayISO() ? todayISO() : period.to;
@@ -50,20 +53,27 @@ function CashChart({ period, transactions }: { period: Period; transactions: Fin
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} barGap={2} barCategoryGap="25%">
           <CartesianGrid vertical={false} stroke="#E2E8F0" />
-          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748B" }} tickLine={false} axisLine={{ stroke: "#E2E8F0" }} interval="preserveStartEnd" minTickGap={12} />
-          <YAxis tick={{ fontSize: 11, fill: "#64748B" }} tickLine={false} axisLine={false} width={64} tickFormatter={(v: number) => `R$ ${v.toLocaleString("pt-BR")}`} />
+          <XAxis dataKey="label" tick={{ fontSize: ".875rem", fill: "var(--muted)" }} tickLine={false} axisLine={{ stroke: "#E2E8F0" }} interval="preserveStartEnd" minTickGap={12} />
+          <YAxis tick={{ fontSize: ".875rem", fill: "var(--muted)" }} tickLine={false} axisLine={false} width={Math.round(88 * textScale)} tickFormatter={(v: number) => `R$ ${v.toLocaleString("pt-BR")}`} />
           <Tooltip
             cursor={{ fill: "#F1F5F9" }}
             formatter={(value, name) => [brl(Number(value)), name]}
-            contentStyle={{ fontSize: 12, borderRadius: 6, borderColor: "#E2E8F0", color: "#172033" }}
+            contentStyle={{ fontSize: ".875rem", borderRadius: 6, borderColor: "#E2E8F0", color: "#172033" }}
             itemStyle={{ color: "#172033" }}
           />
-          <Legend iconType="square" iconSize={10} wrapperStyle={{ fontSize: 12 }} formatter={(v) => <span style={{ color: "#172033" }}>{v}</span>} />
+          <Legend iconType="square" iconSize={10} wrapperStyle={{ fontSize: ".875rem" }} formatter={(v) => <span style={{ color: "#172033" }}>{v}</span>} />
           <Bar dataKey="received" name="Receitas recebidas" fill={SERIES.received} radius={[4, 4, 0, 0]} maxBarSize={grouping === "week" ? 52 : 22} isAnimationActive={!reducedMotion} animationDuration={360} animationEasing="ease-out" />
           <Bar dataKey="expenses" name="Despesas pagas" fill={SERIES.expenses} radius={[4, 4, 0, 0]} maxBarSize={grouping === "week" ? 52 : 22} isAnimationActive={!reducedMotion} animationDuration={360} animationEasing="ease-out" />
         </BarChart>
       </ResponsiveContainer>
       </div>
+      <details className="border-t border-line p-4">
+        <summary className="rounded py-2 text-sm font-semibold text-primary">Ver valores do gráfico em tabela</summary>
+        <table tabIndex={0} aria-label="Valores do fluxo de caixa" className="data-table mt-3">
+          <thead><tr><th scope="col">Período</th><th scope="col">Receitas recebidas</th><th scope="col">Despesas pagas</th></tr></thead>
+          <tbody>{data.map(bucket => <tr key={bucket.label}><th scope="row">{bucket.label}</th><td>{brl(bucket.received)}</td><td>{brl(bucket.expenses)}</td></tr>)}</tbody>
+        </table>
+      </details>
     </div>
   );
 }

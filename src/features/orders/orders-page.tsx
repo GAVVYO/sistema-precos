@@ -53,8 +53,8 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
           </button>
         )}
         <button type="button" className="min-w-0 flex-1 rounded text-left" aria-label={`Abrir ${number}, ${customerOf(order.customerId)?.name}`} onClick={() => openOrder(order.id)}>
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="flex flex-wrap items-center gap-1.5">
               <span className="font-semibold text-primary">{number}</span>
               <PaymentBadge order={order} />
             </span>
@@ -194,7 +194,7 @@ export function OrdersPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-line bg-surface p-3">
+      <div className="order-filters mb-4 flex flex-wrap items-center gap-2 rounded-md border border-line bg-surface p-3">
         <div className="relative w-80">
           <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-slate-400" aria-hidden />
           <Input className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por número, cliente, placa ou veículo" aria-label="Buscar ordens de serviço" />

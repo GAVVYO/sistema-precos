@@ -27,16 +27,34 @@ export function Dialog({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const subtitleId = useId();
 
   useEffect(() => {
     const el = ref.current;
+    const previous = document.activeElement;
     if (el && !el.open) el.showModal();
+    return () => {
+      el?.close();
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus({ preventScroll: true });
+    };
   }, []);
 
   return (
     <dialog
       ref={ref}
       aria-labelledby={titleId}
+      aria-describedby={subtitle ? subtitleId : undefined}
+      onKeyDown={event => {
+        // Mantém o ciclo dentro da janela inclusive em navegadores que enviam
+        // o foco ao chrome do navegador no fim da sequência nativa.
+        if (event.key !== "Tab") return;
+        const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+        )).filter(item => item.tabIndex >= 0 && item.getClientRects().length > 0);
+        const first = items[0], last = items[items.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
@@ -50,13 +68,13 @@ export function Dialog({
       <header className="flex items-start justify-between gap-4 border-b border-line px-6 py-5">
         <div className="min-w-0">
           <h2 id={titleId} className="text-base font-semibold break-words">{title}</h2>
-          {subtitle && <div className="mt-0.5 text-xs text-muted">{subtitle}</div>}
+          {subtitle && <div id={subtitleId} className="mt-0.5 text-sm text-muted">{subtitle}</div>}
         </div>
         <button
           type="button"
           onClick={onClose}
           aria-label="Fechar"
-          className="rounded p-1 text-muted hover:bg-slate-100 hover:text-ink"
+          className="dialog-close inline-flex size-11 shrink-0 items-center justify-center rounded text-muted hover:bg-slate-100 hover:text-ink"
         >
           <X className="size-4" aria-hidden />
         </button>

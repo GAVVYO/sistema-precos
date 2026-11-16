@@ -10,6 +10,7 @@ import {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
   useId,
+  useEffect,
 } from "react";
 
 export function cx(...parts: (string | false | null | undefined)[]): string {
@@ -148,7 +149,7 @@ export function CardHeader({
         <h2 className="text-sm font-semibold text-ink">{title}</h2>
         {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
       </div>
-      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+      {actions && <div className="flex max-w-full flex-wrap items-center gap-2">{actions}</div>}
     </header>
   );
 }
@@ -162,10 +163,11 @@ export function PageHeader({
   description?: string;
   actions?: ReactNode;
 }) {
+  useEffect(() => { document.title = `${title} · GAVYO Auto`; }, [title]);
   return (
     <div className="page-heading mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-[28px] leading-tight font-bold tracking-tight text-ink">{title}</h1>
+        <h1 className="text-[1.75rem] leading-tight font-bold tracking-tight text-ink">{title}</h1>
         {description && <p className="mt-1.5 text-sm text-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -258,7 +260,7 @@ export function Tabs<T extends string>({
   label: string;
 }) {
   return (
-    <div role="group" aria-label={label} className="flex gap-1 border-b border-line">
+    <div role="group" aria-label={label} className="flex flex-wrap gap-1 border-b border-line">
       {tabs.map((t) => (
         <button
           key={t.value}
@@ -293,7 +295,7 @@ export function Segmented<T extends string>({
   label: string;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex rounded-md border border-line bg-surface p-0.5">
+    <div role="group" aria-label={label} className="inline-flex max-w-full flex-wrap rounded-md border border-line bg-surface p-0.5">
       {options.map((o) => (
         <button
           key={o.value}
@@ -301,7 +303,7 @@ export function Segmented<T extends string>({
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
           className={cx(
-            "h-9 rounded px-3 text-sm font-semibold",
+            "min-h-11 rounded px-3 py-2 text-sm font-semibold",
             value === o.value ? "bg-primary text-primary-fg" : "text-muted hover:text-ink",
           )}
         >

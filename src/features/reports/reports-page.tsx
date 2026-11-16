@@ -62,13 +62,12 @@ export function ReportsPage() {
       <div className="report-layout grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
         <Card className="self-start">
           <CardHeader title="Tipo de relatório" />
-          <div role="radiogroup" aria-label="Tipo de relatório" className="p-1.5">
+          <div role="group" aria-label="Tipo de relatório" className="p-1.5">
             {available.map((r) => (
               <button
                 key={r.kind}
                 type="button"
-                role="radio"
-                aria-checked={r.kind === info.kind}
+                aria-pressed={r.kind === info.kind}
                 onClick={() => { setKind(r.kind); setOption(""); setMechanicId(""); setText(""); }}
                 className={cx("block w-full rounded-md px-3 py-2 text-left", r.kind === info.kind ? "bg-primary-soft" : "hover:bg-slate-50")}
               >
@@ -124,7 +123,7 @@ export function ReportsPage() {
             <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum registro encontrado" description="Ajuste o período ou os filtros para ver resultados." />
           ) : (
             <div className="max-h-[calc(100vh-390px)] overflow-auto">
-              <table className="data-table">
+              <table tabIndex={0} aria-label={report.title} className="data-table">
                 <thead className="sticky top-0">
                   <tr>{report.columns.map((c) => <th key={c.key} className={c.type === "money" || c.type === "number" ? "num" : undefined}>{c.label}</th>)}</tr>
                 </thead>

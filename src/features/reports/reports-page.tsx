@@ -11,7 +11,7 @@ import { exportReportPdf, exportReportXlsx, formatCell } from "@/lib/export";
 import { buildReport, ReportKind, REPORTS } from "@/services/reports";
 
 const OPTIONS: Partial<Record<ReportKind, { label: string; all: string; items: [string, string][] }>> = {
-  orders: { label: "Status", all: "Todos os status", items: [...Object.entries(ORDER_STATUS_LABELS), ["cancelled", "Cancelada"]] as [string, string][] },
+  orders: { label: "Etapa", all: "Todas as etapas", items: [...Object.entries(ORDER_STATUS_LABELS), ["cancelled", "Cancelado"]] as [string, string][] },
   finance: { label: "Tipo", all: "Receitas e despesas", items: [["income", "Somente receitas"], ["expense", "Somente despesas"]] },
   stock: { label: "Situação", all: "Todas as situações", items: [["ok", "Normal"], ["low", "Estoque baixo"], ["out", "Sem estoque"]] },
   stock_moves: { label: "Tipo", all: "Todos os tipos", items: Object.entries(MOVEMENT_TYPE_LABELS) },

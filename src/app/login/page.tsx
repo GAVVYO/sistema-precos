@@ -13,7 +13,7 @@ import { ROLE_LABELS } from "@/domain/permissions";
 
 const ROLE_HINTS = {
   owner: "Acesso geral, usuários e configurações",
-  receptionist: "Agenda, clientes e abertura de OS",
+  receptionist: "Agenda, clientes e abertura de serviços",
   mechanic: "Serviços atribuídos, status e peças",
   financial: "Receitas, despesas e relatórios",
 };

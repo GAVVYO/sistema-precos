@@ -110,7 +110,7 @@ export const demoStore = {
   mutate<T>(fn: (db: Database, ctx: Ctx) => T): T {
     const s = this.getState();
     if (s.connection !== "online") {
-      throw new DomainError("offline", "Sem conexão. Alterações ficam bloqueadas até a conexão voltar.");
+      throw new DomainError("offline", "Sem internet. Tente de novo quando a internet voltar.");
     }
     if (!s.session) throw new DomainError("forbidden", "Sessão encerrada. Entre novamente.");
     const draft = structuredClone(s.db);

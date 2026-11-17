@@ -95,19 +95,19 @@ function TransactionDialog({ kind, onClose }: { kind: "income" | "expense"; onCl
     const r =
       kind === "expense"
         ? act((db, ctx) => createExpense(db, ctx, { description, category, amountCents, date, method, notes }), "Despesa registrada.")
-        : act((db, ctx) => createIncome(db, ctx, { description, amountCents, date, method, status, customerId: customerId || null, notes }), "Receita registrada.");
+        : act((db, ctx) => createIncome(db, ctx, { description, amountCents, date, method, status, customerId: customerId || null, notes }), "Entrada registrada.");
     if (r.ok) onClose();
   };
 
   return (
     <Dialog
-      title={kind === "expense" ? "Nova despesa" : "Nova receita avulsa"}
-      subtitle={kind === "income" ? "Para receitas de OS, use “Registrar pagamento” na própria ordem." : undefined}
+      title={kind === "expense" ? "Nova despesa" : "Entrada sem serviço"}
+      subtitle={kind === "income" ? "Para receber de um serviço, use o botão Receber no próprio serviço." : undefined}
       onClose={onClose}
       footer={
         <>
           <Button onClick={onClose}>Cancelar</Button>
-          <Button variant="primary" disabled={!online} onClick={save}>{kind === "expense" ? "Registrar despesa" : "Registrar receita"}</Button>
+          <Button variant="primary" disabled={!online} onClick={save}>{kind === "expense" ? "Registrar despesa" : "Registrar entrada"}</Button>
         </>
       }
     >
@@ -202,7 +202,7 @@ export function FinancePage() {
         actions={
           <>
             <PeriodPicker value={period} onChange={setPeriod} />
-            {can("finance.payment") && <Button icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => setDialog("income")}>Nova receita</Button>}
+            {can("finance.payment") && <Button icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => setDialog("income")}>Entrada sem serviço</Button>}
             {can("finance.expense") && <Button variant="primary" icon={<Minus className="size-4" aria-hidden />} disabled={!online} onClick={() => setDialog("expense")}>Nova despesa</Button>}
           </>
         }
@@ -212,7 +212,7 @@ export function FinancePage() {
         <Stat label="Receitas recebidas" value={formatBRL(summary.receivedCents)} tone="success" hint="Entradas de caixa no período" />
         <Stat label="Despesas pagas" value={formatBRL(summary.expensesCents)} tone="danger" hint="Saídas de caixa no período" />
         <Stat label="Contas a receber" value={formatBRL(summary.receivableCents)} tone={receivables.length ? "warning" : "neutral"} hint={`${receivables.length} em aberto hoje`} />
-        <Stat label="Resultado de caixa" value={formatBRL(summary.cashResultCents)} tone={summary.cashResultCents < 0 ? "danger" : "neutral"} hint="Recebido − despesas pagas" />
+        <Stat label="Sobrou no caixa" value={formatBRL(summary.cashResultCents)} tone={summary.cashResultCents < 0 ? "danger" : "neutral"} hint="Recebido − despesas pagas" />
       </div>
 
       <Card className="mb-4">
@@ -221,13 +221,13 @@ export function FinancePage() {
           subtitle={`${formatDate(period.from)} a ${formatDate(period.to)}`}
           actions={
             <span className="text-xs text-muted">
-              Faturamento (OS concluídas, pagas ou não): <strong className="text-ink">{formatBRL(summary.billedCents)}</strong>
+              Valor dos serviços prontos (pagos ou não): <strong className="text-ink">{formatBRL(summary.billedCents)}</strong>
             </span>
           }
         />
         <CashChart period={period} transactions={view.transactions} />
         <p className="border-t border-line px-4 py-2 text-xs text-muted">
-          Resultado de caixa não é lucro contábil: considera apenas valores efetivamente recebidos e pagos no período. O custo das peças entra pelas despesas de compra, não é descontado novamente das receitas.
+          “Sobrou no caixa” não é lucro contábil: considera apenas valores efetivamente recebidos e pagos no período. O custo das peças entra pelas despesas de compra, não é descontado novamente das receitas.
         </p>
       </Card>
 
@@ -251,7 +251,7 @@ export function FinancePage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="data-table">
-                <thead><tr><th>Data</th><th>Cliente</th><th>OS</th><th>Descrição</th><th>Forma</th><th>Situação</th><th className="num">Valor</th></tr></thead>
+                <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th>Descrição</th><th>Forma</th><th>Situação</th><th className="num">Valor</th></tr></thead>
                 <tbody>
                   {incomes.map((t) => {
                     const order = t.orderId ? view.orders.find((o) => o.id === t.orderId) : null;
@@ -297,7 +297,7 @@ export function FinancePage() {
 
         {tab === "receivable" &&
           (receivables.length === 0 ? (
-            <EmptyState icon={<CircleDollarSign className="size-8" aria-hidden />} title="Nada a receber" description="Todos os serviços concluídos estão pagos." />
+            <EmptyState icon={<CircleDollarSign className="size-8" aria-hidden />} title="Nada a receber" description="Todos os serviços prontos já foram pagos." />
           ) : (
             <div className="overflow-x-auto">
               <table className="data-table">

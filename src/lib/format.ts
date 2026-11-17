@@ -161,5 +161,5 @@ export function formatPlate(plate: string): string {
 }
 
 export function formatOrderNumber(n: number): string {
-  return `OS-${String(n).padStart(4, "0")}`;
+  return `Serviço nº ${n}`;
 }

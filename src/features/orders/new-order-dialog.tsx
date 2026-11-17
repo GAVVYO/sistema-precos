@@ -115,7 +115,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
     );
     setBusy(false);
     if (result.ok) {
-      toast("success", `${formatOrderNumber(result.value.number)} aberta com sucesso.`);
+      toast("success", `${formatOrderNumber(result.value.number)} aberto com sucesso.`);
       onClose();
       openOrder(result.value.id);
     }
@@ -123,7 +123,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
 
   return (
     <Dialog
-      title="Nova ordem de serviço"
+      title="Novo serviço"
       subtitle={prefill.appointmentId ? "Criada a partir de um agendamento — confira os dados antes de salvar." : "Preencha o essencial; valores e peças podem ser completados depois."}
       size="lg"
       onClose={onClose}
@@ -144,7 +144,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
           </div>
           <Button onClick={onClose}>Cancelar</Button>
           <Button variant="primary" loading={busy} disabled={!online} onClick={submit}>
-            Abrir OS
+            Abrir serviço
           </Button>
         </>
       }
@@ -285,7 +285,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
 
         <div className="lg:col-span-2">
           <SectionTitle>Peças</SectionTitle>
-          <p className="mb-2 text-xs text-muted">As peças adicionadas são baixadas do estoque assim que a OS for salva.</p>
+          <p className="mb-2 text-xs text-muted">As peças adicionadas são baixadas do estoque assim que o serviço for salvo.</p>
           <PartsEditor drafts={drafts} onChange={setDrafts} />
         </div>
         <button type="submit" className="hidden" aria-hidden tabIndex={-1} />

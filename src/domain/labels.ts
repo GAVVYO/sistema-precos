@@ -8,7 +8,7 @@ import type {
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   waiting: "Aguardando",
   in_progress: "Em andamento",
-  done: "Concluído",
+  done: "Pronto",
 };
 
 export const ORDER_STATUSES: OrderStatus[] = ["waiting", "in_progress", "done"];
@@ -26,7 +26,7 @@ export const MOVEMENT_TYPE_LABELS: Record<StockMovementType, string> = {
   in: "Entrada",
   out: "Saída manual",
   adjust: "Ajuste",
-  order_out: "Saída por OS",
+  order_out: "Saída por serviço",
   return: "Estorno / devolução",
 };
 

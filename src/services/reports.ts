@@ -18,12 +18,12 @@ export interface ReportInfo {
 }
 
 export const REPORTS: ReportInfo[] = [
-  { kind: "orders", label: "Ordens de serviço", description: "OS abertas no período, com status, pagamento e valores.", permission: "os.view", usesPeriod: true },
-  { kind: "finance", label: "Movimentações financeiras", description: "Receitas e despesas do período e resultado de caixa.", permission: "finance.view", usesPeriod: true },
-  { kind: "receivables", label: "Contas a receber", description: "Valores em aberto hoje, por cliente e OS.", permission: "finance.view", usesPeriod: false },
-  { kind: "stock", label: "Posição de estoque", description: "Quantidades atuais, mínimos e valor em estoque.", permission: "stock.view", usesPeriod: false },
-  { kind: "stock_moves", label: "Movimentações de estoque", description: "Entradas, saídas, ajustes e devoluções do período.", permission: "stock.view", usesPeriod: true },
-  { kind: "history", label: "Histórico de serviços", description: "Serviços concluídos no período, por veículo.", permission: "customers.view", usesPeriod: true },
+  { kind: "orders", label: "Serviços", description: "Serviços abertos no período, com etapa, pagamento e valores.", permission: "os.view", usesPeriod: true },
+  { kind: "finance", label: "Dinheiro que entrou e saiu", description: "Entradas e saídas de dinheiro no período e quanto sobrou no caixa.", permission: "finance.view", usesPeriod: true },
+  { kind: "receivables", label: "Contas a receber", description: "Quem ainda falta pagar, por cliente e serviço.", permission: "finance.view", usesPeriod: false },
+  { kind: "stock", label: "Peças em estoque", description: "Quantidades atuais, mínimos e valor em estoque.", permission: "stock.view", usesPeriod: false },
+  { kind: "stock_moves", label: "Histórico de peças", description: "Entradas, saídas, ajustes e devoluções de peças no período.", permission: "stock.view", usesPeriod: true },
+  { kind: "history", label: "Histórico de serviços", description: "Serviços prontos no período, por veículo.", permission: "customers.view", usesPeriod: true },
 ];
 
 export interface ReportFilters {
@@ -65,7 +65,7 @@ export function buildReport(view: WorkshopView, kind: ReportKind, f: ReportFilte
             plate: v ? formatPlate(v.plate) : "",
             service: o.description,
             mechanic: user(o.mechanicId),
-            status: o.cancelledAt ? "Cancelada" : ORDER_STATUS_LABELS[o.status],
+            status: o.cancelledAt ? "Cancelado" : ORDER_STATUS_LABELS[o.status],
             payment: PAYMENT_SITUATION_LABELS[paymentSituation(o, t)],
             labor: t.laborCents,
             parts: t.partsCents,
@@ -74,17 +74,17 @@ export function buildReport(view: WorkshopView, kind: ReportKind, f: ReportFilte
           };
         });
       return {
-        title: "Ordens de serviço",
+        title: "Serviços",
         period,
         columns: [
-          { key: "number", label: "OS", type: "text", width: 10 },
+          { key: "number", label: "Serviço", type: "text", width: 14 },
           { key: "opened", label: "Abertura", type: "date" },
           { key: "customer", label: "Cliente", type: "text" },
           { key: "vehicle", label: "Veículo", type: "text", width: 20 },
           { key: "plate", label: "Placa", type: "text", width: 11 },
-          { key: "service", label: "Serviço", type: "text", width: 38 },
+          { key: "service", label: "Descrição", type: "text", width: 38 },
           { key: "mechanic", label: "Responsável", type: "text", width: 24 },
-          { key: "status", label: "Status", type: "text", width: 14 },
+          { key: "status", label: "Etapa", type: "text", width: 14 },
           { key: "payment", label: "Pagamento", type: "text", width: 20 },
           { key: "labor", label: "Mão de obra", type: "money" },
           { key: "parts", label: "Peças", type: "money" },
@@ -113,7 +113,7 @@ export function buildReport(view: WorkshopView, kind: ReportKind, f: ReportFilte
       const income = sum(rows, "income");
       const expense = sum(rows, "expense");
       return {
-        title: "Movimentações financeiras",
+        title: "Dinheiro que entrou e saiu",
         period,
         columns: [
           { key: "date", label: "Data", type: "date" },
@@ -132,7 +132,7 @@ export function buildReport(view: WorkshopView, kind: ReportKind, f: ReportFilte
         summary: [
           { label: "Receitas recebidas", value: formatBRL(income) },
           { label: "Despesas pagas", value: formatBRL(expense) },
-          { label: "Resultado de caixa (não é lucro contábil)", value: formatBRL(income - expense) },
+          { label: "Sobrou no caixa (não é lucro contábil)", value: formatBRL(income - expense) },
         ],
       };
     }
@@ -176,7 +176,7 @@ export function buildReport(view: WorkshopView, kind: ReportKind, f: ReportFilte
           situation: PART_SITUATION[partSituation(p)],
         }));
       return {
-        title: "Posição de estoque",
+        title: "Peças em estoque",
         columns: [
           { key: "code", label: "Código", type: "text", width: 12 },
           { key: "name", label: "Nome", type: "text", width: 36 },
@@ -207,7 +207,7 @@ export function buildReport(view: WorkshopView, kind: ReportKind, f: ReportFilte
           user: user(m.userId),
         }));
       return {
-        title: "Movimentações de estoque",
+        title: "Histórico de peças",
         period,
         columns: [
           { key: "date", label: "Data", type: "date" },
@@ -215,7 +215,7 @@ export function buildReport(view: WorkshopView, kind: ReportKind, f: ReportFilte
           { key: "part", label: "Peça", type: "text", width: 34 },
           { key: "type", label: "Tipo", type: "text", width: 20 },
           { key: "delta", label: "Quantidade", type: "number", width: 12 },
-          { key: "balance", label: "Saldo após", type: "number", width: 12 },
+          { key: "balance", label: "Ficou com", type: "number", width: 12 },
           { key: "reason", label: "Motivo", type: "text", width: 40 },
           { key: "user", label: "Responsável", type: "text", width: 24 },
         ],
@@ -252,11 +252,11 @@ export function buildReport(view: WorkshopView, kind: ReportKind, f: ReportFilte
         period,
         columns: [
           { key: "date", label: "Conclusão", type: "date" },
-          { key: "number", label: "OS", type: "text", width: 10 },
+          { key: "number", label: "Serviço", type: "text", width: 14 },
           { key: "customer", label: "Cliente", type: "text" },
           { key: "vehicle", label: "Veículo", type: "text", width: 20 },
           { key: "plate", label: "Placa", type: "text", width: 11 },
-          { key: "service", label: "Serviço", type: "text", width: 38 },
+          { key: "service", label: "Descrição", type: "text", width: 38 },
           { key: "parts", label: "Peças", type: "text", width: 44 },
           { key: "mechanic", label: "Responsável", type: "text", width: 24 },
           { key: "total", label: "Valor", type: "money" },

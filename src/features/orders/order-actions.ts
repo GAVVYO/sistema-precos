@@ -28,7 +28,7 @@ export function useOrderActions() {
     const r = act((d, c) => updateOrder(d, c, order.id, details(order, mechanicId)));
     if (!r.ok) return;
     const who = mechanicId ? userOf(mechanicId)?.name.split(" ")[0] : null;
-    toast("success", who ? `${number} atribuída a ${who}.` : `${number} ficou sem responsável.`, {
+    toast("success", who ? `${number} atribuído a ${who}.` : `${number} ficou sem responsável.`, {
       label: "Desfazer",
       run: () => act((d, c) => updateOrder(d, c, order.id, details(order, before)), `${number}: responsável restaurado.`),
     });
@@ -62,7 +62,7 @@ export function useOrderActions() {
   const addPart = (order: ServiceOrder, partId: ID) => {
     const current = itemsOf(order).find((i) => i.partId === partId)?.quantity ?? 0;
     const part = view.parts.find((p) => p.id === partId);
-    setPartQty(order, partId, current + 1, `${part?.name ?? "Peça"} lançada na ${formatOrderNumber(order.number)}. Estoque baixado.`);
+    setPartQty(order, partId, current + 1, `${part?.name ?? "Peça"} lançada no ${formatOrderNumber(order.number)}. Estoque baixado.`);
   };
 
   /**
@@ -78,11 +78,11 @@ export function useOrderActions() {
     }
     if (!moved.length) return;
     const skipped = orders.length - moved.length;
-    toast("success", `${moved.length} ${moved.length === 1 ? "OS movida" : "OS movidas"} para ${ORDER_STATUS_LABELS[status]}${skipped ? ` (${skipped} sem alteração)` : ""}.`, {
+    toast("success", `${moved.length} ${moved.length === 1 ? "serviço movido" : "serviços movidos"} para ${ORDER_STATUS_LABELS[status]}${skipped ? ` (${skipped} sem alteração)` : ""}.`, {
       label: "Desfazer",
       run: () => {
         for (const m of moved) act((d, c) => changeOrderStatus(d, c, m.order.id, m.from));
-        toast("success", "Movimentação desfeita.");
+        toast("success", "Mudança desfeita.");
       },
     });
   };
@@ -95,7 +95,7 @@ export function useOrderActions() {
     }
     if (!changed.length) return;
     const who = mechanicId ? userOf(mechanicId)?.name.split(" ")[0] : null;
-    toast("success", `${changed.length} ${changed.length === 1 ? "OS" : "OS"} ${who ? `atribuída(s) a ${who}` : "sem responsável"}.`, {
+    toast("success", `${changed.length} ${changed.length === 1 ? "serviço" : "serviços"} ${who ? `atribuído(s) a ${who}` : "sem responsável"}.`, {
       label: "Desfazer",
       run: () => {
         for (const o of changed) act((d, c) => updateOrder(d, c, o.id, details(o, o.mechanicId)));

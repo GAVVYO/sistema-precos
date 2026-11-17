@@ -60,7 +60,7 @@ export function OrderSearch() {
 
   // Comandos, clientes e peças só aparecem quando há texto digitado, para não encher o painel.
   const actions = !q ? [] : [
-    can("os.create") && active("orders") && { key: "nova-os", words: "nova os ordem de servico abrir criar", icon: <Plus size={16} />, title: "Nova ordem de serviço", hint: <kbd>N</kbd>, disabled: !online, run: () => openNewOrder() },
+    can("os.create") && active("orders") && { key: "nova-os", words: "novo servico nova os ordem de servico abrir criar", icon: <Plus size={16} />, title: "Novo serviço", hint: <kbd>N</kbd>, disabled: !online, run: () => openNewOrder() },
     can("schedule.manage") && active("schedule") && { key: "novo-agendamento", words: "novo agendamento agenda marcar horario", icon: <CalendarPlus size={16} />, title: "Novo agendamento", disabled: !online, run: () => router.push("/agenda?novo=1") },
     ...modules.map((m) => ({ key: m.key, words: `ir para ${m.label}`, icon: <ArrowRight size={16} />, title: `Ir para ${m.label}`, hint: GO_KEYS[m.href] ? <><kbd>G</kbd><kbd>{GO_KEYS[m.href]}</kbd></> : undefined, disabled: false, run: () => router.push(m.href) })),
   ].filter((a): a is Exclude<typeof a, false> => !!a && norm(a.words).includes(nq)).slice(0, 4);
@@ -71,7 +71,7 @@ export function OrderSearch() {
   return (
     <div className="order-search" ref={root} onBlur={(e) => { if (e.relatedTarget instanceof Element && e.relatedTarget.closest("dialog")) return; if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
       <Search size={18} aria-hidden />
-      <input ref={input} aria-label="Buscar OS, cliente, peça ou comando" aria-controls={open ? id : undefined} value={query} onChange={(e) => { setQuery(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} placeholder="Buscar placa, cliente, OS ou comando" />
+      <input ref={input} aria-label="Buscar placa ou nome do cliente" aria-controls={open ? id : undefined} value={query} onChange={(e) => { setQuery(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} placeholder="Buscar placa ou nome do cliente" />
       {query ? <button type="button" aria-label="Limpar busca global" onClick={() => { setQuery(""); input.current?.focus(); }}><X size={16} aria-hidden /></button> : <kbd>Ctrl K</kbd>}
       {open && <div id={id} className="order-search-results">
         {nothing && <p className="search-empty">Nada encontrado. Busque por outra placa, nome, número, peça ou comando.</p>}
@@ -81,7 +81,7 @@ export function OrderSearch() {
           {actions.map((a) => <CommandRow key={a.key} icon={a.icon} title={a.title} hint={a.hint} disabled={a.disabled} onSelect={() => go(a.run)} />)}
         </>}
 
-        {matches.length > 0 && <p className="search-caption">{q ? "Ordens de serviço" : "Ordens recentes"}</p>}
+        {matches.length > 0 && <p className="search-caption">{q ? "Serviços" : "Serviços recentes"}</p>}
         {matches.map((o) => {
           const v = vehicleOf(o.vehicleId);
           return <div key={o.id} className="search-result">
@@ -107,7 +107,7 @@ export function OrderSearch() {
           {parts.map((p) => <CommandRow key={p.id} icon={<Package size={16} />} title={p.name} detail={`${p.code} · ${p.quantity} em estoque`} onSelect={() => go(() => router.push(`/estoque?q=${encodeURIComponent(p.code)}`))} />)}
         </>}
 
-        <p className="search-shortcuts"><kbd>N</kbd> nova OS · <kbd>G</kbd> + letra abre um módulo · <kbd>Ctrl Z</kbd> desfaz a última movimentação</p>
+        <p className="search-shortcuts"><kbd>N</kbd> novo serviço · <kbd>G</kbd> + letra abre um módulo · <kbd>Ctrl Z</kbd> desfaz a última mudança</p>
       </div>}
     </div>
   );

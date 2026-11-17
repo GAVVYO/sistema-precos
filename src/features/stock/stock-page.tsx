@@ -67,7 +67,7 @@ function PartDialog({ part, onClose }: { part: Part | null; onClose: () => void 
           )}
         </Field>
         {part ? (
-          <Field label="Quantidade atual" className="col-span-3" hint="Altere pelo botão Movimentar, para manter o histórico.">
+          <Field label="Quantidade atual" className="col-span-3" hint="Altere pelo botão Entrada / Saída de peças, para manter o histórico.">
             {(p) => <Input {...p} value={part.quantity} disabled />}
           </Field>
         ) : (
@@ -95,8 +95,8 @@ function MoveDialog({ part, onClose }: { part: Part; onClose: () => void }) {
 
   return (
     <Dialog
-      title={`Movimentar ${part.name}`}
-      subtitle={`${part.code} · saldo atual: ${part.quantity}`}
+      title={`Entrada / Saída: ${part.name}`}
+      subtitle={`${part.code} · tem agora: ${part.quantity}`}
       size="sm"
       onClose={onClose}
       footer={
@@ -106,26 +106,26 @@ function MoveDialog({ part, onClose }: { part: Part; onClose: () => void }) {
             variant="primary"
             disabled={!online || !validQty || (after !== null && after < 0)}
             onClick={() => {
-              const r = act((db, ctx) => moveStock(db, ctx, { partId: part.id, type, quantity: qty, reason }), "Movimentação registrada.");
+              const r = act((db, ctx) => moveStock(db, ctx, { partId: part.id, type, quantity: qty, reason }), "Pronto. Estoque atualizado.");
               if (r.ok) onClose();
             }}
           >
-            Registrar movimentação
+            Salvar
           </Button>
         </>
       }
     >
       <div className="space-y-3">
         <Segmented
-          label="Tipo de movimentação"
+          label="O que aconteceu"
           value={type}
           onChange={setType}
-          options={[{ value: "in", label: "Entrada" }, { value: "out", label: "Saída manual" }, { value: "adjust", label: "Ajuste de saldo" }]}
+          options={[{ value: "in", label: "Chegou peça" }, { value: "out", label: "Saiu peça" }, { value: "adjust", label: "Contei o estoque" }]}
         />
         <Field
-          label={type === "adjust" ? "Quantidade contada (novo saldo)" : "Quantidade"}
-          error={after !== null && after < 0 ? `Saldo insuficiente: há apenas ${part.quantity} em estoque.` : undefined}
-          hint={after !== null ? `Saldo após a movimentação: ${after}` : undefined}
+          label={type === "adjust" ? "Quantas tem agora (contadas)" : "Quantidade"}
+          error={after !== null && after < 0 ? `Não dá: só tem ${part.quantity} em estoque.` : undefined}
+          hint={after !== null ? `Vai ficar com: ${after}` : undefined}
         >
           {(p) => <Input {...p} type="number" min={0} step={1} value={quantity} onChange={(e) => setQuantity(e.target.value)} autoFocus />}
         </Field>
@@ -164,7 +164,7 @@ export function StockPage() {
     <div className="module-page module-stock">
       <PageHeader
         title="Estoque"
-        description="Peças cadastradas, quantidades disponíveis e histórico de movimentações."
+        description="Peças da oficina, quanto tem de cada uma e o que entrou e saiu."
         actions={canMove && <Button variant="primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => setEditing("new")}>Nova peça</Button>}
       />
       <div className="mb-4 grid grid-cols-3 gap-3">
@@ -175,7 +175,7 @@ export function StockPage() {
 
       <Card>
         <div className="px-3 pt-1">
-          <Tabs label="Visões do estoque" value={tab} onChange={setTab} tabs={[{ value: "parts", label: "Peças", count: view.parts.length }, { value: "moves", label: "Movimentações", count: view.stockMovements.length }]} />
+          <Tabs label="Visões do estoque" value={tab} onChange={setTab} tabs={[{ value: "parts", label: "Peças", count: view.parts.length }, { value: "moves", label: "Histórico de peças", count: view.stockMovements.length }]} />
         </div>
 
         {tab === "parts" ? (
@@ -197,7 +197,7 @@ export function StockPage() {
               </Select>
             </div>
             {view.parts.length === 0 ? (
-              <EmptyState icon={<Boxes className="size-8" aria-hidden />} title="Nenhuma peça cadastrada" description="Cadastre as peças que a oficina utiliza para controlar o estoque e usá-las nas OS." action={canMove ? <Button variant="primary" disabled={!online} onClick={() => setEditing("new")}>Nova peça</Button> : undefined} />
+              <EmptyState icon={<Boxes className="size-8" aria-hidden />} title="Nenhuma peça cadastrada" description="Cadastre as peças que a oficina usa para controlar o estoque e lançá-las nos serviços." action={canMove ? <Button variant="primary" disabled={!online} onClick={() => setEditing("new")}>Nova peça</Button> : undefined} />
             ) : parts.length === 0 ? (
               <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhuma peça encontrada" description={filtered ? "Revise a busca ou os filtros aplicados." : undefined} />
             ) : (
@@ -223,12 +223,12 @@ export function StockPage() {
                                 <MoreMenu
                                   label={`Mais ações de ${p.name}`}
                                   items={[
-                                    { label: "Ver histórico", icon: <History className="size-4" />, onSelect: () => { setMovePart(p.id); setTab("moves"); } },
+                                    { label: "Ver histórico da peça", icon: <History className="size-4" />, onSelect: () => { setMovePart(p.id); setTab("moves"); } },
                                     { label: "Editar peça", icon: <Pencil className="size-4" />, disabled: !online, onSelect: () => setEditing(p) },
                                     { label: "Guardar na bandeja", icon: <Inbox className="size-4" />, onSelect: () => tray.add([{ type: "part", id: p.id }]) },
                                   ]}
                                 />
-                                <Button size="sm" icon={<ArrowLeftRight className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setMoving(p)} aria-label={`Movimentar ${p.name}`}>Movimentar</Button>
+                                <Button size="sm" icon={<ArrowLeftRight className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setMoving(p)} aria-label={`Entrada ou saída de ${p.name}`}>Entrada / Saída</Button>
                               </>
                             ) : (
                               <Button size="sm" icon={<History className="size-3.5" aria-hidden />} onClick={() => { setMovePart(p.id); setTab("moves"); }}>Histórico</Button>
@@ -249,15 +249,15 @@ export function StockPage() {
                 <option value="">Todas as peças</option>
                 {[...view.parts].sort((a, b) => a.name.localeCompare(b.name)).map((p) => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}
               </Select>
-              <span className="text-xs text-muted">{moves.length} {moves.length === 1 ? "movimentação" : "movimentações"}</span>
+              <span className="text-xs text-muted">{moves.length} {moves.length === 1 ? "registro" : "registros"}</span>
             </div>
             {moves.length === 0 ? (
-              <EmptyState icon={<ArrowLeftRight className="size-8" aria-hidden />} title="Nenhuma movimentação registrada" />
+              <EmptyState icon={<ArrowLeftRight className="size-8" aria-hidden />} title="Nada registrado ainda" />
             ) : (
               <div className="max-h-[calc(100vh-330px)] overflow-auto">
                 <table className="data-table">
                   <thead className="sticky top-0">
-                    <tr><th>Data</th><th>Peça</th><th>Tipo</th><th className="num">Quantidade</th><th className="num">Saldo após</th><th>Motivo</th><th>Responsável</th></tr>
+                    <tr><th>Data</th><th>Peça</th><th>Tipo</th><th className="num">Quantidade</th><th className="num">Ficou com</th><th>Motivo</th><th>Responsável</th></tr>
                   </thead>
                   <tbody>
                     {moves.map((m) => {
@@ -273,7 +273,7 @@ export function StockPage() {
                             {m.reason}
                             {order && can("os.view") && (
                               <button type="button" className="ml-1.5 text-xs font-semibold text-primary hover:underline" onClick={() => openOrder(order.id)}>
-                                abrir {formatOrderNumber(order.number)}
+                                ver {formatOrderNumber(order.number)}
                               </button>
                             )}
                           </td>

@@ -84,7 +84,7 @@ function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment:
                   openNewOrder({ appointmentId: a.id, customerName: a.customerName, phone: a.phone, plate: a.plate, brand: a.brand, model: a.model, description: a.service, mechanicId: a.mechanicId });
                 }}
               >
-                Converter em OS
+                Chegou: abrir serviço
               </Button>
             )}
             {!readOnly && <Button variant="primary" disabled={!online} onClick={save}>{a ? "Salvar alterações" : "Criar agendamento"}</Button>}
@@ -93,7 +93,7 @@ function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment:
       >
         {readOnly && (
           <p className="mb-3 rounded-md bg-slate-50 px-3 py-2 text-xs text-muted">
-            {order ? `Este agendamento foi convertido na ${formatOrderNumber(order.number)} e não pode mais ser alterado.` : "Agendamentos atendidos ou cancelados ficam disponíveis apenas para consulta."}
+            {order ? `Este agendamento virou o ${formatOrderNumber(order.number)} e não pode mais ser alterado.` : "Agendamentos atendidos ou cancelados ficam disponíveis apenas para consulta."}
           </p>
         )}
         <fieldset disabled={readOnly} className="grid grid-cols-6 gap-3">
@@ -219,7 +219,7 @@ export function SchedulePage() {
             <EmptyState icon={<CalendarDays className="size-8" aria-hidden />} title="Nenhum agendamento neste dia" action={<Button disabled={!online} onClick={() => openNew(cursor)}>Novo agendamento</Button>} />
           ) : (
             <table className="data-table">
-              <thead><tr><th>Horário</th><th>Cliente</th><th>Telefone</th><th>Veículo</th><th>Serviço</th><th>Mecânico</th><th>Status</th></tr></thead>
+              <thead><tr><th>Horário</th><th>Cliente</th><th>Telefone</th><th>Veículo</th><th>Serviço</th><th>Mecânico</th><th>Situação</th></tr></thead>
               <tbody>
                 {dayList.map((a) => (
                   <tr key={a.id} className="cursor-pointer" onClick={() => setOpen(a)}>
@@ -296,7 +296,7 @@ export function SchedulePage() {
             <EmptyState icon={<CalendarDays className="size-8" aria-hidden />} title="Nenhum atendimento futuro" description="Crie um agendamento para organizar os próximos dias." />
           ) : (
             <table className="data-table">
-              <thead><tr><th>Data</th><th>Horário</th><th>Cliente</th><th>Veículo</th><th>Serviço</th><th>Mecânico</th><th>Status</th></tr></thead>
+              <thead><tr><th>Data</th><th>Horário</th><th>Cliente</th><th>Veículo</th><th>Serviço</th><th>Mecânico</th><th>Situação</th></tr></thead>
               <tbody>
                 {upcoming.map((a) => (
                   <tr key={a.id} className="cursor-pointer" onClick={() => setOpen(a)}>

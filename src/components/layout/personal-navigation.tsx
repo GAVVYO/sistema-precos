@@ -10,7 +10,7 @@ import { MoreMenu } from "@/components/ui/more-menu";
 import type { ModuleInfo } from "@/domain/permissions";
 
 /** Rótulos curtos para caber na ilha; o nome completo fica no título e no "Mais". */
-const SHORT: Partial<Record<string, string>> = { orders: "Ordens", customers: "Clientes" };
+const SHORT: Partial<Record<string, string>> = { customers: "Clientes" };
 const VISIBLE = 6;
 
 const icons = { dashboard: LayoutDashboard, orders: ClipboardList, stock: Boxes, finance: CircleDollarSign, schedule: CalendarDays, customers: Users, reports: BarChart3, settings: Settings2 };

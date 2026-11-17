@@ -46,7 +46,7 @@ export function MechanicStrip({ value, onChange }: { value: string; onChange: (v
   const open = view.orders.filter((o) => !o.cancelledAt && o.status !== "done");
   const enabled = online && can("os.edit");
   return (
-    <div className="mech-strip" role="group" aria-label="Responsáveis: clique para filtrar, solte uma OS para atribuir">
+    <div className="mech-strip" role="group" aria-label="Responsáveis: clique para filtrar, solte um serviço para atribuir">
       {mechanics.map((m) => (
         <MechanicChip key={m.id} id={m.id} label={m.name.split(" ").slice(0, 2).join(" ")} count={open.filter((o) => o.mechanicId === m.id).length} active={value === m.id} enabled={enabled} onClick={() => onChange(value === m.id ? "" : m.id)} />
       ))}
@@ -63,7 +63,7 @@ function ShelfPart({ part, onAdd, enabled }: { part: Part; onAdd: () => void; en
   return (
     <li ref={setNodeRef} className={cx("shelf-part", isDragging && "opacity-40")}>
       {enabled && !out && (
-        <button type="button" className="shelf-grip" aria-label={`Arrastar ${part.name} para a OS`} {...attributes} {...listeners}>
+        <button type="button" className="shelf-grip" aria-label={`Arrastar ${part.name} para o serviço`} {...attributes} {...listeners}>
           <GripVertical className="size-4" aria-hidden />
         </button>
       )}
@@ -71,7 +71,7 @@ function ShelfPart({ part, onAdd, enabled }: { part: Part; onAdd: () => void; en
         <span className="block truncate font-medium">{part.name}</span>
         <span className={cx("text-xs", out ? "text-danger" : "text-muted")}>{part.code} · {out ? "sem estoque" : `${part.quantity} em estoque`} · {formatBRL(part.priceCents)}</span>
       </span>
-      <Button size="sm" variant="ghost" disabled={!enabled || out} onClick={onAdd} aria-label={`Lançar ${part.name} na OS`} title="Lançar 1 unidade">
+      <Button size="sm" variant="ghost" disabled={!enabled || out} onClick={onAdd} aria-label={`Lançar ${part.name} no serviço`} title="Lançar 1 unidade">
         <Plus className="size-4" aria-hidden />
       </Button>
     </li>
@@ -185,8 +185,8 @@ export function OrderPeek({
           <p className="mt-1 text-sm">{order.description}</p>
         </div>
         <div className="flex shrink-0 items-start gap-0.5">
-          <button type="button" className="peek-icon" onClick={() => onStep(-1)} aria-label="OS anterior" title="OS anterior (↑)"><ChevronUp className="size-4" aria-hidden /></button>
-          <button type="button" className="peek-icon" onClick={() => onStep(1)} aria-label="Próxima OS" title="Próxima OS (↓)"><ChevronDown className="size-4" aria-hidden /></button>
+          <button type="button" className="peek-icon" onClick={() => onStep(-1)} aria-label="Serviço anterior" title="Serviço anterior (↑)"><ChevronUp className="size-4" aria-hidden /></button>
+          <button type="button" className="peek-icon" onClick={() => onStep(1)} aria-label="Próximo serviço" title="Próximo serviço (↓)"><ChevronDown className="size-4" aria-hidden /></button>
           {pip.supported && (
             <button type="button" className="peek-icon" onClick={() => pip.open(order.id)} aria-label="Destacar em mini janela por cima de tudo" title="Mini janela por cima (útil com o WhatsApp aberto)"><PictureInPicture2 className="size-4" aria-hidden /></button>
           )}
@@ -212,7 +212,7 @@ export function OrderPeek({
 
         <section
           ref={setNodeRef}
-          aria-label="Peças da OS"
+          aria-label="Peças do serviço"
           className={cx("peek-parts", draggingPart && canParts && "is-target", isOver && canParts && "is-over")}
         >
           <h3 className="peek-title">Peças utilizadas</h3>
@@ -256,7 +256,7 @@ export function OrderPeek({
             </ul>
           )}
           {draggingPart && canParts && <p className="peek-drop-hint" aria-hidden>Solte para lançar 1 unidade</p>}
-          {!canParts && !locked && doneLock && <p className="peek-empty">OS concluída: corrija peças em “Abrir completo”, informando o motivo.</p>}
+          {!canParts && !locked && doneLock && <p className="peek-empty">Serviço pronto: para corrigir peças, abra o serviço completo e escreva o motivo.</p>}
         </section>
 
         <div className="peek-labor">

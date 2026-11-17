@@ -68,8 +68,8 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
       await exportOrderPdf(
         {
           number,
-          kind: order.status === "done" || order.paymentId ? "Ordem de serviço" : "Orçamento",
-          status: cancelled ? "Cancelada" : ORDER_STATUS_LABELS[order.status],
+          kind: order.status === "done" || order.paymentId ? "Serviço" : "Orçamento",
+          status: cancelled ? "Cancelado" : ORDER_STATUS_LABELS[order.status],
           payment: PAYMENT_SITUATION_LABELS[situation],
           openedAt: formatDateTime(order.openedAt),
           customer: customer?.name ?? "",
@@ -117,7 +117,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
             <span className="flex flex-wrap items-center gap-2">
               <StatusBadge order={order} />
               <PaymentBadge order={order} />
-              <span>Aberta em {formatDateTime(order.openedAt)}</span>
+              <span>Aberto em {formatDateTime(order.openedAt)}</span>
             </span>
           </div>
         }
@@ -127,14 +127,14 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
           <>
             {!cancelled && (
               <label className="mr-auto flex items-center gap-2 text-xs text-muted">
-                Status
+                Etapa
                 <Select
                   className="h-8 w-40"
                   value={order.status}
                   disabled={!online || !ORDER_STATUSES.some((s) => s !== order.status && canChangeStatus(db, ctx, order.status, s))}
                   onChange={(e) => {
                     const next = e.target.value as OrderStatus;
-                    act((d, c) => changeOrderStatus(d, c, order.id, next), `${number} movida para ${ORDER_STATUS_LABELS[next]}.`);
+                    act((d, c) => changeOrderStatus(d, c, order.id, next), `${number} movido para ${ORDER_STATUS_LABELS[next]}.`);
                   }}
                 >
                   {ORDER_STATUSES.map((s) => (
@@ -160,7 +160,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
       >
         {cancelled && (
           <div className="mb-4 rounded-md border border-red-200 bg-danger-soft px-3 py-2 text-sm text-danger">
-            <strong>OS cancelada</strong> em {formatDateTime(order.cancelledAt!)}. Motivo: {order.cancelReason}
+            <strong>Serviço cancelado</strong> em {formatDateTime(order.cancelledAt!)}. Motivo: {order.cancelReason}
           </div>
         )}
 
@@ -194,7 +194,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
                 <div className="space-y-3 rounded-md border border-primary/40 bg-primary-soft/40 p-3">
                   <PartsEditor drafts={drafts} onChange={setDrafts} alreadyUsed={new Map(items.map((i) => [i.partId, i.quantity]))} />
                   {order.status === "done" && (
-                    <Field label="Motivo da correção" hint="Obrigatório: esta OS já foi concluída e a correção ficará registrada no histórico e no estoque.">
+                    <Field label="Motivo da correção" hint="Obrigatório: este serviço já está pronto e a correção ficará registrada no histórico e no estoque.">
                       {(p) => <Textarea {...p} rows={2} value={correction} onChange={(e) => setCorrection(e.target.value)} />}
                     </Field>
                   )}
@@ -205,7 +205,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
                   </div>
                 </div>
               ) : items.length === 0 ? (
-                <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-sm text-muted">Nenhuma peça adicionada a esta OS.</p>
+                <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-sm text-muted">Nenhuma peça lançada neste serviço.</p>
               ) : (
                 <div className="overflow-x-auto rounded-md border border-line">
                   <table className="data-table">
@@ -247,13 +247,13 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
               <dl className="space-y-1 text-sm">
                 <div className="flex justify-between"><dt className="text-muted">Mão de obra</dt><dd>{formatBRLOrPending(totals.laborCents)}</dd></div>
                 <div className="flex justify-between"><dt className="text-muted">Peças</dt><dd>{formatBRL(totals.partsCents)}</dd></div>
-                <div className="flex justify-between border-t border-line pt-1.5 text-base font-semibold"><dt>Total</dt><dd><ReadableText label="total da OS" text={orderTotalText(totals)} /></dd></div>
+                <div className="flex justify-between border-t border-line pt-1.5 text-base font-semibold"><dt>Total</dt><dd><ReadableText label="total do serviço" text={orderTotalText(totals)} /></dd></div>
               </dl>
               <p className="mt-2 text-xs text-muted">
                 {situation === "paid" && payment
                   ? `Pago em ${formatDateTime(payment.paidAt)} via ${PAYMENT_METHOD_LABELS[payment.method]}.`
                   : situation === "pending"
-                    ? order.status === "done" ? "Serviço concluído, aguardando pagamento." : "Pagamento ainda não registrado."
+                    ? order.status === "done" ? "Serviço pronto, falta receber." : "Pagamento ainda não registrado."
                     : situation === "undefined"
                       ? "Informe a mão de obra para liberar o pagamento."
                       : situation === "free" ? "Serviço sem cobrança." : ""}
@@ -272,7 +272,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
               <div className="flex flex-col items-stretch gap-2">
                 <Button icon={<FileDown className="size-4" aria-hidden />} loading={exporting} onClick={downloadPdf}>Gerar PDF</Button>
                 {can("os.cancel") && !locked && order.status !== "done" && (
-                  <Button variant="danger" icon={<Ban className="size-4" aria-hidden />} disabled={!online} onClick={() => setSub("cancel")}>Cancelar OS</Button>
+                  <Button variant="danger" icon={<Ban className="size-4" aria-hidden />} disabled={!online} onClick={() => setSub("cancel")}>Cancelar serviço</Button>
                 )}
               </div>
             </div>

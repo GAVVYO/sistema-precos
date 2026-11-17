@@ -21,7 +21,7 @@ export function useMoveOrder() {
     const undoable = canChangeStatus(db, { workshopId: order.workshopId, userId: user.id }, next, from);
     toast(
       "success",
-      message ?? `${number} movida para ${ORDER_STATUS_LABELS[next]}.`,
+      message ?? `${number} movido para ${ORDER_STATUS_LABELS[next]}.`,
       undoable
         ? { label: "Desfazer", run: () => act((d, c) => changeOrderStatus(d, c, order.id, from), `${number} voltou para ${ORDER_STATUS_LABELS[from]}.`) }
         : undefined,

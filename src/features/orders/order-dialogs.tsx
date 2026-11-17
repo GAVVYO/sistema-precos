@@ -59,7 +59,7 @@ export function PaymentDialog({ orderId, onClose }: { orderId: ID; onClose: () =
             onClick={() => {
               if (busy) return;
               setBusy(true);
-              const r = act((db, ctx) => registerPayment(db, ctx, order.id, { method }), "Pagamento registrado. A receita já consta no financeiro.");
+              const r = act((db, ctx) => registerPayment(db, ctx, order.id, { method }), "Pagamento registrado. O valor já aparece no Financeiro.");
               setBusy(false);
               if (r.ok) onClose();
             }}
@@ -149,7 +149,7 @@ export function EditOrderDialog({ order, onClose }: { order: ServiceOrder; onClo
     if (km !== null && !Number.isInteger(km)) return toast("error", "Quilometragem deve ser um número inteiro.");
     const r = act(
       (db, ctx) => updateOrder(db, ctx, order.id, { description, notes, mechanicId: mechanicId || null, laborCents, mileage: km }),
-      "OS atualizada.",
+      "Serviço atualizado.",
     );
     if (r.ok) onClose();
   };
@@ -185,7 +185,7 @@ export function EditOrderDialog({ order, onClose }: { order: ServiceOrder; onClo
           label="Mão de obra (R$)"
           optional
           error={laborInvalid ? "Valor inválido. Ex.: 150,00" : undefined}
-          hint={order.paymentId ? "OS paga: o valor não pode ser alterado." : "Em branco = a definir. 0 = serviço gratuito."}
+          hint={order.paymentId ? "Serviço pago: o valor não pode ser alterado." : "Em branco = a definir. 0 = serviço gratuito."}
         >
           {(p) => <Input {...p} value={labor} onChange={(e) => setLabor(e.target.value)} inputMode="decimal" disabled={!!order.paymentId} placeholder="A definir" />}
         </Field>
@@ -211,21 +211,21 @@ export function CancelOrderDialog({ order, hasParts, onClose }: { order: Service
       onClose={onClose}
       footer={
         <>
-          <Button onClick={onClose}>Manter OS</Button>
+          <Button onClick={onClose}>Não cancelar</Button>
           <Button
             variant="danger"
             disabled={!online}
             onClick={() => {
-              const r = act((db, ctx) => cancelOrder(db, ctx, order.id, { reason, returnParts: hasParts && returnParts }), "OS cancelada.");
+              const r = act((db, ctx) => cancelOrder(db, ctx, order.id, { reason, returnParts: hasParts && returnParts }), "Serviço cancelado.");
               if (r.ok) onClose();
             }}
           >
-            Cancelar OS
+            Cancelar serviço
           </Button>
         </>
       }
     >
-      <p className="mb-3 text-sm">A OS sairá do quadro e ficará disponível apenas para consulta. Esta ação não pode ser desfeita.</p>
+      <p className="mb-3 text-sm">O serviço sai do quadro e fica só para consulta. Esta ação não pode ser desfeita.</p>
       <Field label="Motivo do cancelamento">
         {(p) => <Textarea {...p} rows={2} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />}
       </Field>

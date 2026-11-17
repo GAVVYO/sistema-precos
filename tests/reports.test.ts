@@ -40,7 +40,7 @@ describe("relatórios", () => {
     expect(other.rows).toHaveLength(3);
     expect(mine.rows.some((r) => r.customer === "Edilson Monteiro Braga")).toBe(false);
     const done = buildReport(scopeTo(db, DEMO_WORKSHOP_ID), "orders", { ...filters, option: "done" });
-    expect(done.rows.every((r) => r.status === "Concluído")).toBe(true);
+    expect(done.rows.every((r) => r.status === "Pronto")).toBe(true);
     const cancelled = buildReport(scopeTo(db, DEMO_WORKSHOP_ID), "orders", { ...filters, option: "cancelled" });
     expect(cancelled.rows).toHaveLength(1);
     const byPlate = buildReport(scopeTo(db, DEMO_WORKSHOP_ID), "history", { ...filters, text: "hxa-4b21" });
@@ -59,11 +59,11 @@ describe("exportações", () => {
     expect(sheet.getCell("A1").value).toBe("Oficina Modelo Passaré");
     let headerRow = 0;
     sheet.eachRow((row, n) => {
-      if (row.getCell(1).value === "OS") headerRow = n;
+      if (row.getCell(1).value === "Serviço") headerRow = n;
     });
     expect(headerRow).toBeGreaterThan(0);
     const first = sheet.getRow(headerRow + 1);
-    expect(first.getCell(1).value).toBe("OS-0001");
+    expect(first.getCell(1).value).toBe("Serviço nº 1");
     expect(first.getCell(2).value).toBeInstanceOf(Date);
     expect(first.getCell(12).value).toBe(212);
     expect(sheet.getColumn(12).numFmt).toContain("#,##0.00");

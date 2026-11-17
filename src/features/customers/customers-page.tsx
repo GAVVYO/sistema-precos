@@ -24,7 +24,7 @@ function OrderHistory({ orders, showVehicle, onOpen }: { orders: ServiceOrder[];
     <div className="overflow-x-auto rounded-md border border-line">
       <table className="data-table">
         <thead>
-          <tr><th>Data</th><th>OS</th>{showVehicle && <th>Veículo</th>}<th>Serviço</th><th>Peças</th><th className="num">Valor</th><th>Responsável</th><th>Status</th></tr>
+          <tr><th>Data</th><th>Serviço</th>{showVehicle && <th>Veículo</th>}<th>Serviço</th><th>Peças</th><th className="num">Valor</th><th>Responsável</th><th>Etapa</th></tr>
         </thead>
         <tbody>
           {orders.map((o) => {
@@ -126,7 +126,7 @@ function CustomerDialog({ customer, onClose }: { customer: Customer | null; onCl
           <Button onClick={onClose}>Fechar</Button>
           {customer && can("os.create") && (
             <Button variant="primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => { onClose(); openNewOrder({ customerId: customer.id }); }}>
-              Nova OS para este cliente
+              Novo serviço para este cliente
             </Button>
           )}
           {!customer && <Button variant="primary" disabled={!online} onClick={save}>Cadastrar cliente</Button>}
@@ -175,7 +175,7 @@ function CustomerDialog({ customer, onClose }: { customer: Customer | null; onCl
               )}
             </section>
             <section>
-              <h3 className="mb-2 text-sm font-semibold">Histórico de ordens de serviço ({orders.length})</h3>
+              <h3 className="mb-2 text-sm font-semibold">Serviços deste cliente ({orders.length})</h3>
               <OrderHistory orders={orders} showVehicle onOpen={(id) => { onClose(); openOrder(id); }} />
             </section>
           </>
@@ -203,7 +203,7 @@ function VehicleDialog({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => 
           <Button onClick={onClose}>Fechar</Button>
           {can("os.create") && (
             <Button variant="primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => { onClose(); openNewOrder({ customerId: vehicle.customerId, vehicleId: vehicle.id }); }}>
-              Nova OS para este veículo
+              Novo serviço para este veículo
             </Button>
           )}
         </>
@@ -256,7 +256,7 @@ export function CustomersPage() {
       { id: "phone", header: "Telefone", size: 150, sortValue: (c) => c.phone, cell: (c) => formatPhone(c.phone) },
       { id: "vehicles", header: "Veículos", size: 260, cell: (c) => view.vehicles.filter((v) => v.customerId === c.id).map((v) => `${v.model} (${formatPlate(v.plate)})`).join(", ") || "—" },
       { id: "last", header: "Último atendimento", size: 320, sortValue: (c) => last(c.id)?.openedAt ?? "", cell: (c) => { const l = last(c.id); return l ? `${formatDate(l.openedAt)} · ${l.description}` : "—"; } },
-      { id: "orders", header: "OS", size: 80, align: "right", sortValue: (c) => count(c.id), cell: (c) => count(c.id) },
+      { id: "orders", header: "Serviços", size: 80, align: "right", sortValue: (c) => count(c.id), cell: (c) => count(c.id) },
     ];
   }, [view]);
 
@@ -295,7 +295,7 @@ export function CustomersPage() {
 
         {tab === "customers" ? (
           view.customers.length === 0 ? (
-            <EmptyState icon={<Users className="size-8" aria-hidden />} title="Nenhum cliente cadastrado" description="Os clientes são criados ao abrir uma OS ou pelo botão Novo cliente." />
+            <EmptyState icon={<Users className="size-8" aria-hidden />} title="Nenhum cliente cadastrado" description="O cliente é cadastrado sozinho quando você abre um serviço. Também dá para usar o botão Novo cliente." />
           ) : customers.length === 0 ? (
             <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum cliente encontrado" description="Tente buscar por outro nome, telefone ou placa." />
           ) : (

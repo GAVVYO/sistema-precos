@@ -205,7 +205,7 @@ export async function buildReportXlsx(report: ReportData, branding: Branding): P
 
 export interface OrderDocument {
   number: string;
-  /** "Orçamento" enquanto aberta sem pagamento; "Ordem de serviço" caso contrário. */
+  /** "Orçamento" enquanto aberto sem pagamento; "Serviço" caso contrário. */
   kind: string;
   status: string;
   payment: string;
@@ -227,10 +227,10 @@ export interface OrderDocument {
 export async function exportOrderPdf(order: OrderDocument, branding: Branding): Promise<void> {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  let y = pdfHeader(doc, branding, `${order.kind} ${order.number}`, [
+  let y = pdfHeader(doc, branding, order.kind === "Serviço" ? order.number : `${order.kind} · ${order.number}`, [
     `Gerado em ${formatDateTime(new Date().toISOString())}`,
     `Abertura: ${order.openedAt}`,
-    `Status: ${order.status}`,
+    `Etapa: ${order.status}`,
   ]);
 
   const pairs: [string, string][] = [

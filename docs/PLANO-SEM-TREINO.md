@@ -27,7 +27,7 @@ Princípio: **o básico bem feito**. Nada de funcionalidade nova até a tela "Ho
 
 ## Passos
 1. ✅ **Auditoria sem treino** (lista abaixo).
-2. **Linguagem** (Impeccable *clarify*): aplicar o mapa de termos em telas, mensagens de erro (`src/services`), rótulos (`src/domain/labels.ts`), `formatOrderNumber` (`src/lib/format.ts`), PDF/Excel (`src/lib/export.ts`), WhatsApp (`src/lib/whatsapp.ts`) e testes.
+2. ✅ **Linguagem** (Impeccable *clarify*): aplicar o mapa de termos em telas, mensagens de erro (`src/services`), rótulos (`src/domain/labels.ts`), `formatOrderNumber` (`src/lib/format.ts`), PDF/Excel (`src/lib/export.ts`), WhatsApp (`src/lib/whatsapp.ts`) e testes.
 3. **Caminho principal visível**: botão escrito e grande para abrir serviço, mudar etapa e receber em cada tela; busca como campo visível.
 4. **Telas que ensinam** (Impeccable *onboard*): estados vazios com próximo passo; dica na primeira vez para recursos de arrastar; confirmações claras.
 5. **Tela "Hoje"** (primeira após login): "Quem chega hoje e a que horas" (botão "Chegou: abrir serviço") e "Quem falta pagar" (botão "Receber"). Só reorganiza dados existentes.

@@ -199,7 +199,7 @@ function Notifications() {
   }
   if (can("os.view") && active("orders")) {
     const n = view.orders.filter((o) => !o.cancelledAt && o.status === "waiting" && o.mechanicId === user.id).length;
-    if (n) items.push({ icon: <Wrench className="size-4 text-muted" aria-hidden />, text: `${n} OS aguardando você`, href: "/ordens" });
+    if (n) items.push({ icon: <Wrench className="size-4 text-muted" aria-hidden />, text: `${n} ${n === 1 ? "serviço aguardando" : "serviços aguardando"} você`, href: "/ordens" });
   }
 
   return (
@@ -245,7 +245,7 @@ function Header() {
 
   const conn = {
     online: { label: "Online", dot: "bg-emerald-400" },
-    offline: { label: "Offline", dot: "bg-red-400" },
+    offline: { label: "Sem internet", dot: "bg-red-400" },
     reconnecting: { label: "Reconectando…", dot: "bg-amber-400 animate-pulse" },
   }[connection];
 
@@ -270,8 +270,8 @@ function Header() {
         <OrderSearch />
         <div className="island-tools">
           {can("os.create") && settings.activeModules.includes("orders") && (
-            <Button variant="primary" size="sm" className="topbar-primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()} aria-keyshortcuts="N" title="Nova OS (N)">
-              <span className="topbar-primary-label">Nova OS</span>
+            <Button variant="primary" size="sm" className="topbar-primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()} aria-keyshortcuts="N" title="Novo serviço (N)">
+              <span className="topbar-primary-label">Novo serviço</span>
             </Button>
           )}
           {/* Conexão: só aparece escrita quando não está online (a faixa vermelha explica o resto). */}
@@ -333,10 +333,10 @@ function ConnectionBanner() {
       <WifiOff className="size-4" aria-hidden />
       {connection === "offline" ? (
         <span>
-          <strong>Você está offline.</strong> Exibindo dados carregados em {formatDateTime(lastSyncAt)}. Criação, edição, pagamentos e movimentações estão bloqueados até a conexão voltar.
+          <strong>Sem internet.</strong> Você pode consultar (dados de {formatDateTime(lastSyncAt)}). Abrir serviço, mudar etapa, receber e mexer no estoque voltam quando a internet voltar.
         </span>
       ) : (
-        <span>Reconectando e atualizando os dados…</span>
+        <span>Internet voltando. Atualizando os dados…</span>
       )}
     </div>
   );

@@ -61,7 +61,7 @@ function mirrorStyles(win: Window) {
 function PipOrder({ orderId }: { orderId: ID }) {
   const { view, customerOf, vehicleOf, partOf, openOrder } = useApp();
   const order = view.orders.find((o) => o.id === orderId);
-  if (!order) return <p className="p-4">OS não encontrada.</p>;
+  if (!order) return <p className="p-4">Serviço não encontrado.</p>;
   const customer = customerOf(order.customerId);
   const vehicle = vehicleOf(order.vehicleId);
   const items = view.orderItems.filter((i) => i.orderId === order.id);

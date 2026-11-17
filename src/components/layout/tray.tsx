@@ -121,7 +121,7 @@ export function TrayDock({ dnd = false }: { dnd?: boolean }) {
       className={cx("tray-dock", dragging && "is-target", isOver && "is-over", !showBody && "is-collapsed")}
     >
       <header className="tray-head">
-        <button type="button" className="tray-toggle" aria-expanded={showBody} onClick={() => setOpen((o) => !o)} title="Arraste OS ou peças para cá para guardar enquanto atende outra coisa">
+        <button type="button" className="tray-toggle" aria-expanded={showBody} onClick={() => setOpen((o) => !o)} title="Arraste serviços ou peças para cá para guardar enquanto atende outra coisa">
           <Inbox className="size-4" aria-hidden />
           <span>Bandeja</span>
           <span className="tray-count">{count}</span>
@@ -129,9 +129,9 @@ export function TrayDock({ dnd = false }: { dnd?: boolean }) {
         </button>
         {open && orders.length > 0 && (
           <MoreMenu
-            label="Ações com as OS da bandeja"
+            label="Ações com os serviços da bandeja"
             items={[
-              ...ORDER_STATUSES.map((s, i) => ({ label: ORDER_STATUS_LABELS[s], group: i === 0 ? `Mover ${orders.length} OS para` : undefined, icon: <ArrowRight className="size-4" />, disabled: !online, onSelect: () => moveMany(orders, s) })),
+              ...ORDER_STATUSES.map((s, i) => ({ label: ORDER_STATUS_LABELS[s], group: i === 0 ? `Mover ${orders.length} ${orders.length === 1 ? "serviço" : "serviços"} para` : undefined, icon: <ArrowRight className="size-4" />, disabled: !online, onSelect: () => moveMany(orders, s) })),
               ...(can("os.edit")
                 ? mechanics.map((m, i) => ({ label: m.name, group: i === 0 ? "Atribuir todas a" : undefined, icon: <UserCheck className="size-4" />, disabled: !online, onSelect: () => assignMany(orders, m.id) }))
                 : []),
@@ -142,7 +142,7 @@ export function TrayDock({ dnd = false }: { dnd?: boolean }) {
       </header>
       {showBody && (
         count === 0 ? (
-          <p className="tray-empty">{dragging ? "Solte aqui para guardar" : "Arraste OS ou peças para cá para guardar enquanto atende outra coisa."}</p>
+          <p className="tray-empty">{dragging ? "Solte aqui para guardar" : "Arraste serviços ou peças para cá para guardar enquanto atende outra coisa."}</p>
         ) : (
           <ul className="tray-list">
             {items.map((i) => <TrayRow key={`${i.type}:${i.id}`} item={i} dnd={dnd} />)}

@@ -1,4 +1,13 @@
-# Estado atual e continuidade — 16/11/2026
+# Estado atual e continuidade — 17/11/2026
+
+## Plano "uso sem treino" (em andamento)
+
+Plano e auditoria: [PLANO-SEM-TREINO.md](PLANO-SEM-TREINO.md). Um commit por passo.
+
+- **Passo 2 — Linguagem (feito):** "OS" virou **Serviço** em telas, mensagens de erro, PDF, Excel e WhatsApp; número exibido "Serviço nº 11" (`formatOrderNumber`). Menu "Serviços", botão "Novo serviço". Etapa "Concluído" → **Pronto**; botões **Começar / Marcar como pronto / Receber**. "Pagamento pendente" → **Falta pagar**. Estoque: botão **Entrada / Saída**, aba **Histórico de peças**, coluna **Ficou com**, opções "Chegou peça / Saiu peça / Contei o estoque". Relatórios: **Dinheiro que entrou e saiu**, **Peças em estoque**, **Histórico de peças**. Financeiro: **Sobrou no caixa**, **Entrada sem serviço**. Agenda: **Chegou: abrir serviço**. Offline: "Sem internet" com o que fica bloqueado em palavras simples. Busca: "Buscar placa ou nome do cliente".
+  - Dados já salvos no navegador mantêm textos antigos de histórico ("OS aberta", "Status alterado para Concluído"); a atividade recente do Início reconhece os dois formatos. "Restaurar demonstração" recria tudo com os textos novos.
+  - Chaves internas (`os.view`, rota `/ordens`, atalho G+O) não mudaram.
+
 
 ## Atualização local de acessibilidade
 

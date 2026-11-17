@@ -153,7 +153,7 @@ function Column({ status, orders, canDrag, filtered }: { status: OrderStatus; or
   return (
     <section
       ref={setNodeRef}
-      aria-label={`${ORDER_STATUS_LABELS[status]}: ${orders.length} OS`}
+      aria-label={`${ORDER_STATUS_LABELS[status]}: ${orders.length} ${orders.length === 1 ? "serviço" : "serviços"}`}
       className={cx(
         "kanban-column flex min-h-64 flex-col rounded-xl border border-line bg-slate-100/70",
         COLUMN_ACCENT[status],
@@ -166,7 +166,7 @@ function Column({ status, orders, canDrag, filtered }: { status: OrderStatus; or
       </header>
       <div className="flex max-h-[calc(100vh-390px)] min-h-40 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
         {orders.length === 0 ? (
-          <p className="px-2 py-6 text-center text-xs text-muted">{filtered ? "Nenhuma OS encontrada com os filtros atuais." : "Nenhuma OS nesta etapa."}</p>
+          <p className="px-2 py-6 text-center text-xs text-muted">{filtered ? "Nenhum serviço encontrado com os filtros atuais." : "Nenhum serviço nesta etapa."}</p>
         ) : (
           orders.map((o) => <OrderCard key={o.id} order={o} draggable={canDrag} />)
         )}
@@ -298,12 +298,12 @@ export function OrdersPage() {
   return (
     <>
       <PageHeader
-        title="Ordens de serviço"
-        description="Clique no cartão para ver ao lado. Arraste para outra etapa ou até um responsável; no painel, arraste peças para dentro da OS."
+        title="Serviços"
+        description="Clique no cartão para ver os detalhes. Use o botão do cartão para passar para a próxima etapa."
         actions={
           <>
             {cancelled.length > 0 && (
-              <Button onClick={() => setShowCancelled(true)}>Canceladas ({cancelled.length})</Button>
+              <Button onClick={() => setShowCancelled(true)}>Cancelados ({cancelled.length})</Button>
             )}
           </>
         }
@@ -312,7 +312,7 @@ export function OrdersPage() {
       <div className="order-filters mb-4 flex flex-wrap items-center gap-2 rounded-md border border-line bg-surface p-3">
         <div className="relative w-80">
           <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-slate-400" aria-hidden />
-          <Input className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por número, cliente, placa ou veículo" aria-label="Buscar ordens de serviço" />
+          <Input className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar placa, nome do cliente ou nº do serviço" aria-label="Buscar serviços" />
         </div>
         <Select className="w-64" value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="Filtrar por período de abertura">
           {PERIODS.map((p) => (
@@ -330,8 +330,8 @@ export function OrdersPage() {
       <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
       <MechanicStrip value={mechanic} onChange={setMechanic} />
       {pickedOrders.length > 0 && (
-        <div className="pick-bar" role="region" aria-label="Seleção de OS">
-          <strong>{pickedOrders.length} {pickedOrders.length === 1 ? "OS selecionada" : "OS selecionadas"}</strong>
+        <div className="pick-bar" role="region" aria-label="Serviços selecionados">
+          <strong>{pickedOrders.length} {pickedOrders.length === 1 ? "serviço selecionado" : "serviços selecionados"}</strong>
           <span className="text-muted">Arraste uma delas para levar todas.</span>
           <span className="ml-auto flex flex-wrap items-center gap-2">
             <MoreMenu text="Mover para" label="Mover selecionadas para" items={ORDER_STATUSES.map((st, i) => ({ label: ORDER_STATUS_LABELS[st], group: i === 0 ? "Mover para" : undefined, icon: <ArrowRight className="size-4" />, disabled: !online, onSelect: () => { moveMany(pickedOrders, st); setPicked(new Set()); } }))} />
@@ -349,14 +349,14 @@ export function OrdersPage() {
         <div className="rounded-md border border-line bg-surface">
           <EmptyState
             icon={<ClipboardList className="size-8" aria-hidden />}
-            title="Nenhuma ordem de serviço ainda"
-            description="Abra a primeira OS para começar a acompanhar os serviços da oficina."
-            action={can("os.create") ? <Button variant="primary" disabled={!online} onClick={() => openNewOrder()}>Nova OS</Button> : undefined}
+            title="Nenhum serviço ainda"
+            description="Quando um carro chegar, clique em Novo serviço para começar."
+            action={can("os.create") ? <Button variant="primary" disabled={!online} onClick={() => openNewOrder()}>Novo serviço</Button> : undefined}
           />
         </div>
       ) : filtered && visible.length === 0 ? (
         <div className="rounded-md border border-line bg-surface">
-          <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhuma OS encontrada" description="Revise a busca ou limpe os filtros para ver todas as ordens." />
+          <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum serviço encontrado" description="Confira a placa ou o nome, ou limpe a busca para ver todos." />
         </div>
       ) : (
         <div className="kanban-board grid grid-cols-3 gap-4">
@@ -374,7 +374,7 @@ export function OrdersPage() {
         {dragging?.type === "order" && (
           <div className="relative">
             <OrderCard order={dragging.order} draggable overlay />
-            {picked.has(dragging.order.id) && picked.size > 1 && <span className="drag-count" aria-hidden>{picked.size} OS</span>}
+            {picked.has(dragging.order.id) && picked.size > 1 && <span className="drag-count" aria-hidden>{picked.size} serviços</span>}
           </div>
         )}
         {dragging?.type === "part" && <PartDragPreview partId={dragging.partId} />}
@@ -383,10 +383,10 @@ export function OrdersPage() {
       </PeekContext.Provider>
 
       {showCancelled && (
-        <Dialog title="Ordens canceladas" subtitle="Canceladas ficam fora do quadro, disponíveis apenas para consulta." onClose={() => setShowCancelled(false)}>
+        <Dialog title="Serviços cancelados" subtitle="Serviços cancelados ficam fora do quadro, só para consulta." onClose={() => setShowCancelled(false)}>
           <table className="data-table">
             <thead>
-              <tr><th>OS</th><th>Cliente</th><th>Veículo</th><th>Cancelada em</th><th>Motivo</th></tr>
+              <tr><th>Serviço</th><th>Cliente</th><th>Veículo</th><th>Cancelada em</th><th>Motivo</th></tr>
             </thead>
             <tbody>
               {cancelled.map((o) => (

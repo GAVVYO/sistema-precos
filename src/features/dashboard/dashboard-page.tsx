@@ -33,10 +33,10 @@ function OpenOrdersTable({ orders, empty }: { orders: ServiceOrder[]; empty: str
   const { customerOf, vehicleOf, userOf } = useApp();
   const [sort, setSort] = useState<{ key: "openedAt" | "customer" | "service" | "status"; desc: boolean }>({ key: "openedAt", desc: false });
   const columns = [
-    { key: "openedAt", label: "OS / abertura" },
+    { key: "openedAt", label: "Serviço / abertura" },
     { key: "customer", label: "Cliente / veículo" },
     { key: "service", label: "Serviço / responsável" },
-    { key: "status", label: "Status" },
+    { key: "status", label: "Etapa" },
   ] as const;
   const value = (o: ServiceOrder): string => sort.key === "customer" ? customerOf(o.customerId)?.name ?? "" : sort.key === "service" ? o.description : sort.key === "status" ? ORDER_STATUS_LABELS[o.status] : o.openedAt;
   const sorted = [...orders].sort((a, b) => (sort.desc ? -1 : 1) * value(a).localeCompare(value(b), "pt-BR", { numeric: true }));
@@ -125,7 +125,7 @@ function StockAlerts() {
 function RecentActivity() {
   const { view, userOf, openOrder } = useApp();
   const relevant = view.orderEvents
-    .filter((e) => /^(OS aberta|Status alterado para Concluído|Pagamento|OS cancelada)/.test(e.message))
+    .filter((e) => /^(OS aberta|Serviço aberto|Status alterado para Concluído|Etapa mudou para Pronto|Pagamento|OS cancelada|Serviço cancelado)/.test(e.message))
     .sort((a, b) => b.at.localeCompare(a.at))
     .slice(0, 8);
   return (
@@ -140,9 +140,9 @@ function RecentActivity() {
             return (
               <li key={e.id} className="relative py-2.5 pr-4 pl-9 text-sm"><span className="activity-dot" aria-hidden />
                 <button type="button" className="font-semibold text-primary hover:underline" onClick={() => order && openOrder(order.id)}>
-                  {order ? formatOrderNumber(order.number) : "OS"}
+                  {order ? formatOrderNumber(order.number) : "Serviço"}
                 </button>{" "}
-                {e.message.replace(/^OS aberta\.$/, "aberta.").replace(/^Status alterado para Concluído\.$/, "concluída.").replace(/^OS cancelada/, "cancelada")}
+                {e.message.replace(/^(OS aberta|Serviço aberto)\.$/, "aberto.").replace(/^(Status alterado para Concluído|Etapa mudou para Pronto)\.$/, "está pronto.").replace(/^(OS cancelada|Serviço cancelado)/, "cancelado")}
                 <span className="block text-xs text-muted">{formatDateTime(e.at)} · {userOf(e.userId)?.name ?? "Usuário"}</span>
               </li>
             );
@@ -177,10 +177,10 @@ function OperationalDashboard({ editing, prefs }: { editing: boolean; prefs: Wid
 
   const metric = (id: string, x: number, node: ReactNode, title: string): Widget => ({ id, title, layout: { x, y: 0, w: 3, h: 3, minW: 2, minH: 3 }, render: () => node });
   const widgets: Widget[] = [
-    metric("m-waiting", 0, <MetricCard onSelect={() => setFilter("waiting")} selected={filter === "waiting"} appearance="waiting" icon={<Clock3 />} label="Ordens aguardando" value={open.filter((o) => o.status === "waiting").length} note="Na fila" footer={<>Ordens abertas: <strong>{open.length}</strong></>} />, "Ordens aguardando"),
-    metric("m-progress", 3, <MetricCard onSelect={() => setFilter("in_progress")} selected={filter === "in_progress"} appearance="active" icon={<Wrench />} label="Ordens em andamento" value={open.filter((o) => o.status === "in_progress").length} note="Em execução" footer={<>Responsáveis: <strong>{new Set(open.filter((o) => o.status === "in_progress" && o.mechanicId).map((o) => o.mechanicId)).size}</strong></>} />, "Ordens em andamento"),
-    metric("m-done", 6, <MetricCard onSelect={() => setFilter("done")} selected={filter === "done"} appearance="done" icon={<CheckCircle2 />} label="Ordens concluídas" value={doneWeek} note={`${doneToday} hoje`} footer={<>Período: <strong>últimos 7 dias</strong></>} />, "Ordens concluídas"),
-    metric("m-vehicles", 9, <MetricCard onSelect={() => setFilter("open")} selected={filter === "open"} appearance="neutral" icon={<CarFront />} label="Veículos com OS aberta" value={new Set(open.map((o) => o.vehicleId)).size} footer={<>Com serviço <strong>em aberto</strong></>} />, "Veículos com OS aberta"),
+    metric("m-waiting", 0, <MetricCard onSelect={() => setFilter("waiting")} selected={filter === "waiting"} appearance="waiting" icon={<Clock3 />} label="Serviços aguardando" value={open.filter((o) => o.status === "waiting").length} note="Na fila" footer={<>Serviços abertos: <strong>{open.length}</strong></>} />, "Serviços aguardando"),
+    metric("m-progress", 3, <MetricCard onSelect={() => setFilter("in_progress")} selected={filter === "in_progress"} appearance="active" icon={<Wrench />} label="Serviços em andamento" value={open.filter((o) => o.status === "in_progress").length} note="Sendo feitos" footer={<>Responsáveis: <strong>{new Set(open.filter((o) => o.status === "in_progress" && o.mechanicId).map((o) => o.mechanicId)).size}</strong></>} />, "Serviços em andamento"),
+    metric("m-done", 6, <MetricCard onSelect={() => setFilter("done")} selected={filter === "done"} appearance="done" icon={<CheckCircle2 />} label="Serviços prontos" value={doneWeek} note={`${doneToday} hoje`} footer={<>Período: <strong>últimos 7 dias</strong></>} />, "Serviços prontos"),
+    metric("m-vehicles", 9, <MetricCard onSelect={() => setFilter("open")} selected={filter === "open"} appearance="neutral" icon={<CarFront />} label="Carros na oficina" value={new Set(open.map((o) => o.vehicleId)).size} footer={<>Com serviço <strong>em aberto</strong></>} />, "Carros na oficina"),
     {
       id: "services",
       title: "Serviços da oficina",
@@ -191,12 +191,12 @@ function OperationalDashboard({ editing, prefs }: { editing: boolean; prefs: Wid
           <div className="work-filter" role="group" aria-label="Filtrar serviços do início">
             <button type="button" aria-pressed={filter === "open"} onClick={() => setFilter("open")}>Em aberto</button>
             <button type="button" aria-pressed={filter === "waiting"} onClick={() => setFilter("waiting")}>Aguardando</button>
-            <button type="button" aria-pressed={filter === "in_progress"} onClick={() => setFilter("in_progress")}>Em execução</button>
+            <button type="button" aria-pressed={filter === "in_progress"} onClick={() => setFilter("in_progress")}>Em andamento</button>
             {(can("finance.view") || can("finance.payment")) && <button type="button" aria-pressed={filter === "receivable"} onClick={() => setFilter("receivable")}>A receber ({receivable.length})</button>}
-            <button type="button" aria-pressed={filter === "done"} onClick={() => setFilter("done")}>Concluídas</button>
-            <Input aria-label="Buscar serviços do início" placeholder="Placa, cliente ou OS" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <button type="button" aria-pressed={filter === "done"} onClick={() => setFilter("done")}>Prontos</button>
+            <Input aria-label="Buscar serviços do início" placeholder="Placa ou nome do cliente" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
-          <OpenOrdersTable orders={visible} empty={search ? "Nenhuma OS corresponde à busca. Tente outra placa, cliente ou número." : "Nenhuma OS nesta situação."} />
+          <OpenOrdersTable orders={visible} empty={search ? "Nenhum serviço com essa placa ou nome. Confira o que foi digitado." : "Nenhum serviço nesta situação."} />
         </Card>
       ),
     },
@@ -229,12 +229,12 @@ function MechanicDashboard() {
       <div className="mb-4 grid grid-cols-3 gap-3">
         <Stat label="Aguardando você" value={open.filter((o) => o.status === "waiting").length} tone="warning" />
         <Stat label="Em andamento" value={open.filter((o) => o.status === "in_progress").length} />
-        <Stat label="Concluídas hoje" value={doneToday.length} tone="success" />
+        <Stat label="Prontos hoje" value={doneToday.length} tone="success" />
       </div>
       <Card>
-        <CardHeader title="Meus serviços" subtitle="Ordens atribuídas a você" />
+        <CardHeader title="Meus serviços" subtitle="Serviços com você como responsável" />
         {open.length === 0 ? (
-          <EmptyState icon={<CheckCircle2 className="size-7" aria-hidden />} title="Nenhum serviço pendente" description="Quando uma OS for atribuída a você, ela aparece aqui." />
+          <EmptyState icon={<CheckCircle2 className="size-7" aria-hidden />} title="Nenhum serviço pendente" description="Quando um serviço for passado para você, ele aparece aqui." />
         ) : (
           <ul className="divide-y divide-line">
             {open.map((o) => {
@@ -253,9 +253,9 @@ function MechanicDashboard() {
                     <Button
                       variant="primary"
                       disabled={!online}
-                      onClick={() => act((d, c) => changeOrderStatus(d, c, o.id, next), `${formatOrderNumber(o.number)} movida para ${ORDER_STATUS_LABELS[next]}.`)}
+                      onClick={() => act((d, c) => changeOrderStatus(d, c, o.id, next), `${formatOrderNumber(o.number)} movido para ${ORDER_STATUS_LABELS[next]}.`)}
                     >
-                      {next === "in_progress" ? "Iniciar serviço" : "Concluir serviço"}
+                      {next === "in_progress" ? "Começar" : "Marcar como pronto"}
                     </Button>
                   )}
                 </li>
@@ -281,7 +281,7 @@ function FinanceDashboard({ editing, prefs }: { editing: boolean; prefs: WidgetP
     stat("f-received", 0, "Recebido no mês", <Stat label="Recebido no mês" value={formatBRL(summary.receivedCents)} tone="success" />),
     stat("f-expenses", 3, "Despesas pagas no mês", <Stat label="Despesas pagas no mês" value={formatBRL(summary.expensesCents)} tone="danger" />),
     stat("f-receivable", 6, "Contas a receber", <Stat label="Contas a receber" value={formatBRL(summary.receivableCents)} tone="warning" hint={`${receivables.length} em aberto`} />),
-    stat("f-result", 9, "Resultado de caixa do mês", <Stat label="Resultado de caixa do mês" value={formatBRL(summary.cashResultCents)} hint="Recebido − despesas pagas" />),
+    stat("f-result", 9, "Sobrou no caixa no mês", <Stat label="Sobrou no caixa no mês" value={formatBRL(summary.cashResultCents)} hint="Recebido − despesas pagas" />),
     {
       id: "f-receivables",
       title: "Lista de contas a receber",
@@ -290,7 +290,7 @@ function FinanceDashboard({ editing, prefs }: { editing: boolean; prefs: WidgetP
         <Card>
           <CardHeader title="Contas a receber" actions={<Link href="/financeiro" className="text-sm font-medium text-primary hover:underline">Ver financeiro</Link>} />
           {receivables.length === 0 ? (
-            <EmptyState icon={<CircleDollarSign className="size-7" aria-hidden />} title="Nada a receber" description="Todos os serviços concluídos estão pagos." />
+            <EmptyState icon={<CircleDollarSign className="size-7" aria-hidden />} title="Nada a receber" description="Todos os serviços prontos já foram pagos." />
           ) : (
             <table className="data-table">
               <thead><tr><th>Origem</th><th>Cliente</th><th className="num">Valor</th><th /></tr></thead>

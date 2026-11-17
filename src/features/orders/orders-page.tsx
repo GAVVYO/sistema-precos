@@ -1,6 +1,6 @@
 "use client";
 
-import { FirstTip } from "@/components/ui/first-tip";
+import { GuidedTour, IllusDrag, IllusSequence, IllusTap, IllusTyping } from "@/components/ui/guided-tour";
 import {
   CollisionDetection, DndContext, DragEndEvent, pointerWithin, rectIntersection, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors,
 } from "@dnd-kit/core";
@@ -84,6 +84,7 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
     <article
       ref={overlay ? undefined : setNodeRef}
       data-order-id={overlay ? undefined : order.id}
+      data-tour={overlay ? undefined : "card"}
       className={cx(
         "order-card order-card-compact rounded-md border border-line bg-surface text-sm",
         selected && !overlay && "is-selected",
@@ -104,6 +105,7 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
             type="button"
             className="-ml-1.5 flex h-6 w-5 shrink-0 cursor-grab touch-none items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-ink active:cursor-grabbing"
             aria-label={`Arrastar ${number}`}
+            data-tour="drag"
             {...listeners}
             {...attributes}
           >
@@ -328,10 +330,41 @@ export function OrdersPage() {
       </div>
 
       {active.length > 0 && (
-        <FirstTip id="quadro" title="Como usar este quadro">
-          <p>Cada carro passa por <strong>Aguardando → Em andamento → Pronto</strong>. O botão do cartão faz o próximo passo: <strong>Começar</strong>, <strong>Marcar como pronto</strong> e <strong>Receber</strong>.</p>
-          <p>Clique no cartão para ver os detalhes e lançar peças. Se preferir, também dá para arrastar o cartão para outra coluna ou até o nome de um responsável, e marcar a caixinha do canto para mexer em vários de uma vez.</p>
-        </FirstTip>
+        <GuidedTour
+          id="quadro"
+          steps={[
+            {
+              target: "[data-tour=search]",
+              title: "Ache o carro pela placa ou pelo nome",
+              body: <p>Digite aqui a placa (ou o nome do cliente) para encontrar o serviço na hora.</p>,
+              illustration: <IllusTyping text="QRT4J58" />,
+            },
+            {
+              target: ".kanban-board [data-tour=next-step]",
+              title: "Este botão faz o próximo passo",
+              body: <p>Cada carro passa por Aguardando, Em andamento e Pronto. O botão do cartão muda sozinho: <strong>Começar</strong>, depois <strong>Marcar como pronto</strong> e, no fim, <strong>Receber</strong>.</p>,
+              illustration: <IllusSequence items={["Começar", "Marcar como pronto", "Receber"]} />,
+            },
+            {
+              target: ".kanban-board [data-tour=card]",
+              title: "Clique no cartão para ver tudo",
+              body: <p>Abre o resumo ao lado: cliente, telefone, peças e valor. Lá você lança as peças usadas.</p>,
+              illustration: <IllusTap label="Serviço nº 11" />,
+            },
+            {
+              target: ".kanban-board [data-tour=drag]",
+              title: "Se preferir, arraste",
+              body: <><p>Segure nos pontinhos e solte o cartão em outra coluna ou no nome de um responsável.</p><p className="tour-note">É só um atalho: os botões fazem a mesma coisa.</p></>,
+              illustration: <IllusDrag />,
+            },
+            {
+              target: "[data-tour=new-order]",
+              title: "Carro chegou? Comece aqui",
+              body: <p>Clique em <strong>Novo serviço</strong>, digite a placa e o que o cliente pediu.</p>,
+              illustration: <IllusTap label="+ Novo serviço" />,
+            },
+          ]}
+        />
       )}
 
       <PeekContext.Provider value={{ peekId, setPeek, picked, togglePick }}>

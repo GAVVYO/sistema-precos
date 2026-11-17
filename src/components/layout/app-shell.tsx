@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, LayoutDashboard, Lock, Settings2, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
+  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, LayoutDashboard, Lightbulb, Lock, Settings2, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -275,7 +275,7 @@ function Header() {
       <div className="island island-actions">
         <div className="island-tools">
           {can("os.create") && settings.activeModules.includes("orders") && (
-            <Button variant="primary" size="sm" className="topbar-primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()} aria-keyshortcuts="N" title="Novo serviço (N)">
+            <Button data-tour="new-order" variant="primary" size="sm" className="topbar-primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()} aria-keyshortcuts="N" title="Novo serviço (N)">
               <span className="topbar-primary-label">Novo serviço</span>
             </Button>
           )}
@@ -315,6 +315,23 @@ function Header() {
                     Organizar tela inicial
                   </Link>
                 )}
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50"
+                  onClick={() => {
+                    close();
+                    // Apaga só as dicas já vistas por esta pessoa nesta oficina e mostra de novo.
+                    const suffix = `:${membership.workshopId}:${user.id}`;
+                    try {
+                      Object.keys(localStorage).filter((k) => k.startsWith("gavyo:prefs:tip:") && k.endsWith(suffix)).forEach((k) => localStorage.removeItem(k));
+                    } catch { /* sem armazenamento: nada a limpar */ }
+                    window.location.reload();
+                  }}
+                >
+                  <Lightbulb className="size-4" aria-hidden />
+                  Ver as dicas de novo
+                </button>
                 <button
                   type="button"
                   role="menuitem"

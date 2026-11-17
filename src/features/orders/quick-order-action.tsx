@@ -21,7 +21,7 @@ export function QuickOrderAction({ order, size = "sm", statusOnly = false }: { o
   const receivable = !statusOnly && can("finance.payment") && paymentSituation(order, orderTotals(view, order)) === "pending";
   return (
     <>
-      {allowed ? <Button size={size} variant="primary" disabled={!online} icon={next === "done" ? <Check className="size-3.5" aria-hidden /> : <Play className="size-3.5" aria-hidden />} onClick={() => moveOrder(order, next, `${formatOrderNumber(order.number)} ${next === "done" ? "está pronto" : "em andamento"}.`)}>{next === "done" ? "Marcar como pronto" : "Começar"}</Button> : receivable ? <Button size={size} variant="primary" disabled={!online} icon={<CircleDollarSign className="size-3.5" aria-hidden />} onClick={() => setPay(true)}>Receber</Button> : null}
+      {allowed ? <Button data-tour="next-step" size={size} variant="primary" disabled={!online} icon={next === "done" ? <Check className="size-3.5" aria-hidden /> : <Play className="size-3.5" aria-hidden />} onClick={() => moveOrder(order, next, `${formatOrderNumber(order.number)} ${next === "done" ? "está pronto" : "em andamento"}.`)}>{next === "done" ? "Marcar como pronto" : "Começar"}</Button> : receivable ? <Button data-tour="next-step" size={size} variant="primary" disabled={!online} icon={<CircleDollarSign className="size-3.5" aria-hidden />} onClick={() => setPay(true)}>Receber</Button> : null}
       {pay && <PaymentDialog orderId={order.id} onClose={() => setPay(false)} />}
     </>
   );

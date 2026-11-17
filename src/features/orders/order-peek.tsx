@@ -1,6 +1,6 @@
 "use client";
 
-import { FirstTip } from "@/components/ui/first-tip";
+import { GuidedTour, IllusTap, IllusTyping } from "@/components/ui/guided-tour";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { ChevronDown, ChevronUp, GripVertical, Maximize2, Minus, PackagePlus, Phone, PictureInPicture2, Plus, Search, Trash2, UserX, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -72,7 +72,7 @@ function ShelfPart({ part, onAdd, enabled }: { part: Part; onAdd: () => void; en
         <span className="block truncate font-medium">{part.name}</span>
         <span className={cx("text-xs", out ? "text-danger" : "text-muted")}>{part.code} · {out ? "sem estoque" : `${part.quantity} em estoque`} · {formatBRL(part.priceCents)}</span>
       </span>
-      <Button size="sm" variant="ghost" disabled={!enabled || out} onClick={onAdd} aria-label={`Lançar ${part.name} no serviço`} title="Lançar 1 unidade">
+      <Button size="sm" variant="ghost" data-tour="add-part" disabled={!enabled || out} onClick={onAdd} aria-label={`Lançar ${part.name} no serviço`} title="Lançar 1 unidade">
         <Plus className="size-4" aria-hidden />
       </Button>
     </li>
@@ -196,10 +196,6 @@ export function OrderPeek({
       </header>
 
       <div className="peek-body">
-        <FirstTip id="painel" title="Resumo do serviço" className="mb-3">
-          <p>Para lançar uma peça, clique em <strong>+</strong> ao lado dela na lista “Adicionar do estoque”. Para tirar, use <strong>−</strong>. Para mudar a mão de obra, clique no valor e digite.</p>
-          <p>Para ver tudo (PDF, WhatsApp, cancelar), use <strong>Ver serviço completo</strong>, lá embaixo.</p>
-        </FirstTip>
         <dl className="peek-info">
           <div><dt>Cliente</dt><dd>{customer?.name}</dd></div>
           <div><dt>Telefone</dt><dd className="flex items-center gap-1"><Phone className="size-3.5 text-muted" aria-hidden />{customer ? formatPhone(customer.phone) : "—"}</dd></div>
@@ -264,7 +260,7 @@ export function OrderPeek({
           {!canParts && !locked && doneLock && <p className="peek-empty">Serviço pronto: para corrigir peças, clique em “Ver serviço completo” e escreva o motivo.</p>}
         </section>
 
-        <div className="peek-labor">
+        <div className="peek-labor" data-tour="labor">
           <span className="text-muted">Mão de obra</span>
           {canLabor ? (
             <ScrubNumber
@@ -301,8 +297,36 @@ export function OrderPeek({
         )}
       </div>
 
+      <GuidedTour
+        id="painel"
+        delay={700}
+        steps={[
+          {
+            target: ".order-peek [data-tour=add-part]:not(:disabled)",
+            title: "Lance as peças usadas",
+            body: <p>Clique no <strong>+</strong> ao lado da peça. Cada clique lança uma unidade e já baixa do estoque. Para tirar, use o <strong>−</strong> em “Peças utilizadas”.</p>,
+            illustration: <IllusTap label="+" />,
+          },
+          {
+            target: ".order-peek [data-tour=labor] [role=spinbutton]",
+            title: "Mão de obra: clique e digite",
+            body: <p>Clique no valor, digite quanto vai cobrar e aperte Enter.</p>,
+            illustration: <IllusTyping text="150,00" />,
+          },
+          {
+            target: ".order-peek [data-tour=next-step]",
+            title: "Próximo passo do serviço",
+            body: <p>Quando terminar uma etapa, clique aqui. O botão mostra o que vem a seguir.</p>,
+          },
+          {
+            target: ".order-peek [data-tour=full]",
+            title: "Precisa de mais?",
+            body: <p>Em <strong>Ver serviço completo</strong> você gera o PDF, manda orçamento pelo WhatsApp ou cancela o serviço.</p>,
+          },
+        ]}
+      />
       <footer className="peek-footer">
-        <Button className="peek-full" icon={<Maximize2 className="size-4" aria-hidden />} onClick={() => openOrder(order.id)}>Ver serviço completo</Button>
+        <Button className="peek-full" data-tour="full" icon={<Maximize2 className="size-4" aria-hidden />} onClick={() => openOrder(order.id)}>Ver serviço completo</Button>
         <QuickOrderAction order={order} size="md" />
       </footer>
     </aside>

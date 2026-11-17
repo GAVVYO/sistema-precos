@@ -69,7 +69,7 @@ export function OrderSearch() {
   const nothing = matches.length === 0 && actions.length === 0 && customers.length === 0 && parts.length === 0;
 
   return (
-    <div className="order-search" ref={root} onBlur={(e) => { if (e.relatedTarget instanceof Element && e.relatedTarget.closest("dialog")) return; if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
+    <div className="order-search" data-tour="search" ref={root} onBlur={(e) => { if (e.relatedTarget instanceof Element && e.relatedTarget.closest("dialog")) return; if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
       <Search size={18} aria-hidden />
       <input ref={input} aria-label="Buscar placa ou nome do cliente" aria-controls={open ? id : undefined} value={query} onChange={(e) => { setQuery(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} placeholder="Buscar placa ou nome do cliente" />
       {query ? <button type="button" aria-label="Limpar busca global" onClick={() => { setQuery(""); input.current?.focus(); }}><X size={16} aria-hidden /></button> : <kbd>Ctrl K</kbd>}

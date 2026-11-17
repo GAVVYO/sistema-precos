@@ -1261,3 +1261,40 @@ html[data-motion="reduce"] .order-card.just-moved { animation: none; }
 @media (prefers-reduced-motion: reduce) { .pay-stage *, .pay-stage *::before, .pay-stage *::after, .pay-change { animation: none !important; } }
 html[data-motion="reduce"] .pay-stage *, html[data-motion="reduce"] .pay-change { animation: none !important; }
 html[data-motion="reduce"] .pay-stage *::before, html[data-motion="reduce"] .pay-stage *::after { animation: none !important; }
+
+/* ---------- Leveza (17/11): animações mais curtas e sem vidro desfocado ----------
+   Medido: o custo maior no Mac era redesenhar o desfoque (backdrop-filter) do cabeçalho e
+   do menu ao rolar, e as durações de 420–720 ms davam sensação de lerdeza. Prevalece sobre o acima. */
+.island, .island-header .movable-nav-frame:not(.nav-floating), .island-search-slot .order-search, .side-nav {
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
+}
+.island-search-slot .order-search:focus-within, .side-nav.is-open { background: var(--surface); }
+.page-enter { animation-duration: 140ms; }
+dialog[open] { animation-duration: 160ms; }
+.dashboard-stats > * { animation-duration: 220ms; }
+::view-transition-group(*) { animation-duration: 300ms; }
+::view-transition-group(.card) { animation-duration: 300ms; }
+::view-transition-group(.pay-row) { animation-duration: 280ms; }
+::view-transition-old(.pay-row):only-child { animation-duration: 340ms; }
+::view-transition-group(order-hero) { animation-duration: 280ms; }
+::view-transition-old(order-hero), ::view-transition-new(order-hero) { animation-duration: 180ms; }
+html[data-vt="open"]::view-transition-new(root) { animation-duration: 260ms; }
+html[data-vt="close"]::view-transition-old(root) { animation-duration: 200ms; }
+html[data-vt="workshop"]::view-transition-new(root) { animation-duration: 480ms; }
+::view-transition-group(brand-logo) { animation-duration: 420ms; }
+::view-transition-new(brand-logo) { animation-duration: 420ms; }
+html[data-nav-switch="side"]::view-transition-new(side-nav):only-child { animation-duration: 340ms; }
+html[data-nav-switch="top"]::view-transition-new(top-nav):only-child { animation-duration: 320ms; }
+.side-brand[data-pop] .side-brand-logo .app-brand-logo { animation-duration: 440ms; animation-delay: 260ms; }
+.side-brand[data-pop] .side-burst::before, .side-brand[data-pop] .side-burst i { animation-duration: 520ms; animation-delay: 360ms; }
+.side-nav[data-entering] .side-nav-item { animation-duration: 260ms; animation-delay: calc(var(--i) * 25ms + 60ms); }
+.with-sidebar { transition-duration: 240ms; }
+.side-nav { transition-duration: 200ms, 200ms, 120ms; }
+.nav-pill[data-ready] { transition-duration: 280ms, 280ms, 200ms; }
+.order-card.just-moved { animation-duration: 800ms; }
+.pay-card { animation-duration: 420ms; }
+.pay-note { animation-duration: 380ms; animation-delay: calc(var(--n) * 50ms); }
+.pay-phone { animation-duration: 380ms; }
+.pay-receipt { animation-duration: 440ms; }
+.tour-pop { animation-duration: 200ms; }

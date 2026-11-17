@@ -12,7 +12,7 @@ import { vtName, withTransition } from "@/lib/view-transition";
 function animateCardMove(orderId: string, nextLabel: string, run: () => void) {
   const name = vtName("card", orderId);
   const style = document.createElement("style");
-  style.textContent = `::view-transition-group(${name}){z-index:20;animation-duration:560ms;animation-timing-function:cubic-bezier(.34,1.25,.64,1)}::view-transition-old(${name}){animation:none;opacity:0}::view-transition-new(${name}){animation:card-land 560ms cubic-bezier(.34,1.25,.64,1) both}`;
+  style.textContent = `::view-transition-group(${name}){z-index:20;animation-duration:380ms;animation-timing-function:cubic-bezier(.34,1.25,.64,1)}::view-transition-old(${name}){animation:none;opacity:0}::view-transition-new(${name}){animation:card-land 380ms cubic-bezier(.34,1.25,.64,1) both}`;
   // Só as duas colunas envolvidas entram na animação (menos "fotos" = troca mais leve).
   const cols: Element[] = [];
   const mark = (el: Element | null | undefined) => { if (el) { el.setAttribute("data-vt-col", ""); cols.push(el); } };

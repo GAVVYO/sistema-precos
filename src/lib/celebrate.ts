@@ -35,7 +35,7 @@ export function celebratePayment(from: DOMRect, amount: string): void {
       { transform: `translate(calc(-50% + ${dx * 0.5}px), calc(-50% + ${dy * 0.5 - 70}px)) scale(1)`, opacity: 1, offset: 0.65 },
       { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35)`, opacity: 0.2 },
     ],
-    { duration: 1150, delay: 250, easing: "cubic-bezier(.45,0,.2,1)", fill: "both" },
+    { duration: 900, delay: 150, easing: "cubic-bezier(.45,0,.2,1)", fill: "both" },
   ).finished.then(() => {
     target?.animate([{ transform: "scale(1)" }, { transform: "scale(1.18)" }, { transform: "scale(1)" }], { duration: 380, easing: "cubic-bezier(.34,1.56,.64,1)" });
     layer.remove();

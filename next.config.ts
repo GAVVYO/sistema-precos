@@ -6,7 +6,16 @@ import type { NextConfig } from "next";
  * validam o conteúdo pré-renderizado de cada rota) ficam desligados. Reavaliar
  * na fase 2, quando as telas passarem a buscar dados no servidor.
  */
+/**
+ * `STATIC_EXPORT=1` (npm run build:hostinger) gera a pasta `out/` com HTML, CSS e JS
+ * prontos para qualquer hospedagem (inclusive a compartilhada da Hostinger):
+ * a demonstração não usa servidor. `trailingSlash` cria `pagina/index.html`,
+ * que o Apache serve sem regras extras. Na fase 2 (backend) voltará a precisar de Node.
+ */
+const staticExport = process.env.STATIC_EXPORT === "1";
+
 const nextConfig: NextConfig = {
+  ...(staticExport ? { output: "export" as const, trailingSlash: true, images: { unoptimized: true } } : {}),
   turbopack: {
     rules: {
       "*.css": {

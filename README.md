@@ -28,6 +28,8 @@ Abra http://localhost:3000. Na tela de acesso, escolha a oficina e o usuário fi
 | `npm run typecheck` | Checagem de tipos (TypeScript strict) |
 | `npm run lint` | ESLint |
 
+| `npm run build:hostinger` | Gera `out/` e `gavyo-hostinger.zip` para publicar na Hostinger ([passo a passo](docs/DEPLOY-HOSTINGER.md)) |
+
 Nenhuma variável de ambiente é necessária para a demonstração. Veja [.env.example](.env.example).
 
 ## Roteiro de demonstração
@@ -58,7 +60,7 @@ Plano e validação:
 - [Acessibilidade](docs/ACESSIBILIDADE.md) · [Navegação](docs/NAVEGACAO.md)
 
 Referência:
-- [Funcionalidades e limitações](docs/FUNCIONALIDADES.md) · [Arquitetura](docs/ARQUITETURA.md) · [Roadmap: backend e produção](docs/ROADMAP.md) · [Schema MySQL previsto](prisma/schema.prisma)
+- [Publicar na Hostinger](docs/DEPLOY-HOSTINGER.md) · [Funcionalidades e limitações](docs/FUNCIONALIDADES.md) · [Arquitetura](docs/ARQUITETURA.md) · [Roadmap: backend e produção](docs/ROADMAP.md) · [Schema MySQL previsto](prisma/schema.prisma)
 - [PRODUCT.md](PRODUCT.md) e [DESIGN.md](DESIGN.md) — produto e identidade visual · [Revisão visual](docs/REVISAO-VISUAL.md) · [Contexto visual](docs/CONTEXTO-VISUAL.md) · [Ideias de interface adaptável](docs/IDEIAS-INTERFACE-ADAPTAVEL.md)
 
 ## Stack

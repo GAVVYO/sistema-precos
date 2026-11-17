@@ -103,7 +103,7 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
         {draggable && (
           <button
             type="button"
-            className="-ml-1.5 flex h-6 w-5 shrink-0 cursor-grab touch-none items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-ink active:cursor-grabbing"
+            className="-ml-1.5 flex size-6 shrink-0 cursor-grab touch-none items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-ink active:cursor-grabbing"
             aria-label={`Arrastar ${number}`}
             data-tour="drag"
             {...listeners}

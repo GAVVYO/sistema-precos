@@ -602,7 +602,7 @@ body.is-resizing { cursor: col-resize; user-select: none; }
 
 /* Seleção múltipla (referência: Finder, Google Drive). */
 .order-card { position: relative; }
-.pick-box { position: absolute; top: -8px; left: -8px; z-index: 2; display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; border: 2px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--primary-fg); opacity: 0; transition: opacity 120ms; }
+.pick-box { position: absolute; top: -12px; left: -12px; z-index: 2; display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; border: 2px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--primary-fg); opacity: 0; transition: opacity 120ms; }
 .order-card:hover .pick-box, .order-card:focus-within .pick-box, .kanban-board:has(.is-picked) .pick-box { opacity: 1; }
 .pick-box[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); opacity: 1; }
 .order-card.is-picked { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 5%, var(--surface)); }
@@ -992,7 +992,7 @@ html { scroll-padding-top: 140px; }
 .today-time { min-width: 3.6rem; font-size: 1.375rem; font-weight: 750; font-variant-numeric: tabular-nums; }
 .today-who { display: grid; gap: 2px; min-width: 0; }
 .today-who strong, .today-name-link { font-size: 1rem; font-weight: 700; text-align: left; }
-.today-name-link { color: var(--primary); }
+.today-name-link { color: var(--primary); min-height: 32px; padding-block: 4px; margin-block: -4px; }
 .today-name-link:hover { text-decoration: underline; }
 .today-meta { font-size: .875rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .today-value { font-size: 1.125rem; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; }

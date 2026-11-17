@@ -89,8 +89,26 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
     setVehicleChoice(first ? first.id : NEW_VEHICLE);
   };
 
+  // Campos obrigatórios conferidos antes de salvar: a pessoa vê de uma vez o que falta, em cada campo.
+  const [tried, setTried] = useState(false);
+  const fieldErrors: Record<string, string | undefined> = {
+    name: !customer && name.trim().length < 2 ? "Escreva o nome do cliente." : undefined,
+    plate: !usingExistingVehicle ? (plate.trim() === "" ? "Escreva a placa." : normalizePlate(plate) ? undefined : "Placa incompleta. Exemplo: ABC1D23.") : undefined,
+    brand: !usingExistingVehicle && brand.trim().length < 2 ? "Escreva a marca." : undefined,
+    model: !usingExistingVehicle && model.trim().length < 1 ? "Escreva o modelo." : undefined,
+    description: description.trim().length < 3 ? "Escreva o que o cliente pediu." : undefined,
+  };
+  const missing = Object.entries(fieldErrors).filter(([, v]) => v);
+  const err = (k: string) => (tried ? fieldErrors[k] : undefined);
+  const LABELS: Record<string, string> = { name: "nome", plate: "placa", brand: "marca", model: "modelo", description: "o que o cliente pediu" };
+
   const submit = () => {
     if (busy) return;
+    if (missing.length) {
+      setTried(true);
+      const names = missing.map(([k]) => LABELS[k]);
+      return toast("error", `Falta preencher: ${names.length > 1 ? `${names.slice(0, -1).join(", ")} e ${names.at(-1)}` : names[0]}.`);
+    }
     if (laborInvalid) return toast("error", "Valor de mão de obra inválido. Use o formato 150,00.");
     const items = draftsToItems(drafts);
     if (typeof items === "string") return toast("error", items);
@@ -174,7 +192,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
           ) : (
             <div className="grid grid-cols-5 gap-3">
               <div className="relative col-span-3">
-                <Field label="Nome" hint="Digite para buscar um cadastro ou criar um novo.">
+                <Field label="Nome" hint="Digite para buscar um cadastro ou criar um novo." error={err("name")}>
                   {(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" autoFocus placeholder="Nome, telefone ou placa" />}
                 </Field>
                 {suggestions.length > 0 && (
@@ -217,13 +235,13 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
             )}
             {!usingExistingVehicle && (
               <div className="grid grid-cols-6 gap-3">
-                <Field label="Placa" className="col-span-2">
+                <Field label="Placa" className="col-span-2" error={err("plate")}>
                   {(p) => <Input {...p} value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} placeholder="ABC1D23" maxLength={8} />}
                 </Field>
-                <Field label="Marca" className="col-span-2">
+                <Field label="Marca" className="col-span-2" error={err("brand")}>
                   {(p) => <Input {...p} value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Fiat" />}
                 </Field>
-                <Field label="Modelo" className="col-span-2">
+                <Field label="Modelo" className="col-span-2" error={err("model")}>
                   {(p) => <Input {...p} value={model} onChange={(e) => setModel(e.target.value)} placeholder="Uno" />}
                 </Field>
                 <Field label="Ano" optional className="col-span-3">
@@ -245,7 +263,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
         <div>
           <SectionTitle>Serviço</SectionTitle>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Descrição do serviço" className="col-span-2">
+            <Field label="O que o cliente pediu" className="col-span-2" error={err("description")}>
               {(p) => (
                 <>
                   <Input {...p} value={description} onChange={(e) => setDescription(e.target.value)} list="servicos-sugeridos" placeholder="Ex.: Troca de óleo e filtro" />

@@ -165,11 +165,12 @@ function Column({ status, orders, canDrag, filtered }: { status: OrderStatus; or
         isOver && draggingOrder && "ring-2 ring-primary/50",
       )}
     >
-      <header className="flex items-center justify-between px-3 py-2">
+      <header className="kanban-head flex items-center justify-between px-3 py-2">
         <h2 className="text-sm font-semibold">{ORDER_STATUS_LABELS[status]}</h2>
         <span className="rounded bg-surface px-2 py-0.5 text-xs font-semibold text-muted tabular-nums">{orders.length}</span>
       </header>
-      <div className="flex max-h-[calc(100vh-390px)] min-h-40 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
+      {/* Sem rolagem própria: a coluna cresce e a página rola (uma rolagem só, sem cortar a caixinha de seleção). */}
+      <div className="kanban-cards flex min-h-40 flex-1 flex-col gap-3">
         {orders.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-muted">{filtered ? "Nenhum serviço encontrado com os filtros atuais." : "Nenhum serviço nesta etapa."}</p>
         ) : (

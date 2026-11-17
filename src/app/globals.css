@@ -252,7 +252,7 @@ textarea.ui-control { min-height: 72px; }
 .kanban-column > header h2::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
 .kanban-waiting > header h2::before { background: var(--warning); }
 .kanban-done > header h2::before { background: var(--success); }
-.kanban-column > div { padding: 0 10px 10px; }
+.kanban-column > div { padding: 6px 14px 16px; }
 .appointment-chip { transition: filter 140ms, transform 140ms; }
 .appointment-chip:hover { transform: translateY(-1px); }
 .schedule-week { overflow-x: auto; }
@@ -300,7 +300,6 @@ textarea.ui-control { min-height: 72px; }
   .dashboard-metrics { gap: 12px; }
   .work-filter input { max-width: none; margin-left: 0; width: 100%; }
   .kanban-board { grid-template-columns: 1fr; }
-  .kanban-column > div { max-height: 450px; }
   .dialog-actions .ui-button { flex-grow: 1; white-space: normal; min-height: 38px; height: auto; padding-block: 10px; }
   .app-dialog { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); }
   .app-dialog > header, .app-dialog > div, .app-dialog > footer { padding: 16px; }
@@ -1156,3 +1155,10 @@ html[data-vt="workshop"]::view-transition-new(root) { animation: vt-reveal 720ms
 @media (prefers-reduced-motion: reduce) { .nav-pill[data-ready] { transition: none; } .order-card.just-moved { animation: none; } }
 html[data-motion="reduce"] .nav-pill[data-ready] { transition: none; }
 html[data-motion="reduce"] .order-card.just-moved { animation: none; }
+
+/* ---------- Quadro com respiro: uma rolagem só (a da página) e folga no fim ---------- */
+.kanban-column { overflow: visible; }
+.kanban-head { padding: 14px 16px 10px; }
+.kanban-head h2 { font-size: .9375rem; }
+.kanban-board { gap: 18px; align-items: start; }
+.app-main { padding-bottom: 120px; }

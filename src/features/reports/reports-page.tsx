@@ -117,7 +117,7 @@ export function ReportsPage() {
           )}
 
           {report.rows.length === 0 ? (
-            <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum registro encontrado" description="Ajuste o período ou os filtros para ver resultados." />
+            <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum registro encontrado" description="Escolha um período maior ou mude os filtros acima da tabela." />
           ) : (
             <div className="max-h-[calc(100vh-390px)] overflow-auto">
               <table tabIndex={0} aria-label={report.title} className="data-table report-table">

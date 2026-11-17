@@ -908,3 +908,14 @@ html { scroll-padding-top: 140px; }
 .order-peek { top: 138px; max-height: calc(100dvh - 154px); }
 @media (max-width: 1000px) { html { scroll-padding-top: 196px; } }
 @media (max-width: 767px) { html { scroll-padding-top: 124px; scroll-padding-bottom: 96px; } }
+/* Passo 4: dica de primeira vez e campo digitável do ajuste por arrasto. */
+.first-tip { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border)); border-radius: 12px; background: var(--color-primary-soft); color: var(--text); font-size: .9375rem; line-height: 1.5; }
+.first-tip-icon { flex-shrink: 0; width: 22px; height: 22px; margin-top: 1px; color: var(--primary); }
+.first-tip-title { font-weight: 700; margin-bottom: 2px; }
+.first-tip-body p + p { margin-top: 4px; }
+@media (max-width: 767px) { .first-tip { flex-wrap: wrap; } .first-tip > div { flex-basis: calc(100% - 34px); } .first-tip > .ui-button { margin-left: 34px; } }
+.scrub-input { width: 7.5rem; cursor: text; border: 1px solid var(--primary); background: var(--surface); color: var(--text); outline: none; font: inherit; font-weight: 600; }
+.demo-options { position: relative; }
+.demo-options > summary { list-style: none; min-height: 24px; }
+.demo-options > summary::-webkit-details-marker { display: none; }
+.demo-options-panel { position: absolute; right: 0; top: calc(100% + 6px); z-index: 60; display: grid; gap: 10px; min-width: 220px; padding: 12px 14px; border: 1px solid #fcd34d; border-radius: 10px; background: #fffbeb; box-shadow: 0 10px 30px rgb(23 32 51 / 16%); }

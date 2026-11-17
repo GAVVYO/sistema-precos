@@ -49,7 +49,7 @@ export function AgendaChip({ a, onOpen, compact, appearance }: { a: Appointment;
         <span className="mr-auto font-bold tabular-nums">{a.time}</span>
         {editable && <>
           <button type="button" className="flex size-8 shrink-0 items-center justify-center rounded hover:bg-surface cursor-grab touch-none active:cursor-grabbing" aria-label={`Arrastar agendamento de ${a.customerName}`} {...attributes} {...listeners}><GripVertical size={16} aria-hidden /></button>
-          <button type="button" className="flex size-8 shrink-0 items-center justify-center rounded hover:bg-surface" aria-label={`Reagendar ${a.customerName}`} onClick={() => { setDate(a.date); setTime(a.time); setEditing(true); }}><CalendarClock size={16} aria-hidden /></button>
+          <button type="button" className="flex size-8 shrink-0 items-center justify-center rounded hover:bg-surface" aria-label={`Mudar dia e horário de ${a.customerName}`} title="Mudar dia e horário" onClick={() => { setDate(a.date); setTime(a.time); setEditing(true); }}><CalendarClock size={16} aria-hidden /></button>
         </>}
       </div>
       <button type="button" onClick={() => onOpen(a)} className="block w-full px-2.5 pb-3 pt-1 text-left" title="Abrir agendamento">

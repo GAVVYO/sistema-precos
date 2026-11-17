@@ -1,5 +1,6 @@
 "use client";
 
+import { FirstTip } from "@/components/ui/first-tip";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { ChevronDown, ChevronUp, GripVertical, Maximize2, Minus, PackagePlus, Phone, PictureInPicture2, Plus, Search, Trash2, UserX, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -195,6 +196,10 @@ export function OrderPeek({
       </header>
 
       <div className="peek-body">
+        <FirstTip id="painel" title="Resumo do serviço" className="mb-3">
+          <p>Para lançar uma peça, clique em <strong>+</strong> ao lado dela na lista “Adicionar do estoque”. Para tirar, use <strong>−</strong>. Para mudar a mão de obra, clique no valor e digite.</p>
+          <p>Para ver tudo (PDF, WhatsApp, cancelar), use <strong>Ver serviço completo</strong>, lá embaixo.</p>
+        </FirstTip>
         <dl className="peek-info">
           <div><dt>Cliente</dt><dd>{customer?.name}</dd></div>
           <div><dt>Telefone</dt><dd className="flex items-center gap-1"><Phone className="size-3.5 text-muted" aria-hidden />{customer ? formatPhone(customer.phone) : "—"}</dd></div>
@@ -268,6 +273,7 @@ export function OrderPeek({
               bigStep={5000}
               pxPerStep={8}
               label="Mão de obra"
+              inputScale={100}
               format={(v) => (order.laborCents === null && v === 0 ? "A definir" : formatBRL(v))}
               onCommit={(v) => setLabor(order, v)}
             />

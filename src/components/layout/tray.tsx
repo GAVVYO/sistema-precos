@@ -105,6 +105,8 @@ export function TrayDock({ dnd = false }: { dnd?: boolean }) {
   const { items, clear } = useTray();
   const { moveMany, assignMany } = useOrderActions();
   const [open, setOpen] = useState(true);
+  // Vazia, a bandeja fica fechada; clicar mostra para que ela serve.
+  const [hint, setHint] = useState(false);
   const { setNodeRef, isOver, active } = useDroppable({ id: "tray", disabled: !dnd });
   const dragging = !!active && !String(active.id).startsWith("tray-");
   const orders = items.flatMap((i) => (i.type === "order" ? view.orders.filter((o) => o.id === i.id && !o.cancelledAt) : []));
@@ -112,7 +114,7 @@ export function TrayDock({ dnd = false }: { dnd?: boolean }) {
 
   if (!dnd && count === 0) return null;
   // Vazia e sem arraste em curso: só a pílula, para não cobrir o conteúdo.
-  const showBody = open && (count > 0 || dragging);
+  const showBody = dragging || (count > 0 ? open : hint);
 
   return (
     <aside
@@ -121,11 +123,11 @@ export function TrayDock({ dnd = false }: { dnd?: boolean }) {
       className={cx("tray-dock", dragging && "is-target", isOver && "is-over", !showBody && "is-collapsed")}
     >
       <header className="tray-head">
-        <button type="button" className="tray-toggle" aria-expanded={showBody} onClick={() => setOpen((o) => !o)} title="Arraste serviços ou peças para cá para guardar enquanto atende outra coisa">
+        <button type="button" className="tray-toggle" aria-expanded={showBody} onClick={() => (count > 0 ? setOpen((o) => !o) : setHint((h) => !h))} title="Guarde serviços ou peças para achar rápido depois">
           <Inbox className="size-4" aria-hidden />
           <span>Bandeja</span>
           <span className="tray-count">{count}</span>
-          {count > 0 && (open ? <ChevronDown className="size-4" aria-hidden /> : <ChevronUp className="size-4" aria-hidden />)}
+          {(showBody ? <ChevronDown className="size-4" aria-hidden /> : <ChevronUp className="size-4" aria-hidden />)}
         </button>
         {open && orders.length > 0 && (
           <MoreMenu
@@ -133,7 +135,7 @@ export function TrayDock({ dnd = false }: { dnd?: boolean }) {
             items={[
               ...ORDER_STATUSES.map((s, i) => ({ label: ORDER_STATUS_LABELS[s], group: i === 0 ? `Mover ${orders.length} ${orders.length === 1 ? "serviço" : "serviços"} para` : undefined, icon: <ArrowRight className="size-4" />, disabled: !online, onSelect: () => moveMany(orders, s) })),
               ...(can("os.edit")
-                ? mechanics.map((m, i) => ({ label: m.name, group: i === 0 ? "Atribuir todas a" : undefined, icon: <UserCheck className="size-4" />, disabled: !online, onSelect: () => assignMany(orders, m.id) }))
+                ? mechanics.map((m, i) => ({ label: m.name, group: i === 0 ? "Passar todos para" : undefined, icon: <UserCheck className="size-4" />, disabled: !online, onSelect: () => assignMany(orders, m.id) }))
                 : []),
               { label: "Esvaziar bandeja", icon: <X className="size-4" />, onSelect: clear, group: " " },
             ]}
@@ -142,7 +144,7 @@ export function TrayDock({ dnd = false }: { dnd?: boolean }) {
       </header>
       {showBody && (
         count === 0 ? (
-          <p className="tray-empty">{dragging ? "Solte aqui para guardar" : "Arraste serviços ou peças para cá para guardar enquanto atende outra coisa."}</p>
+          <p className="tray-empty">{dragging ? "Solte aqui para guardar" : "Guarde aqui um serviço ou peça para achar rápido depois. No botão ⋯ do cartão, escolha “Guardar na bandeja” (ou arraste até aqui)."}</p>
         ) : (
           <ul className="tray-list">
             {items.map((i) => <TrayRow key={`${i.type}:${i.id}`} item={i} dnd={dnd} />)}

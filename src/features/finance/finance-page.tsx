@@ -43,7 +43,7 @@ function CashChart({ period, transactions }: { period: Period; transactions: Fin
   }, [period, transactions, grouping]);
 
   if (!data.some((d) => d.received || d.expenses)) {
-    return <EmptyState title="Sem movimentações no período" description="Registre pagamentos ou despesas para ver o fluxo de caixa." />;
+    return <EmptyState title="Nenhum dinheiro entrou ou saiu neste período" description="Quando você receber um serviço ou lançar uma despesa, o gráfico aparece aqui. Também dá para escolher outro período no alto da tela." />;
   }
   const brl = (v: number) => formatBRL(Math.round(v * 100));
   return (
@@ -247,7 +247,7 @@ export function FinancePage() {
 
         {tab === "income" &&
           (incomes.length === 0 ? (
-            <EmptyState icon={<CircleDollarSign className="size-8" aria-hidden />} title="Nenhuma receita no período" description="As receitas aparecem aqui quando um pagamento é registrado." />
+            <EmptyState icon={<CircleDollarSign className="size-8" aria-hidden />} title="Nada recebido neste período" description="Quando você clicar em Receber num serviço, o valor aparece aqui." />
           ) : (
             <div className="overflow-x-auto">
               <table className="data-table">
@@ -274,7 +274,7 @@ export function FinancePage() {
 
         {tab === "expense" &&
           (expenses.length === 0 ? (
-            <EmptyState icon={<Receipt className="size-8" aria-hidden />} title="Nenhuma despesa no período" action={can("finance.expense") ? <Button disabled={!online} onClick={() => setDialog("expense")}>Nova despesa</Button> : undefined} />
+            <EmptyState icon={<Receipt className="size-8" aria-hidden />} title="Nenhuma despesa neste período" description="Lance aqui contas pagas: compra de peças, aluguel, energia…" action={can("finance.expense") ? <Button disabled={!online} onClick={() => setDialog("expense")}>Nova despesa</Button> : undefined} />
           ) : (
             <div className="overflow-x-auto">
               <table className="data-table">

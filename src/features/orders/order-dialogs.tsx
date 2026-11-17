@@ -45,7 +45,7 @@ export function PaymentDialog({ orderId, onClose }: { orderId: ID; onClose: () =
 
   return (
     <Dialog
-      title="Registrar pagamento"
+      title="Receber"
       subtitle={`${formatOrderNumber(order.number)} · ${customerOf(order.customerId)?.name} · ${vehicleLabel(vehicle)} ${vehicle ? formatPlate(vehicle.plate) : ""}`}
       size="sm"
       onClose={onClose}
@@ -59,12 +59,12 @@ export function PaymentDialog({ orderId, onClose }: { orderId: ID; onClose: () =
             onClick={() => {
               if (busy) return;
               setBusy(true);
-              const r = act((db, ctx) => registerPayment(db, ctx, order.id, { method }), "Pagamento registrado. O valor já aparece no Financeiro.");
+              const r = act((db, ctx) => registerPayment(db, ctx, order.id, { method }), `Recebido ${formatBRL(totals.totalCents)} do ${formatOrderNumber(order.number)}. O valor já aparece no Financeiro.`);
               setBusy(false);
               if (r.ok) onClose();
             }}
           >
-            Confirmar recebimento de {formatBRL(totals.totalCents)}
+            Recebi {formatBRL(totals.totalCents)}
           </Button>
         </>
       }
@@ -74,9 +74,9 @@ export function PaymentDialog({ orderId, onClose }: { orderId: ID; onClose: () =
         <div className="flex justify-between"><dt className="text-muted">Peças</dt><dd>{formatBRL(totals.partsCents)}</dd></div>
         <div className="flex justify-between border-t border-line pt-1 text-base font-semibold"><dt>Total a receber</dt><dd>{formatBRL(totals.totalCents)}</dd></div>
       </dl>
-      <p className="mb-2 text-sm font-medium">Forma de pagamento</p>
+      <p className="mb-2 text-sm font-medium">Como o cliente pagou?</p>
       <PaymentMethodPicker value={method} onChange={setMethod} />
-      <p className="mt-3 text-xs text-muted">O pagamento é integral e registrado manualmente. Não há cobrança automática nem pagamento parcial.</p>
+      <p className="mt-3 text-xs text-muted">Só marque depois de receber o valor inteiro. O sistema não cobra o cliente sozinho.</p>
     </Dialog>
   );
 }

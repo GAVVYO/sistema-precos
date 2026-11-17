@@ -198,7 +198,7 @@ export function SchedulePage() {
     <div className="module-page module-schedule">
       <PageHeader
         title="Agenda"
-        description="Arraste pela alça para mudar o dia. Use o calendário do cartão para ajustar dia e horário."
+        description="Clique no agendamento para confirmar ou, quando o cliente chegar, abrir o serviço. Para mudar dia e horário, use o botão de calendário do cartão (ou arraste)."
         actions={<Button variant="primary" icon={<CalendarPlus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNew(mode === "list" ? today : cursor)}>Novo agendamento</Button>}
       />
       <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -216,7 +216,7 @@ export function SchedulePage() {
       {mode === "day" && (
         <Card>
           {dayList.length === 0 ? (
-            <EmptyState icon={<CalendarDays className="size-8" aria-hidden />} title="Nenhum agendamento neste dia" action={<Button disabled={!online} onClick={() => openNew(cursor)}>Novo agendamento</Button>} />
+            <EmptyState icon={<CalendarDays className="size-8" aria-hidden />} title="Nenhum agendamento neste dia" description="Quando um cliente ligar para marcar, registre aqui." action={<Button disabled={!online} onClick={() => openNew(cursor)}>Novo agendamento</Button>} />
           ) : (
             <table className="data-table">
               <thead><tr><th>Horário</th><th>Cliente</th><th>Telefone</th><th>Veículo</th><th>Serviço</th><th>Mecânico</th><th>Situação</th></tr></thead>
@@ -293,7 +293,7 @@ export function SchedulePage() {
       {mode === "list" && (
         <Card>
           {upcoming.length === 0 ? (
-            <EmptyState icon={<CalendarDays className="size-8" aria-hidden />} title="Nenhum atendimento futuro" description="Crie um agendamento para organizar os próximos dias." />
+            <EmptyState icon={<CalendarDays className="size-8" aria-hidden />} title="Nenhum cliente marcado para os próximos dias" description="Quando um cliente ligar para marcar, registre aqui." action={<Button variant="primary" disabled={!online} onClick={() => openNew(today)}>Novo agendamento</Button>} />
           ) : (
             <table className="data-table">
               <thead><tr><th>Data</th><th>Horário</th><th>Cliente</th><th>Veículo</th><th>Serviço</th><th>Mecânico</th><th>Situação</th></tr></thead>

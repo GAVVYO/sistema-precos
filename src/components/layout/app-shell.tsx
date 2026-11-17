@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, Lock, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
+  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, LayoutDashboard, Lock, Settings2, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -142,7 +142,10 @@ function DemoBar() {
             ))}
         </select>
       </label>
-      <div className="ml-auto flex items-center gap-3">
+      {/* Opções de teste ficam recolhidas para não confundir quem usa no dia a dia. */}
+      <details className="demo-options ml-auto">
+        <summary className="flex cursor-pointer items-center gap-1 font-medium"><Settings2 className="size-3.5" aria-hidden />Opções da demonstração</summary>
+        <div className="demo-options-panel">
         <button
           type="button"
           className="flex items-center gap-1 font-medium underline-offset-2 hover:underline"
@@ -160,7 +163,8 @@ function DemoBar() {
           <RotateCcw className="size-3.5" aria-hidden />
           Restaurar demonstração
         </button>
-      </div>
+        </div>
+      </details>
       {confirmReset && (
         <ConfirmDialog
           title="Restaurar demonstração"
@@ -305,6 +309,12 @@ function Header() {
                   <p className="text-sm text-muted">{user.email}</p>
                   <p className="mt-1 flex items-center gap-1.5 text-sm text-muted"><span className={cx("size-2 rounded-full", conn.dot)} aria-hidden />{conn.label}</p>
                 </div>
+                {membership.role !== "mechanic" && (
+                  <Link role="menuitem" href="/inicio?organizar=1" onClick={close} className="widget-customize flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50">
+                    <LayoutDashboard className="size-4" aria-hidden />
+                    Organizar tela inicial
+                  </Link>
+                )}
                 <button
                   type="button"
                   role="menuitem"

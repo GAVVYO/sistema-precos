@@ -1,5 +1,6 @@
 "use client";
 
+import { FirstTip } from "@/components/ui/first-tip";
 import {
   CollisionDetection, DndContext, DragEndEvent, pointerWithin, rectIntersection, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors,
 } from "@dnd-kit/core";
@@ -63,8 +64,8 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
   const customer = customerOf(order.customerId)?.name;
   const mechanic = userOf(order.mechanicId)?.name.split(" ").slice(0, 2).join(" ") ?? "Sem responsável";
   const menuItems: MoreMenuItem[] = [
-    { label: "Abrir completo", icon: <ExternalLink className="size-4" />, onSelect: () => openOrder(order.id) },
-    { label: isPicked ? "Tirar da seleção" : "Selecionar (X)", icon: <CheckSquare className="size-4" />, onSelect: () => togglePick(order.id) },
+    { label: "Ver serviço completo", icon: <ExternalLink className="size-4" />, onSelect: () => openOrder(order.id) },
+    { label: isPicked ? "Desmarcar" : "Marcar para mexer em vários", icon: <CheckSquare className="size-4" />, onSelect: () => togglePick(order.id) },
     tray.has({ type: "order", id: order.id })
       ? { label: "Tirar da bandeja", icon: <Inbox className="size-4" />, onSelect: () => tray.remove({ type: "order", id: order.id }) }
       : { label: "Guardar na bandeja", icon: <Inbox className="size-4" />, onSelect: () => tray.add([{ type: "order", id: order.id }]) },
@@ -326,20 +327,27 @@ export function OrdersPage() {
         )}
       </div>
 
+      {active.length > 0 && (
+        <FirstTip id="quadro" title="Como usar este quadro">
+          <p>Cada carro passa por <strong>Aguardando → Em andamento → Pronto</strong>. O botão do cartão faz o próximo passo: <strong>Começar</strong>, <strong>Marcar como pronto</strong> e <strong>Receber</strong>.</p>
+          <p>Clique no cartão para ver os detalhes e lançar peças. Se preferir, também dá para arrastar o cartão para outra coluna ou até o nome de um responsável, e marcar a caixinha do canto para mexer em vários de uma vez.</p>
+        </FirstTip>
+      )}
+
       <PeekContext.Provider value={{ peekId, setPeek, picked, togglePick }}>
       <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
       <MechanicStrip value={mechanic} onChange={setMechanic} />
       {pickedOrders.length > 0 && (
         <div className="pick-bar" role="region" aria-label="Serviços selecionados">
           <strong>{pickedOrders.length} {pickedOrders.length === 1 ? "serviço selecionado" : "serviços selecionados"}</strong>
-          <span className="text-muted">Arraste uma delas para levar todas.</span>
+          <span className="text-muted">Use os botões ao lado (ou arraste um deles para levar todos).</span>
           <span className="ml-auto flex flex-wrap items-center gap-2">
-            <MoreMenu text="Mover para" label="Mover selecionadas para" items={ORDER_STATUSES.map((st, i) => ({ label: ORDER_STATUS_LABELS[st], group: i === 0 ? "Mover para" : undefined, icon: <ArrowRight className="size-4" />, disabled: !online, onSelect: () => { moveMany(pickedOrders, st); setPicked(new Set()); } }))} />
+            <MoreMenu text="Mover para" label="Mover selecionados para" items={ORDER_STATUSES.map((st, i) => ({ label: ORDER_STATUS_LABELS[st], group: i === 0 ? "Mover para" : undefined, icon: <ArrowRight className="size-4" />, disabled: !online, onSelect: () => { moveMany(pickedOrders, st); setPicked(new Set()); } }))} />
             {can("os.edit") && (
-              <MoreMenu text="Atribuir a" label="Atribuir selecionadas a" items={[...mechanics.map((m, i) => ({ label: m.name, group: i === 0 ? "Atribuir a" : undefined, icon: <UserCheck className="size-4" />, disabled: !online, onSelect: () => { assignMany(pickedOrders, m.id); setPicked(new Set()); } })), { label: "Sem responsável", icon: <UserCheck className="size-4" />, disabled: !online, onSelect: () => { assignMany(pickedOrders, null); setPicked(new Set()); } }]} />
+              <MoreMenu text="Passar para" label="Passar selecionados para" items={[...mechanics.map((m, i) => ({ label: m.name, group: i === 0 ? "Passar para" : undefined, icon: <UserCheck className="size-4" />, disabled: !online, onSelect: () => { assignMany(pickedOrders, m.id); setPicked(new Set()); } })), { label: "Sem responsável", icon: <UserCheck className="size-4" />, disabled: !online, onSelect: () => { assignMany(pickedOrders, null); setPicked(new Set()); } }]} />
             )}
             <Button size="sm" icon={<Inbox className="size-4" aria-hidden />} onClick={() => { tray.add(pickedOrders.map((o) => ({ type: "order" as const, id: o.id }))); setPicked(new Set()); }}>Guardar na bandeja</Button>
-            <Button size="sm" variant="ghost" onClick={() => setPicked(new Set())}>Limpar (Esc)</Button>
+            <Button size="sm" variant="ghost" onClick={() => setPicked(new Set())}>Desmarcar todos</Button>
           </span>
         </div>
       )}
@@ -356,7 +364,12 @@ export function OrdersPage() {
         </div>
       ) : filtered && visible.length === 0 ? (
         <div className="rounded-md border border-line bg-surface">
-          <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum serviço encontrado" description="Confira a placa ou o nome, ou limpe a busca para ver todos." />
+          <EmptyState
+            icon={<SearchX className="size-8" aria-hidden />}
+            title="Nenhum serviço encontrado"
+            description="Confira a placa ou o nome. Se o carro ainda não tem serviço, abra um novo."
+            action={<div className="flex flex-wrap justify-center gap-2"><Button onClick={() => { setSearch(""); setMechanic(""); setPeriod("all"); }}>Limpar busca</Button>{can("os.create") && <Button variant="primary" disabled={!online} onClick={() => openNewOrder()}>Novo serviço</Button>}</div>}
+          />
         </div>
       ) : (
         <div className="kanban-board grid grid-cols-3 gap-4">

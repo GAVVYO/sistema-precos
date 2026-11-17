@@ -199,7 +199,7 @@ export function StockPage() {
             {view.parts.length === 0 ? (
               <EmptyState icon={<Boxes className="size-8" aria-hidden />} title="Nenhuma peça cadastrada" description="Cadastre as peças que a oficina usa para controlar o estoque e lançá-las nos serviços." action={canMove ? <Button variant="primary" disabled={!online} onClick={() => setEditing("new")}>Nova peça</Button> : undefined} />
             ) : parts.length === 0 ? (
-              <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhuma peça encontrada" description={filtered ? "Revise a busca ou os filtros aplicados." : undefined} />
+              <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhuma peça encontrada" description={filtered ? "Confira o nome ou o código da peça, ou mude os filtros." : undefined} />
             ) : (
               <div className="overflow-x-auto">
                 <table className="data-table">
@@ -252,7 +252,7 @@ export function StockPage() {
               <span className="text-xs text-muted">{moves.length} {moves.length === 1 ? "registro" : "registros"}</span>
             </div>
             {moves.length === 0 ? (
-              <EmptyState icon={<ArrowLeftRight className="size-8" aria-hidden />} title="Nada registrado ainda" />
+              <EmptyState icon={<ArrowLeftRight className="size-8" aria-hidden />} title="Nada registrado ainda" description="Quando chegar ou sair peça, clique em Entrada / Saída na lista de peças. Peças lançadas nos serviços também aparecem aqui." />
             ) : (
               <div className="max-h-[calc(100vh-330px)] overflow-auto">
                 <table className="data-table">

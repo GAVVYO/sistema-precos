@@ -2,6 +2,7 @@
 
 import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, CalendarPlus, CarFront, CheckCircle2, CircleDollarSign, Clock3, PackageCheck, Wrench } from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Badge, Button, Card, CardHeader, EmptyState, Input, PageHeader, Stat } from "@/components/ui/primitives";
@@ -29,7 +30,7 @@ function OrderLink({ order }: { order: ServiceOrder }) {
   );
 }
 
-function OpenOrdersTable({ orders, empty }: { orders: ServiceOrder[]; empty: string }) {
+function OpenOrdersTable({ orders, empty, emptyAction }: { orders: ServiceOrder[]; empty: string; emptyAction?: ReactNode }) {
   const { customerOf, vehicleOf, userOf } = useApp();
   const [sort, setSort] = useState<{ key: "openedAt" | "customer" | "service" | "status"; desc: boolean }>({ key: "openedAt", desc: false });
   const columns = [
@@ -40,7 +41,7 @@ function OpenOrdersTable({ orders, empty }: { orders: ServiceOrder[]; empty: str
   ] as const;
   const value = (o: ServiceOrder): string => sort.key === "customer" ? customerOf(o.customerId)?.name ?? "" : sort.key === "service" ? o.description : sort.key === "status" ? ORDER_STATUS_LABELS[o.status] : o.openedAt;
   const sorted = [...orders].sort((a, b) => (sort.desc ? -1 : 1) * value(a).localeCompare(value(b), "pt-BR", { numeric: true }));
-  if (orders.length === 0) return <EmptyState icon={<Wrench className="size-7" aria-hidden />} title={empty} />;
+  if (orders.length === 0) return <EmptyState icon={<Wrench className="size-7" aria-hidden />} title={empty} action={emptyAction} />;
   return (
     <div className="overflow-x-auto">
       <table className="data-table service-table">
@@ -78,7 +79,7 @@ function TodayAgenda() {
     <Card>
       <CardHeader title="Agenda de hoje" subtitle={`${list.length} ${list.length === 1 ? "atendimento previsto" : "atendimentos previstos"}`} actions={<Link href="/agenda" className="text-sm font-medium text-primary hover:underline">Ver agenda</Link>} />
       {list.length === 0 ? (
-        <EmptyState icon={<CalendarDays className="size-7" aria-hidden />} title="Nenhum agendamento para hoje" />
+        <EmptyState icon={<CalendarDays className="size-7" aria-hidden />} title="Ninguém marcado para hoje" description="Quando um cliente ligar para marcar, registre na Agenda." />
       ) : (
         <ul className="divide-y divide-line">
           {list.map((a) => (
@@ -132,7 +133,7 @@ function RecentActivity() {
     <Card>
       <CardHeader title="Atividade recente" />
       {relevant.length === 0 ? (
-        <EmptyState title="Nenhuma atividade registrada" />
+        <EmptyState title="Nada aconteceu ainda" description="Quando alguém abrir, terminar ou receber um serviço, aparece aqui." />
       ) : (
         <ul className="activity-feed divide-y divide-line">
           {relevant.map((e) => {
@@ -196,7 +197,7 @@ function OperationalDashboard({ editing, prefs }: { editing: boolean; prefs: Wid
             <button type="button" aria-pressed={filter === "done"} onClick={() => setFilter("done")}>Prontos</button>
             <Input aria-label="Buscar serviços do início" placeholder="Placa ou nome do cliente" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
-          <OpenOrdersTable orders={visible} empty={search ? "Nenhum serviço com essa placa ou nome. Confira o que foi digitado." : "Nenhum serviço nesta situação."} />
+          <OpenOrdersTable orders={visible} empty={search ? "Nenhum serviço com essa placa ou nome. Confira o que foi digitado." : "Nenhum serviço nesta situação."} emptyAction={search ? <Button onClick={() => setSearch("")}>Limpar busca</Button> : filter !== "open" ? <Button onClick={() => setFilter("open")}>Ver todos em aberto</Button> : undefined} />
         </Card>
       ),
     },
@@ -351,7 +352,11 @@ export function DashboardPage() {
   const today = todayISO();
   const variant =
     membership.role === "mechanic" ? "mechanic" : membership.role === "financial" && can("finance.view") ? "finance" : can("os.view") ? "operational" : "none";
-  const [editing, setEditing] = useState(false);
+  // "Organizar tela inicial" fica no menu da conta (Minha conta) e chega aqui por ?organizar=1.
+  const params = useSearchParams();
+  const router = useRouter();
+  const editing = params.has("organizar");
+  const setEditing = (on: boolean) => router.replace(on ? "/inicio?organizar=1" : "/inicio", { scroll: false });
   const prefs = useWidgetPrefs(`${variant}:${membership.workshopId}:${user.id}`);
   const customizable = variant === "operational" || variant === "finance";
 

@@ -297,14 +297,14 @@ export function CustomersPage() {
           view.customers.length === 0 ? (
             <EmptyState icon={<Users className="size-8" aria-hidden />} title="Nenhum cliente cadastrado" description="O cliente é cadastrado sozinho quando você abre um serviço. Também dá para usar o botão Novo cliente." />
           ) : customers.length === 0 ? (
-            <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum cliente encontrado" description="Tente buscar por outro nome, telefone ou placa." />
+            <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum cliente encontrado" description="Confira o nome, o telefone ou a placa. Se for cliente novo, ele é cadastrado ao abrir o serviço." />
           ) : (
             <DataTable prefKey="clientes" label="Clientes" columns={customerColumns} data={customers} rowKey={(c) => c.id} defaultSort={{ id: "name" }} onRowClick={(c) => setCustomerId(c.id)} />
           )
         ) : view.vehicles.length === 0 ? (
-          <EmptyState icon={<Car className="size-8" aria-hidden />} title="Nenhum veículo cadastrado" />
+          <EmptyState icon={<Car className="size-8" aria-hidden />} title="Nenhum veículo cadastrado" description="O carro é cadastrado sozinho quando você abre um serviço com a placa dele." />
         ) : vehicles.length === 0 ? (
-          <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum veículo encontrado" description="Tente buscar por outra placa, modelo ou proprietário." />
+          <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum veículo encontrado" description="Confira a placa, o modelo ou o nome do dono." />
         ) : (
           <DataTable prefKey="veiculos" label="Veículos" columns={vehicleColumns} data={vehicles} rowKey={(v) => v.id} defaultSort={{ id: "plate" }} onRowClick={(v) => setVehicleId(v.id)} />
         )}

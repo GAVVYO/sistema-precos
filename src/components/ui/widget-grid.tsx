@@ -2,7 +2,7 @@
 
 import "react-grid-layout/css/styles.css";
 import {
-  ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, Eye, EyeOff, LayoutDashboard, Minus, Move, Plus, RotateCcw,
+  ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, Eye, EyeOff, Minus, Move, Plus, RotateCcw,
 } from "lucide-react";
 import { ReactNode, useMemo } from "react";
 import GridLayout, { type Layout, type LayoutItem, useContainerWidth, verticalCompactor } from "react-grid-layout";
@@ -159,22 +159,17 @@ function WidgetFrame({ widget, editing, onNudge, onHide }: { widget: Widget; edi
   );
 }
 
-/** Botões do cabeçalho: Personalizar painel / Restaurar padrão / Concluir. */
+/** Botões do cabeçalho no modo de organizar: Restaurar padrão / Terminar. */
 export function WidgetGridToolbar({ prefs, editing, onEditingChange }: { prefs: WidgetPrefs; editing: boolean; onEditingChange: (editing: boolean) => void }) {
   // Com texto ampliado os blocos ficam empilhados: personalizar não teria efeito.
   const { preferences } = useAccessibility();
   if (preferences.textSize !== "default") return null;
-  if (!editing) {
-    return (
-      <Button className="widget-customize" icon={<LayoutDashboard className="size-4" aria-hidden />} onClick={() => onEditingChange(true)}>
-        Personalizar painel
-      </Button>
-    );
-  }
+  // Fora do modo de organizar, o botão fica no menu "Minha conta" (Organizar tela inicial).
+  if (!editing) return null;
   return (
     <>
       <Button icon={<RotateCcw className="size-4" aria-hidden />} onClick={prefs.reset}>Restaurar padrão</Button>
-      <Button variant="primary" icon={<Check className="size-4" aria-hidden />} onClick={() => onEditingChange(false)}>Concluir</Button>
+      <Button variant="primary" icon={<Check className="size-4" aria-hidden />} onClick={() => onEditingChange(false)}>Terminar</Button>
     </>
   );
 }

@@ -205,15 +205,11 @@ function Notifications() {
   return (
     <Menu
       label={`Notificações (${items.length})`}
-      buttonClassName="relative rounded p-1.5 hover:bg-white/10"
+      buttonClassName="topbar-icon"
       button={
         <>
-          <Bell className="size-4" aria-hidden />
-          {items.length > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-danger text-xs font-bold text-white">
-              {items.length}
-            </span>
-          )}
+          <Bell className="size-5" aria-hidden />
+          {items.length > 0 && <span className="topbar-badge" aria-hidden>{items.length}</span>}
         </>
       }
     >
@@ -246,71 +242,75 @@ function Header() {
   }[connection];
 
   return (
-    <header className="app-header no-print bg-secondary text-secondary-fg">
-      <div className="app-topbar mx-auto flex min-h-20 max-w-[1600px] items-center gap-6 px-6">
-        <Link href="/inicio" className="flex min-w-0 shrink-0 items-center gap-2 rounded">
+    <header className="app-header no-print">
+      <div className="app-topbar">
+        {/* Barra unificada (referência: toolbar unificada do macOS, GitHub, Shopify Admin):
+            oficina à esquerda, busca no centro, ação principal e conta à direita. */}
+        <Link href="/inicio" className="app-brand" aria-label={`${settings.displayName} — início`}>
           {settings.logoDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={settings.logoDataUrl} alt="" className="size-7 rounded bg-white object-contain" />
+            <img src={settings.logoDataUrl} alt="" className="app-brand-logo bg-white object-contain" />
           ) : (
-            <BrandMark className="size-8 shrink-0" />
+            <BrandMark className="app-brand-logo" />
           )}
-          <span className="min-w-0"><span className="block text-lg font-extrabold tracking-tight">GAVYO Auto</span><span className="block max-w-64 truncate text-xs opacity-80" title={settings.displayName}>{settings.displayName}</span></span>
+          <span className="min-w-0">
+            <span className="app-brand-name" title={settings.displayName}>{settings.displayName}</span>
+            <span className="app-brand-product">GAVYO Auto</span>
+          </span>
         </Link>
 
-
-
         <OrderSearch />
-        <div className="account-controls ml-auto flex shrink-0 items-center gap-4">
-        {can("os.create") && settings.activeModules.includes("orders") && (
-          <Button variant="primary" size="sm" className="h-8" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()}>
-            Nova OS
-          </Button>
-        )}
-        <span className="flex items-center gap-1.5 text-xs whitespace-nowrap" role="status" aria-live="polite">
-          <span className={cx("size-2 rounded-full", conn.dot)} aria-hidden />
-          {conn.label}
-        </span>
-        <AccessibilityControls />
-        <Notifications />
-        <Menu
-          label="Menu do usuário"
-          buttonClassName="flex items-center gap-2 rounded px-1.5 py-1 text-left hover:bg-white/10"
-          button={
-            <>
-              <span className="flex size-7 items-center justify-center rounded-full bg-white/15 text-xs font-semibold">
-                {user.name.split(" ").slice(0, 2).map((p) => p[0]).join("")}
-              </span>
-              <span className="hidden leading-tight lg:block">
-                <span className="block max-w-36 truncate text-xs font-semibold">{user.name}</span>
-                <span className="block text-xs opacity-70">{ROLE_LABELS[membership.role]}</span>
-              </span>
-              <ChevronDown className="size-3.5 opacity-70" aria-hidden />
-            </>
-          }
-        >
-          {(close) => (
-            <>
-              <div className="border-b border-line px-3 py-2">
-                <p className="text-sm font-semibold">{user.name}</p>
-                <p className="text-xs text-muted">{user.email}</p>
-                <p className="text-xs text-muted">{ROLE_LABELS[membership.role]}</p>
-              </div>
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
-                onClick={() => {
-                  close();
-                  demoStore.logout();
-                  router.replace("/login");
-                }}
-              >
-                <LogOut className="size-4" aria-hidden />
-                Sair
-              </button>
-            </>
+        <div className="account-controls">
+          {can("os.create") && settings.activeModules.includes("orders") && (
+            <Button variant="primary" size="sm" className="topbar-primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()} aria-keyshortcuts="N" title="Nova OS (N)">
+              <span className="topbar-primary-label">Nova OS</span>
+            </Button>
           )}
-        </Menu>
+          {/* Conexão: só aparece escrita quando não está online (a faixa vermelha explica o resto). */}
+          <span className={cx("topbar-status", connection === "online" && "sr-only")} role="status" aria-live="polite">
+            <span className={cx("size-2 rounded-full", conn.dot)} aria-hidden />
+            {conn.label}
+          </span>
+          <span className="topbar-sep" aria-hidden />
+          <AccessibilityControls />
+          <Notifications />
+          <Menu
+            label={`Conta de ${user.name} (${ROLE_LABELS[membership.role]})`}
+            buttonClassName="topbar-account"
+            button={
+              <>
+                <span className="topbar-avatar">
+                  {user.name.split(" ").slice(0, 2).map((p) => p[0]).join("")}
+                  <span className={cx("topbar-avatar-dot", conn.dot)} aria-hidden />
+                </span>
+                <ChevronDown className="size-4 opacity-70" aria-hidden />
+              </>
+            }
+          >
+            {(close) => (
+              <>
+                <div className="border-b border-line px-3 py-2.5">
+                  <p className="text-sm font-semibold">{user.name}</p>
+                  <p className="text-sm text-muted">{ROLE_LABELS[membership.role]} · {settings.displayName}</p>
+                  <p className="text-sm text-muted">{user.email}</p>
+                  <p className="mt-1 flex items-center gap-1.5 text-sm text-muted"><span className={cx("size-2 rounded-full", conn.dot)} aria-hidden />{conn.label}</p>
+                </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50"
+                  onClick={() => {
+                    close();
+                    demoStore.logout();
+                    router.replace("/login");
+                  }}
+                >
+                  <LogOut className="size-4" aria-hidden />
+                  Sair
+                </button>
+              </>
+            )}
+          </Menu>
         </div>
       </div>
       <PersonalNavigation modules={modules} preferenceKey={`${membership.workshopId}:${user.id}`} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, CalendarPlus, CarFront, CheckCircle2, CircleDollarSign, Clock3, PackageCheck, Plus, Wrench } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, CalendarPlus, CarFront, CheckCircle2, CircleDollarSign, Clock3, PackageCheck, Wrench } from "lucide-react";
 import Link from "next/link";
 import { ReactNode, useState } from "react";
 import { useApp } from "@/app-state/app-context";
@@ -9,7 +9,6 @@ import { ReadableText } from "@/components/accessibility/accessibility-controls"
 import { MetricCard } from "@/components/ui/metric-card";
 import { useWidgetPrefs, type Widget, WidgetGrid, WidgetGridToolbar, type WidgetPrefs } from "@/components/ui/widget-grid";
 import { APPOINTMENT_STATUS_LABELS, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from "@/domain/labels";
-import { ROLE_LABELS } from "@/domain/permissions";
 import type { ServiceOrder } from "@/domain/types";
 import { PaymentDialog } from "@/features/orders/order-dialogs";
 import { QuickOrderAction } from "@/features/orders/quick-order-action";
@@ -348,7 +347,7 @@ function FinanceDashboard({ editing, prefs }: { editing: boolean; prefs: WidgetP
 }
 
 export function DashboardPage() {
-  const { user, membership, can, online, settings, openNewOrder } = useApp();
+  const { user, membership, can, settings } = useApp();
   const today = todayISO();
   const variant =
     membership.role === "mechanic" ? "mechanic" : membership.role === "financial" && can("finance.view") ? "finance" : can("os.view") ? "operational" : "none";
@@ -360,7 +359,7 @@ export function DashboardPage() {
     <>
       <PageHeader
         title={membership.role === "mechanic" ? `Meus serviços, ${user.name.split(" ")[0]}` : "Atendimento"}
-        description={`${weekdayName(today)}, ${formatDate(today)} · ${ROLE_LABELS[membership.role]} · ${settings.displayName}`}
+        description={`${weekdayName(today)}, ${formatDate(today)}`}
         actions={
           <>
             {customizable && <WidgetGridToolbar prefs={prefs} editing={editing} onEditingChange={setEditing} />}
@@ -369,11 +368,6 @@ export function DashboardPage() {
                 <CalendarPlus className="size-4" aria-hidden />
                 Novo agendamento
               </Link>
-            )}
-            {!editing && can("os.create") && settings.activeModules.includes("orders") && (
-              <Button variant="primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()}>
-                Nova OS
-              </Button>
             )}
           </>
         }

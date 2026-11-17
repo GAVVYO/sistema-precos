@@ -649,3 +649,78 @@ body.is-resizing { cursor: col-resize; user-select: none; }
 .pip-desc { padding: 10px 12px; border-radius: 8px; background: var(--bg); }
 .pip-parts { display: grid; gap: 4px; }
 .pip-parts li { display: flex; justify-content: space-between; gap: 8px; }
+
+/* ================= Cabeçalho limpo =================
+   Referências: toolbar unificada do macOS (menos altura), GitHub (faixa escura +
+   abas finas), Shopify Admin (busca ao centro), Linear (sobriedade).
+   Uma ação principal (Nova OS); conta, avisos e acessibilidade como ícones. */
+.app-header { background: var(--secondary); color: var(--secondary-fg); }
+.app-topbar { display: flex; align-items: center; gap: 16px; max-width: 1600px; min-height: 56px; margin: 0 auto; padding: 8px 24px; }
+.app-brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 0 1 260px; border-radius: 8px; }
+.app-brand-logo { width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; }
+.app-brand-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .9375rem; font-weight: 750; line-height: 1.2; }
+.app-brand-product { display: block; font-size: .75rem; opacity: .7; line-height: 1.3; }
+.app-topbar .order-search { flex: 0 1 560px; width: auto; margin: 0 auto; padding: 8px 12px; min-height: 40px; border-color: rgb(255 255 255 / 18%); background: rgb(255 255 255 / 7%); }
+.app-topbar .order-search kbd { font-size: .75rem; padding: 1px 6px; opacity: .7; }
+.account-controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: 0; }
+.app-topbar .topbar-primary { min-height: 40px; height: 40px; padding-inline: 14px; margin-right: 6px; }
+.topbar-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgb(255 255 255 / 12%); font-size: .8125rem; font-weight: 600; white-space: nowrap; }
+.topbar-sep { width: 1px; height: 24px; margin: 0 6px; background: rgb(255 255 255 / 18%); }
+.topbar-icon, .app-topbar .accessibility-trigger { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; min-width: 40px; min-height: 40px; padding: 0; border-radius: 8px; opacity: .85; }
+.topbar-icon:hover, .app-topbar .accessibility-trigger:hover { background: rgb(255 255 255 / 12%); opacity: 1; }
+.app-topbar .accessibility-trigger-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.app-topbar .accessibility-active { position: absolute; top: 8px; right: 8px; }
+.topbar-badge { position: absolute; top: 4px; right: 3px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--danger); color: #fff; font-size: .75rem; font-weight: 700; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px var(--secondary); }
+.topbar-account { display: inline-flex; align-items: center; gap: 4px; height: 40px; padding: 0 6px 0 4px; border-radius: 999px; }
+.topbar-account:hover { background: rgb(255 255 255 / 12%); }
+.topbar-avatar { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 999px; background: rgb(255 255 255 / 16%); font-size: .8125rem; font-weight: 700; }
+.topbar-avatar-dot { position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 999px; box-shadow: 0 0 0 2px var(--secondary); }
+
+/* Abas do menu: finas, só sublinhado na ativa (sem fundo duplicado). */
+.movable-nav-slot { min-height: 48px; }
+.movable-nav-frame:not(.nav-floating) { padding: 0 16px; }
+.movable-nav-frame:not(.nav-floating) .personal-nav-inner { padding: 0; gap: 4px; }
+.movable-nav-frame:not(.nav-floating) .personal-nav-track { gap: 2px; padding: 0; }
+.movable-nav-frame:not(.nav-floating) .personal-nav-item { border-radius: 0; }
+.movable-nav-frame:not(.nav-floating) .personal-nav-item > a { min-height: 48px; padding: 0 12px; border-radius: 0; font-weight: 600; }
+.movable-nav-frame:not(.nav-floating) .personal-nav-item:hover { background: transparent; color: var(--text); }
+.movable-nav-frame:not(.nav-floating) .personal-nav-item.is-active { background: transparent; }
+.movable-nav-frame:not(.nav-floating) .personal-nav-item.is-active::after { left: 12px; right: 12px; width: auto; bottom: 0; height: 2px; border-radius: 2px 2px 0 0; }
+.movable-nav-frame:not(.nav-floating) .nav-move-handle { order: 2; width: 36px; min-height: 40px; opacity: .55; }
+.movable-nav-frame:not(.nav-floating) .nav-move-handle:hover, .movable-nav-frame:not(.nav-floating) .nav-move-handle:focus-visible { opacity: 1; }
+
+/* Barra de demonstração em uma linha só. */
+.demo-bar { padding-block: 4px; }
+
+@media (max-width: 1150px) {
+  .app-topbar { gap: 12px; padding-inline: 16px; }
+  .app-brand { flex-basis: 200px; }
+  .app-topbar .order-search { flex: 1 1 auto; }
+}
+@media (max-width: 900px) {
+  .topbar-primary-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .app-topbar .topbar-primary { width: 40px; padding: 0; }
+  .app-brand-product { display: none; }
+}
+@media (max-width: 767px) {
+  .app-topbar { display: flex; flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
+  .app-brand { flex: 1 1 0; }
+  .app-topbar .order-search { order: 3; flex: 1 1 100%; margin: 0; }
+  .topbar-sep { display: none; }
+}
+/* Ajustes sobre regras anteriores: a busca fica no centro até 768 px. */
+@media (max-width: 1150px) and (min-width: 768px) {
+  .app-topbar .order-search { order: 0; grid-column: auto; width: auto; }
+}
+/* Texto ampliado: busca ganha linha própria (mantém a decisão de acessibilidade). */
+html:not([data-text-size="default"])[data-text-size] .app-topbar { display: flex; flex-wrap: wrap; }
+html:not([data-text-size="default"])[data-text-size] .app-topbar .order-search { order: 3; flex: 1 1 100%; margin: 0; }
+html:not([data-text-size="default"])[data-text-size] .account-controls { margin-left: auto; }
+/* Barra de demonstração: rótulos curtos em telas médias para caber em uma linha. */
+@media (max-width: 1250px) and (min-width: 768px) {
+  .demo-bar { flex-wrap: nowrap; gap: 12px; }
+  .demo-bar > span:first-child { white-space: nowrap; }
+  .demo-bar select { max-width: 180px; }
+  .demo-bar button { white-space: nowrap; }
+}
+html:not([data-text-size="default"])[data-text-size] .app-brand { flex: 1 1 auto; }

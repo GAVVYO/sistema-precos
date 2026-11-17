@@ -56,6 +56,13 @@ Validação: typecheck, lint, 32 testes e build aprovados. No navegador (1366 ×
 - **Arrastar para ajustar:** quantidade e mão de obra no painel da OS (Shift = passo maior; teclado ← → e Enter).
 - **Mini janela:** botão ao lado do fechar no painel da OS (Chrome/Edge); fica por cima de outros programas.
 
+## Cabeçalho limpo
+
+- Uma faixa: oficina à esquerda, busca no centro, Nova OS, acessibilidade, avisos e conta (avatar com ponto de conexão).
+- Status "Offline/Reconectando" aparece escrito só quando necessário; detalhes no menu da conta.
+- Abas finas com sublinhado na ativa; a alça de mover a barra ficou no fim, discreta.
+- Até 900 px "Nova OS" vira só o ícone +; no celular a busca vai para a segunda linha.
+
 ## Executar
 
 Requisitos e instalação estão no README. Na demo, não é necessário arquivo .env com credenciais.

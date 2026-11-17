@@ -3,7 +3,7 @@
 import {
   CollisionDetection, DndContext, DragEndEvent, pointerWithin, rectIntersection, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors,
 } from "@dnd-kit/core";
-import { ArrowRight, Check, CheckSquare, ClipboardList, ExternalLink, GripVertical, Inbox, Plus, Search, SearchX, User, UserCheck } from "lucide-react";
+import { ArrowRight, Check, CheckSquare, ClipboardList, ExternalLink, GripVertical, Inbox, Search, SearchX, User, UserCheck } from "lucide-react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
@@ -304,11 +304,6 @@ export function OrdersPage() {
           <>
             {cancelled.length > 0 && (
               <Button onClick={() => setShowCancelled(true)}>Canceladas ({cancelled.length})</Button>
-            )}
-            {can("os.create") && (
-              <Button variant="primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()}>
-                Nova OS
-              </Button>
             )}
           </>
         }

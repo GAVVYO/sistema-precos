@@ -55,11 +55,15 @@ export function GuidedTour({ id, steps, delay = 500 }: { id: string; steps: Tour
 
   useEffect(() => {
     if (seen) return;
-    const t = window.setTimeout(() => {
+    // Não aparece por baixo de uma janela aberta: espera ela fechar.
+    let t = 0;
+    const tryStart = () => {
+      if (document.querySelector("dialog[open]")) { t = window.setTimeout(tryStart, 800); return; }
       const list = steps.filter((s) => findTarget(s.target));
       setAvailable(list);
       setReady(list.length > 0);
-    }, delay);
+    };
+    t = window.setTimeout(tryStart, delay);
     return () => window.clearTimeout(t);
     // Os passos são definidos uma vez por tela.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -107,6 +111,7 @@ export function GuidedTour({ id, steps, delay = 500 }: { id: string; steps: Tour
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
+      if (document.querySelector("dialog[open]")) return;
       if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); setSeen(true); }
       else if (e.key === "ArrowRight") setIndex((i) => Math.min(i + 1, total - 1));
       else if (e.key === "ArrowLeft") setIndex((i) => Math.max(i - 1, 0));

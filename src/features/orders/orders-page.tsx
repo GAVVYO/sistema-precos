@@ -1,5 +1,6 @@
 "use client";
 
+import { vtName } from "@/lib/view-transition";
 import { GuidedTour, IllusDrag, IllusSequence, IllusTap, IllusTyping } from "@/components/ui/guided-tour";
 import {
   CollisionDetection, DndContext, DragEndEvent, pointerWithin, rectIntersection, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors,
@@ -85,6 +86,7 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
       ref={overlay ? undefined : setNodeRef}
       data-order-id={overlay ? undefined : order.id}
       data-tour={overlay ? undefined : "card"}
+      style={overlay ? undefined : ({ ["--vt" as string]: vtName("card", order.id) })}
       className={cx(
         "order-card order-card-compact rounded-md border border-line bg-surface text-sm",
         selected && !overlay && "is-selected",
@@ -270,7 +272,7 @@ export function OrdersPage() {
     }
     if ((ORDER_STATUSES as string[]).includes(over)) {
       if (group.length > 1) moveMany(group, over as OrderStatus);
-      else if (over !== group[0].status) moveOrder(group[0], over as OrderStatus);
+      else if (over !== group[0].status) moveOrder(group[0], over as OrderStatus, undefined, { animate: false });
       setPicked(new Set()); done();
     }
   };

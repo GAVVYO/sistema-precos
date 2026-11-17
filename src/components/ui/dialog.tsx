@@ -17,7 +17,9 @@ export function Dialog({
   size = "md",
   children,
   footer,
+  className,
 }: {
+  className?: string;
   title: string;
   subtitle?: ReactNode;
   onClose: () => void;
@@ -63,6 +65,7 @@ export function Dialog({
         "app-dialog m-auto w-[calc(100vw-2rem)] rounded-xl border border-line bg-surface p-0 text-ink shadow-xl",
         "max-h-[calc(100vh-2rem)] open:flex open:flex-col",
         SIZES[size],
+        className,
       )}
     >
       <header className="flex items-start justify-between gap-4 border-b border-line px-6 py-5">

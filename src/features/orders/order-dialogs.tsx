@@ -1,5 +1,7 @@
 "use client";
 
+import { celebratePayment } from "@/lib/celebrate";
+import { withTransition } from "@/lib/view-transition";
 import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
@@ -56,12 +58,17 @@ export function PaymentDialog({ orderId, onClose }: { orderId: ID; onClose: () =
             variant="primary"
             loading={busy}
             disabled={!online}
-            onClick={() => {
+            onClick={(e) => {
               if (busy) return;
               setBusy(true);
-              const r = act((db, ctx) => registerPayment(db, ctx, order.id, { method }), `Recebido ${formatBRL(totals.totalCents)} do ${formatOrderNumber(order.number)}. O valor já aparece no Financeiro.`);
-              setBusy(false);
-              if (r.ok) onClose();
+              const from = e.currentTarget.getBoundingClientRect();
+              const amount = formatBRL(totals.totalCents);
+              // A linha de "Quem falta pagar" sai com brilho verde e as outras sobem.
+              withTransition("pay", () => {
+                const r = act((db, ctx) => registerPayment(db, ctx, order.id, { method }), `Recebido ${amount} do ${formatOrderNumber(order.number)}. O valor já aparece no Financeiro.`);
+                setBusy(false);
+                if (r.ok) { onClose(); celebratePayment(from, amount); }
+              });
             }}
           >
             Recebi {formatBRL(totals.totalCents)}

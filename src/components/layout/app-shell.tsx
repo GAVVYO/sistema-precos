@@ -5,8 +5,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { setNavMode, SideNavigation, useNavMode } from "./side-navigation";
+import { withTransition } from "@/lib/view-transition";
 import { usePathname, useRouter } from "next/navigation";
-import { ReactNode, useEffect, useId, useRef, useState } from "react";
+import { ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Button, cx, EmptyState } from "@/components/ui/primitives";
@@ -103,7 +104,10 @@ function DemoBar() {
   const switchWorkshop = (workshopId: string) => {
     const owner = db.memberships.find((m) => m.workshopId === workshopId && m.active && m.role === "owner");
     if (!owner) return;
-    demoStore.login(workshopId, owner.userId);
+    // A cor da oficina nova "varre" a tela a partir da logo.
+    const logo = document.querySelector(".side-brand-logo .app-brand-logo, .island-brand .app-brand-logo")?.getBoundingClientRect();
+    const x = logo ? `${logo.left + logo.width / 2}px` : "40px", y = logo ? `${logo.top + logo.height / 2}px` : "40px";
+    withTransition("workshop", () => demoStore.login(workshopId, owner.userId), { vars: { "--vt-x": x, "--vt-y": y } });
     router.push("/inicio");
   };
 
@@ -391,7 +395,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => { main.current?.focus({ preventScroll: true }); }, [pathname]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement.style;
     root.setProperty("--primary", readableAccent(settings.primaryColor, preferences.contrast ? 7 : 5.5));
     root.setProperty("--primary-fg", contrastOn(readableAccent(settings.primaryColor, preferences.contrast ? 7 : 5.5)));

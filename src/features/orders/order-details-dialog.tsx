@@ -111,6 +111,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
   return (
     <>
       <Dialog
+        className="order-hero-dialog"
         title={number}
         subtitle={
           <div>

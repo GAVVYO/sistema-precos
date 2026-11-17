@@ -12,6 +12,7 @@ import { PaymentDialog } from "@/features/orders/order-dialogs";
 import { vehicleLabel } from "@/features/orders/shared";
 import { addDays, formatBRL, formatDate, formatOrderNumber, formatPhone, formatPlate, todayISO } from "@/lib/format";
 import { listReceivables } from "@/services/finance";
+import { vtName } from "@/lib/view-transition";
 
 const nowHHMM = () => {
   const d = new Date();
@@ -117,7 +118,7 @@ function Payments() {
             const v = r.order ? vehicleOf(r.order.vehicleId) : undefined;
             const name = customerOf(r.customerId)?.name ?? "Cliente";
             return (
-              <li key={r.key} className="today-row">
+              <li key={r.key} className="today-row" style={{ ["--vt" as string]: vtName("pay", r.key) }}>
                 <span className="today-who">
                   {r.order ? (
                     <button type="button" className="today-name-link" onClick={() => openOrder(r.order!.id)}>{name}</button>

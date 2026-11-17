@@ -1104,3 +1104,55 @@ html[data-motion="reduce"] .side-burst::before { animation: none !important; }
 @media (forced-colors: active) { .side-nav-item.is-active { outline: 2px solid Highlight; } }
 @media print { .side-nav { display: none; } .with-sidebar { padding-left: 0; } }
 .with-sidebar .tray-dock { left: calc(var(--side-w) + var(--side-gap) * 2 + 8px); }
+
+/* ---------- Animações que mostram o que aconteceu (View Transitions) ---------- */
+/* 1. Cartão anda de coluna: todos os cartões se reposicionam; o que mudou voa e assenta. */
+html[data-vt="move"] .kanban-board .order-card { view-transition-name: var(--vt); view-transition-class: card; }
+::view-transition-group(.card) { animation-duration: 420ms; animation-timing-function: cubic-bezier(.16,1,.3,1); }
+@keyframes card-land { 0% { transform: scale(1.06) rotate(-1.5deg); box-shadow: 0 18px 40px rgb(23 32 51 / 25%); } 70% { transform: scale(.98) rotate(.3deg); } 100% { transform: none; } }
+.order-card.just-moved { animation: card-glow 1.1s ease-out; }
+@keyframes card-glow { 0% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 70%, transparent), 0 0 24px color-mix(in srgb, var(--primary) 45%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+/* 2. Receber: a linha paga sai com brilho verde; as outras sobem. */
+html[data-vt="pay"] .today-row { view-transition-name: var(--vt); view-transition-class: pay-row; }
+::view-transition-group(.pay-row) { animation-duration: 420ms; animation-timing-function: cubic-bezier(.16,1,.3,1); }
+::view-transition-old(.pay-row):only-child { animation: paid-out 520ms cubic-bezier(.7,0,.84,0) both; }
+@keyframes paid-out { 0% { background: #dcfce7; } 35% { background: #bbf7d0; transform: scale(1.02); opacity: 1; } 100% { transform: translateX(40px) scale(.96); opacity: 0; } }
+.celebrate-layer { position: fixed; inset: 0; z-index: 120; pointer-events: none; }
+.celebrate-check { position: fixed; width: 56px; height: 56px; transform: translate(-50%, -50%); animation: check-pop 900ms cubic-bezier(.34,1.56,.64,1) both; }
+.celebrate-check svg { width: 100%; height: 100%; fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.celebrate-check circle { fill: #16a34a; stroke: #16a34a; }
+.celebrate-check path { stroke: #fff; stroke-dasharray: 40; stroke-dashoffset: 40; animation: check-draw 360ms 160ms ease-out forwards; }
+@keyframes check-pop { 0% { transform: translate(-50%, -50%) scale(0); } 30% { transform: translate(-50%, -50%) scale(1.15); } 45%, 75% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(.8); opacity: 0; } }
+@keyframes check-draw { to { stroke-dashoffset: 0; } }
+.celebrate-coin { position: fixed; width: 10px; height: 10px; margin: -5px; border-radius: 999px; background: #fbbf24; box-shadow: inset 0 -2px 0 #d97706; animation: coin-burst 760ms cubic-bezier(.16,1,.3,1) 80ms both; }
+.celebrate-coin:nth-child(3n) { background: #22c55e; box-shadow: none; width: 7px; height: 7px; }
+@keyframes coin-burst { 0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(.4); } 70% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--d) * -1)) scale(1); } }
+.celebrate-amount { position: fixed; padding: 6px 12px; border-radius: 999px; background: #16a34a; color: #fff; font-weight: 800; font-size: 1rem; white-space: nowrap; box-shadow: 0 8px 24px rgb(22 163 74 / 35%); opacity: 0; }
+/* 3. Cartão vira a janela do serviço (e volta ao fechar). */
+html[data-vt="open"] .vt-hero, html[data-vt="close"] .vt-hero,
+html[data-vt="open"] .order-hero-dialog, html[data-vt="close"] .order-hero-dialog { view-transition-name: order-hero; }
+::view-transition-group(order-hero) { animation-duration: 420ms; animation-timing-function: cubic-bezier(.16,1,.3,1); z-index: 30; }
+::view-transition-old(order-hero), ::view-transition-new(order-hero) { height: 100%; object-fit: cover; object-position: top left; animation-duration: 260ms; }
+html[data-vt="open"]::view-transition-new(root) { animation: vt-dim-in 420ms ease-out both; }
+html[data-vt="open"]::view-transition-old(root) { display: block; animation: none; }
+html[data-vt="close"]::view-transition-old(root) { display: block; animation: vt-fade-out 300ms ease-in both; }
+@keyframes vt-dim-in { from { opacity: 0; } }
+@keyframes vt-fade-out { to { opacity: 0; } }
+/* 4a. Pílula da aba ativa desliza até a aba nova. */
+.personal-nav-track, .side-nav-list { position: relative; }
+.nav-pill { position: absolute; top: 0; left: 0; z-index: 0; border-radius: 999px; background: var(--secondary); box-shadow: 0 2px 8px rgb(23 32 51 / 18%); pointer-events: none; }
+.side-nav-list .nav-pill { border-radius: 14px; }
+.nav-pill[data-ready] { transition: transform 420ms cubic-bezier(.34,1.25,.64,1), width 420ms cubic-bezier(.34,1.25,.64,1), height 300ms ease; }
+.personal-nav-item, .side-nav-item { position: relative; z-index: 1; }
+.island-header .movable-nav-frame:not(.nav-floating) .personal-nav-track:has(.nav-pill) .personal-nav-item.is-active > a,
+.side-nav-list:has(.nav-pill) .side-nav-item.is-active { background: transparent; box-shadow: none; }
+.side-nav-list:has(.nav-pill) .side-nav-item.is-active { color: var(--secondary-fg); }
+/* A pílula só vale no menu do topo encaixado e na lateral; flutuante mantém o destaque próprio. */
+.nav-floating .nav-pill { display: none; }
+/* 4b. Troca de oficina: a cor nova varre a tela a partir da logo. */
+html[data-vt="workshop"]::view-transition-old(root) { display: block; animation: none; }
+html[data-vt="workshop"]::view-transition-new(root) { animation: vt-reveal 720ms cubic-bezier(.65,0,.35,1) both; }
+@keyframes vt-reveal { from { clip-path: circle(0 at var(--vt-x, 40px) var(--vt-y, 40px)); } to { clip-path: circle(150vmax at var(--vt-x, 40px) var(--vt-y, 40px)); } }
+@media (prefers-reduced-motion: reduce) { .nav-pill[data-ready] { transition: none; } .order-card.just-moved { animation: none; } }
+html[data-motion="reduce"] .nav-pill[data-ready] { transition: none; }
+html[data-motion="reduce"] .order-card.just-moved { animation: none; }

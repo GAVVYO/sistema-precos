@@ -3,7 +3,8 @@
 import { BarChart3, Boxes, CalendarDays, CircleDollarSign, ClipboardList, LayoutDashboard, Settings2, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from "react";
+import { NavPill } from "./nav-pill";
 import { MovableNavigation } from "./movable-navigation";
 import { setNavMode, useNavMode } from "./side-navigation";
 import { cx } from "@/components/ui/primitives";
@@ -39,9 +40,10 @@ export function PersonalNavigation({ modules, preferenceKey }: { modules: Module
     shown = [...shown.slice(0, -1), hiddenActive];
   }
   const { wide } = useNavMode(preferenceKey);
+  const track = useRef<HTMLElement>(null);
   return <MovableNavigation preferenceKey={preferenceKey} onDockSide={wide ? () => setNavMode(preferenceKey, "side") : undefined}>
     <div className="personal-navigation bg-surface text-ink"><div className="personal-nav-inner">
-      <nav aria-label="Navegação principal" className="personal-nav-track">{shown.map(item => {
+      <nav ref={track} aria-label="Navegação principal" className="personal-nav-track"><NavPill container={track} watch={`${pathname}|${shown.map((m) => m.key).join()}|${VISIBLE}`} />{shown.map(item => {
         const active = activeOf(item.href);
         const Icon = NAV_ICONS[item.key];
         const label = SHORT[item.key] ?? item.label;

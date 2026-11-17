@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, ReactNode, useCallback, useContext, useMemo, useState, useSyncExternalStore } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { withTransition } from "@/lib/view-transition";
 import { toast } from "@/components/ui/toast";
 import { Connection, demoStore, DemoState } from "@/demo/store";
 import type {
@@ -72,7 +73,23 @@ function byId<T extends { id: ID }>(list: T[]): Map<ID, T> {
 export function AppProvider({ state, children }: { state: DemoState; children: ReactNode }) {
   const session = state.session!;
   const { db } = state;
-  const [openOrderId, openOrder] = useState<ID | null>(null);
+  const [openOrderId, setOpenOrderId] = useState<ID | null>(null);
+  const openRef = useRef<ID | null>(null);
+  useEffect(() => { openRef.current = openOrderId; }, [openOrderId]);
+  // O cartão (ou o botão clicado) cresce e vira a janela do serviço; ao fechar, ela encolhe de volta.
+  const openOrder = useCallback((id: ID | null) => {
+    const card = (oid: ID | null) => (oid ? document.querySelector<HTMLElement>(`.kanban-board [data-order-id="${oid}"]`) : null);
+    if (id) {
+      const active = document.activeElement;
+      const src = card(id) ?? (active instanceof HTMLElement && active !== document.body && !active.closest("dialog") ? active : null);
+      if (!src || document.querySelector("dialog[open]")) return setOpenOrderId(id);
+      withTransition("open", () => { src.classList.remove("vt-hero"); setOpenOrderId(id); }, { before: () => src.classList.add("vt-hero") });
+    } else {
+      const dest = card(openRef.current);
+      if (!dest) return setOpenOrderId(null);
+      withTransition("close", () => { setOpenOrderId(null); dest.classList.add("vt-hero"); }, { done: () => dest.classList.remove("vt-hero") });
+    }
+  }, []);
   const [newOrder, setNewOrder] = useState<NewOrderPrefill | null>(null);
 
   const view = useMemo(() => scopeTo(db, session.workshopId), [db, session.workshopId]);
@@ -129,7 +146,7 @@ export function AppProvider({ state, children }: { state: DemoState; children: R
       openNewOrder: (prefill) => setNewOrder(prefill ?? {}),
       closeNewOrder: () => setNewOrder(null),
     };
-  }, [db, view, maps, session, state.connection, state.lastSyncAt, act, openOrderId, newOrder]);
+  }, [db, view, maps, session, state.connection, state.lastSyncAt, act, openOrderId, openOrder, newOrder]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

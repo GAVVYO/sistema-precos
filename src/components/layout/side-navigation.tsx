@@ -9,6 +9,7 @@ import { useApp } from "@/app-state/app-context";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { cx } from "@/components/ui/primitives";
 import type { ModuleInfo } from "@/domain/permissions";
+import { NavPill } from "./nav-pill";
 import { NAV_ICONS } from "./personal-navigation";
 
 /**
@@ -76,6 +77,7 @@ export function SideNavigation({ modules, pref }: { modules: ModuleInfo[]; pref:
   const later = (next: boolean, ms: number) => { window.clearTimeout(timer.current); timer.current = window.setTimeout(() => setOpen(next), ms); };
   useEffect(() => () => window.clearTimeout(timer.current), []);
   const compact = !open;
+  const list = useRef<HTMLElement>(null);
   const [pop] = useState(popOnMount);
   useEffect(() => { popOnMount = false; }, []);
   const [drag, setDrag] = useState<{ start: number; y: number } | null>(null);
@@ -149,7 +151,8 @@ export function SideNavigation({ modules, pref }: { modules: ModuleInfo[]; pref:
           </button>
         </div>
 
-        <nav className="side-nav-list" aria-label="Navegação principal">
+        <nav ref={list} className="side-nav-list" aria-label="Navegação principal">
+          <NavPill container={list} watch={`${pathname}|${compact}`} />
           {modules.map((m, i) => {
             const Icon = NAV_ICONS[m.key];
             const active = activeOf(m.href);

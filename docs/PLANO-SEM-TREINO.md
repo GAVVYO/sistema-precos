@@ -1,4 +1,4 @@
-# Plano "uso sem treino" — 17/11/2026
+# Plano "uso sem treino" — 17/11/2026 (concluído)
 
 ## Contexto
 Público: pessoas **sem experiência com sistemas** (exemplo usado: perfil de caminhoneiro que não mexe com informática). Usuários principais: **recepção no balcão** e **dono** (escritório ou celular). TV na parede é só ideia para demo (fica para depois).
@@ -34,6 +34,16 @@ Princípio: **o básico bem feito**. Nada de funcionalidade nova até a tela "Ho
 6. ✅ **Validação**: simular a pessoa sem experiência nas 4 tarefas (abrir serviço, mudar etapa, receber, achar cliente); idealmente teste com alguém real.
 
 Depois: catálogo de serviços **para mostrar ao cliente** (página pública + link no WhatsApp), TV da parede.
+
+## Resultado (17/11)
+Passos 1–6 concluídos (commits `0951e26` → `d97ee9f`). Itens da auditoria resolvidos: 1–13, 15, 16. **Pendente: 14** (textos de 12 px → 14 px). Validação: [validacao/SEM-TREINO-20261117.md](validacao/SEM-TREINO-20261117.md).
+
+Depois do plano, a pedido do usuário: menu na lateral, recepção recebendo, animações de feedback, quadro sem rolagem interna, janela Receber ilustrada com troco, e a decisão de assumir o estilo sistema operacional (decisões 45–50). Guia atual: [INTERFACE.md](INTERFACE.md).
+
+## Backlog
+- Escolhidos: serviço novo nasce no quadro · números que contam · quadro no celular por abas · modo TV da parede.
+- Sugeridos: texto 14 px (item 14) · peça voa para o serviço · agendamento voa de dia · catálogo para o cliente.
+- Teste com pessoa real (roteiro pronto).
 
 ## Auditoria (passo 1)
 ### Prioridade 1 — a pessoa trava

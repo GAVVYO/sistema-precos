@@ -319,3 +319,29 @@ O verde padrão passou a #147a3a para manter o contraste sobre a superfície sua
 No contraste reforçado, as superfícies são brancas, texto #101827, apoio #26394f, bordas #596a7e, espera #853a04, conclusão #12662e e erro #991b1b. O foco tem 4px. Estados continuam escritos, e cores forçadas do sistema preservam contornos.
 
 O modo ampliado empilha a área de atendimento e remove truncamentos. Tabelas extensas mantêm rolagem local para preservar a leitura de nomes e valores. A navegação por clique, teclado e arraste está descrita em `docs/NAVEGACAO.md`; seu diálogo de posicionamento fica recolhido na alça.
+
+## Atualização — 17/11/2026 (prevalece sobre as seções acima)
+
+Guia completo em `docs/INTERFACE.md`; animações em `docs/ANIMACOES.md`; decisões 37–50 em `docs/DECISOES.md`.
+
+### Direção: estilo sistema operacional
+Assumido pelo produto (decisão 49): ilhas de vidro funcional, menu que se move e encaixa (topo, lateral, flutuante), bandeja, mini janela, transições que mostram o que aconteceu. Limites: caminho principal sempre escrito e visível; todo gesto tem botão; movimento reduzido desliga animações.
+
+### Navigation (substitui)
+Cabeçalho em duas linhas: oficina · busca em campo aberto (pílula 46 px) · Novo serviço, Acessibilidade, Avisos e Minha conta com texto; abaixo, abas com nome e **pílula da aba ativa** na cor secundária da oficina, que desliza (420 ms). Menu lateral: cápsula de vidro fixa à esquerda (108 px recolhida, 240 px aberta com o mouse), itens 44 px (52 px recolhidos com nome curto sob o ícone), raio 22 px. Celular: barra flutuante inferior com ícone e nome (12 px).
+
+### Global search and next action (substitui)
+Busca sempre visível: "Buscar placa ou nome do cliente". Próxima ação escrita no cartão, na lista, no painel e na janela: **Começar / Marcar como pronto / Receber**. Receber abre a janela ilustrada.
+
+### Payment
+Palco de 188 px com fundo pontilhado discreto; cartão genérico 268×168 px na cor secundária com textura fina (linhas a 115°), chip dourado e brilho único; cédulas verdes em leque; celular escuro com tela clara; comprovante com borda serrilhada. Formas em 4 botões (ícone 24 px, rótulo 14 px, dica 12 px), selecionado com borda 2 px e ponto na cor principal. Troco em destaque verde 22 px. Sem marcas reais, sem QR code.
+
+### Motion (substitui)
+Feedback de 200–720 ms com `cubic-bezier(.16,1,.3,1)` (saída suave) ou `(.34,1.25,.64,1)` (leve exagero para "assentar"). View Transitions para mudanças de lugar (cartão, janela, menu, oficina); Web Animations para a comemoração. Nada bloqueia o trabalho: o estado muda antes. `prefers-reduced-motion` e a preferência pessoal removem tudo.
+
+### Do (acréscimos)
+- **Do** mostrar o resultado de uma ação com movimento curto que leve o olho até onde a coisa foi parar.
+- **Do** dar a cada recurso de "sistema operacional" um botão equivalente.
+### Don't (acréscimos)
+- **Don't** pedir dados de cartão, usar logos de bandeiras/PIX ou QR code ilustrativo.
+- **Don't** criar rolagem dentro de colunas ou cartões quando a página pode rolar.

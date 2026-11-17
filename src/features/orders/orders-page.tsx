@@ -376,7 +376,7 @@ export function OrdersPage() {
       {pickedOrders.length > 0 && (
         <div className="pick-bar" role="region" aria-label="Serviços selecionados">
           <strong>{pickedOrders.length} {pickedOrders.length === 1 ? "serviço selecionado" : "serviços selecionados"}</strong>
-          <span className="text-muted">Use os botões ao lado (ou arraste um deles para levar todos).</span>
+          <span className="text-muted">Escolha o que fazer com eles (ou arraste um para levar todos).</span>
           <span className="ml-auto flex flex-wrap items-center gap-2">
             <MoreMenu text="Mover para" label="Mover selecionados para" items={ORDER_STATUSES.map((st, i) => ({ label: ORDER_STATUS_LABELS[st], group: i === 0 ? "Mover para" : undefined, icon: <ArrowRight className="size-4" />, disabled: !online, onSelect: () => { moveMany(pickedOrders, st); setPicked(new Set()); } }))} />
             {can("os.edit") && (

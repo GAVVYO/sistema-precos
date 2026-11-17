@@ -8,15 +8,15 @@ web
 
 ## Users
 
-Proprietário, recepção, mecânicos e financeiro de pequenas oficinas. Uso prioritário em notebook/desktop, com conferência em 1366 × 768.
+Proprietário, recepção, mecânicos e financeiro de pequenas oficinas. Usuários principais: **recepção no balcão e dono**, muitas vezes **sem experiência com sistemas**. Critério de sucesso: **uso real sem treino** (a pessoa entende o que fazer só olhando a tela). Uso prioritário em notebook/desktop (1366 × 768), com celular conferido em 390 px.
 
 ## Product Purpose
 
-Reunir ordens de serviço, clientes, veículos, estoque, agenda e financeiro. O cliente confirmou como prioridade localizar OS, mudar status e receber pagamento. Chegar à ação principal em até três cliques; preencher informações obrigatórias e confirmar operações não é dispensado por esse objetivo.
+Reunir serviços (antes chamados de ordens de serviço), clientes, veículos, estoque, agenda e financeiro. O cliente confirmou como prioridade localizar o serviço, mudar a etapa e receber pagamento; a tela **Hoje** responde quem chega e quem falta pagar. Chegar à ação principal em até três cliques; preencher informações obrigatórias e confirmar operações não é dispensado por esse objetivo.
 
 ## Operating Context
 
-Durante o atendimento, entender serviço e pendências rapidamente. Textos pequenos, excesso de elementos e animações demoradas são falhas explicitamente rejeitadas pelo cliente. Menu superior estabelecido nas decisões anteriores.
+Durante o atendimento, entender serviço e pendências rapidamente. Textos pequenos, excesso de elementos e animações demoradas são falhas explicitamente rejeitadas pelo cliente. Menu no topo por padrão; o usuário pode fixá-lo na lateral. Estilo **sistema operacional** assumido (decisão 49), sempre com caminho principal escrito e alternativa ao gesto.
 
 ## Capabilities and Constraints
 
@@ -32,7 +32,10 @@ docs/ARQUITETURA.md, docs/FUNCIONALIDADES.md e docs/CONTEXTO-VISUAL.md. Duas ofi
 
 ## Product Principles
 
-- Localizar a OS sem navegar por vários módulos.
+- Linguagem de balcão: "Serviço", "Pronto", "Começar", "Falta pagar" — nunca jargão de sistema.
+- O caminho principal é um botão escrito; arrastar e atalhos são extras.
+- Animação mostra o que aconteceu, nunca atrasa o trabalho.
+- Localizar o serviço sem navegar por vários módulos.
 - Estado e próxima ação ficam próximos ao serviço.
 - Linguagem clara, boa legibilidade e poucos controles concorrentes.
 - Movimento dá feedback e não retarda o trabalho.

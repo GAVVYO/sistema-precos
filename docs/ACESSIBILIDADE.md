@@ -41,3 +41,17 @@ Conferência de navegador usa Chrome instalado no macOS, em perfil isolado, Play
 Resultado: typecheck, lint, 48 testes e build de 14 páginas passaram. As varreduras finais registradas não apontaram violações nas regras WCAG A/AA selecionadas do axe. Os oito módulos foram conferidos a 390 e 320px, com todos os ajustes ativos e texto a 150%, sem rolagem horizontal da página; tabelas e navegação mantêm rolagem interna quando necessário. O detector Impeccable retornou apenas avisos consultivos sobre a documentação de tokens e regras antigas. A ampliação de 2rem e a paleta de contraste são decisões documentadas em DESIGN.md.
 
 [Evidências estruturadas da validação](validacao/acessibilidade-20261116.json). Não houve sessão manual com VoiceOver/NVDA nem teste em dispositivos físicos ou bateria em Safari/Firefox. As verificações automatizadas não constituem certificação integral WCAG.
+
+## Atualização — 17/11/2026 (plano sem treino, menu lateral e animações)
+
+- **Linguagem**: termos do dia a dia ("Serviço", "Pronto", "Começar", "Falta pagar", "Sem internet"); mensagens de erro dizem o que fazer.
+- **Nomes sempre escritos**: abas, Avisos, Minha conta e botões de ação têm texto visível; nos casos em que o texto some por espaço (celular, menu lateral recolhido), o nome acessível continua e contém o texto visível (WCAG 2.5.3: "Minha conta — nome, cargo", "Ajustes — Configurações").
+- **Alternativas ao arraste** (WCAG 2.5.7): mão de obra e quantidade aceitam clique e digitação; menu lateral por Minha conta e por Posicionar navegação; bandeja pelo ⋯; mudar etapa pelo botão do cartão e por "Mudar etapa".
+- **Alvos** (WCAG 2.5.8): alça de arrastar com 24 px; caixinha de seleção afastada da alça; nome em "Quem falta pagar" com 32 px de altura.
+- **Formulários**: Novo serviço mostra de uma vez os campos que faltam, com `aria-invalid` e mensagem ligada ao campo; troco com resultado em `aria-live`. Formas de pagamento são rádios de verdade (setas trocam).
+- **Tour de primeira vez**: `role="dialog"`, foco no botão principal, Esc/✕/Pular encerram, ← → navegam; não abre por baixo de uma janela e não captura o Esc dela.
+- **Movimento**: todas as animações (View Transitions, comemoração, tour, desenhos de pagamento, pílula, menu lateral) respeitam `prefers-reduced-motion` e a preferência "Reduzir movimento"; conferido com `reducedMotion: 'reduce'` (nenhuma transição iniciada).
+- **Foco não escondido** (WCAG 2.4.11): `scroll-padding-top` ajustado ao cabeçalho de duas linhas e ao menu lateral.
+- **Contraste**: barra lateral aberta com fundo sólido (texto "GAVYO Auto" passava a falhar sobre o vidro).
+
+Validação: axe-core (WCAG 2.0/2.1/2.2 A e AA) sem violações em Hoje, Serviços, detalhes do serviço, Receber e menu lateral (recolhido e aberto), em 1366 e 390 px. Detalhes em [validacao/SEM-TREINO-20261117.md](validacao/SEM-TREINO-20261117.md). Continua sem sessão manual com leitor de tela.

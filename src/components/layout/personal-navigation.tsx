@@ -43,7 +43,7 @@ export function PersonalNavigation({ modules, preferenceKey }: { modules: Module
         const active = activeOf(item.href);
         const Icon = icons[item.key];
         const label = SHORT[item.key] ?? item.label;
-        return <div key={item.key} className={cx("personal-nav-item", active && "is-active")}><Link href={item.href} aria-current={active ? "page" : undefined} title={label !== item.label ? item.label : undefined}><span className="personal-nav-icon"><Icon size={18} aria-hidden /></span><span className="personal-nav-label">{label}</span></Link></div>;
+        return <div key={item.key} className={cx("personal-nav-item", active && "is-active")}><Link href={item.href} data-tour={`nav-${item.key}`} aria-current={active ? "page" : undefined} title={label !== item.label ? item.label : undefined}><span className="personal-nav-icon"><Icon size={18} aria-hidden /></span><span className="personal-nav-label">{label}</span></Link></div>;
       })}
       {more.length > 0 && (
         <div className="personal-nav-item personal-nav-more">

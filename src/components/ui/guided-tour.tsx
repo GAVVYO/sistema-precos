@@ -44,6 +44,8 @@ export function GuidedTour({ id, steps, delay = 500 }: { id: string; steps: Tour
   const [index, setIndex] = useState(0);
   const [box, setBox] = useState<Box | null>(null);
   const [popH, setPopH] = useState(200);
+  /** Passo cujo alvo já terminou de rolar para a vista. */
+  const [settled, setSettled] = useState(-1);
   const pop = useRef<HTMLDivElement>(null);
   const primary = useRef<HTMLButtonElement>(null);
   const reduced = useReducedMotion();
@@ -70,8 +72,15 @@ export function GuidedTour({ id, steps, delay = 500 }: { id: string; steps: Tour
   useEffect(() => {
     if (!open) return;
     const el = findTarget(step.target);
+    // Só rola se o alvo não estiver bem à vista; o balão espera a rolagem terminar
+    // para o recorte não "correr atrás" do botão.
+    const r = el?.getBoundingClientRect();
+    const header = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+    const visible = !!r && r.top >= header && r.bottom <= window.innerHeight * 0.6;
+    const fixed = !!el?.closest(".island-header");
     // "start" respeita o scroll-padding da ilha e deixa espaço para o balão embaixo.
-    el?.scrollIntoView({ block: "start", inline: "nearest", behavior: reduced ? "auto" : "smooth" });
+    if (!visible && !fixed) el?.scrollIntoView({ block: "start", inline: "nearest", behavior: reduced ? "auto" : "smooth" });
+    const settle = window.setTimeout(() => setSettled(index), visible || fixed || reduced ? 0 : 520);
     let frame = 0;
     const tick = () => {
       const t = findTarget(step.target);
@@ -82,8 +91,8 @@ export function GuidedTour({ id, steps, delay = 500 }: { id: string; steps: Tour
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [open, step, reduced]);
+    return () => { cancelAnimationFrame(frame); window.clearTimeout(settle); };
+  }, [open, step, reduced, index]);
 
   useLayoutEffect(() => {
     if (pop.current) setPopH(pop.current.offsetHeight);
@@ -106,7 +115,8 @@ export function GuidedTour({ id, steps, delay = 500 }: { id: string; steps: Tour
     return () => document.removeEventListener("keydown", onKey, true);
   }, [open, total, setSeen]);
 
-  if (!open || !box || typeof document === "undefined") return null;
+  if (!open || typeof document === "undefined") return null;
+  if (!box || settled !== index) return createPortal(<div className="tour"><div className="tour-backdrop is-dim" aria-hidden /></div>, document.body);
 
   const finish = () => setSeen(true);
   const last = index === available.length - 1;
@@ -124,7 +134,7 @@ export function GuidedTour({ id, steps, delay = 500 }: { id: string; steps: Tour
   return createPortal(
     <div className="tour" data-reduced={reduced || undefined}>
       <div className="tour-backdrop" aria-hidden />
-      <div className="tour-spot" aria-hidden style={{ top: box.top - PAD, left: box.left - PAD, width: box.width + PAD * 2, height: box.height + PAD * 2 }} />
+      <div key={`spot-${index}`} className="tour-spot" aria-hidden style={{ top: box.top - PAD, left: box.left - PAD, width: box.width + PAD * 2, height: box.height + PAD * 2 }} />
       <Arrow className="tour-arrow" aria-hidden style={{ top: arrowTop, left: center - 16 }} data-dir={below ? "up" : "down"} />
       <div
         key={index}

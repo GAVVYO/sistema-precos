@@ -111,7 +111,7 @@ export function WidgetGrid({ prefs, widgets, editing }: { prefs: WidgetPrefs; wi
         {stacked || !mounted ? (
           <div className="grid grid-cols-2 gap-4">
             {ordered.map((l) => (
-              <div key={l.i} className={cx("widget-stacked", l.w > 3 && "col-span-2")}>{byId.get(l.i)!.render()}</div>
+              <div key={l.i} className={cx("widget-stacked", (l.w > 3 || l.h > 4) && "col-span-2")}>{byId.get(l.i)!.render()}</div>
             ))}
           </div>
         ) : (

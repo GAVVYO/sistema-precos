@@ -149,12 +149,12 @@ function TransactionDialog({ kind, onClose }: { kind: "income" | "expense"; onCl
   );
 }
 
-function SettleDialog({ tx, onClose }: { tx: FinancialTransaction; onClose: () => void }) {
+export function SettleDialog({ tx, onClose }: { tx: FinancialTransaction; onClose: () => void }) {
   const { act, online } = useApp();
   const [method, setMethod] = useState<PaymentMethod>(tx.method);
   return (
     <Dialog
-      title="Registrar recebimento"
+      title="Receber"
       subtitle={`${tx.description} · ${formatBRL(tx.amountCents)}`}
       size="sm"
       onClose={onClose}

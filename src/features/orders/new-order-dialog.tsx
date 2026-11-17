@@ -124,7 +124,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
   return (
     <Dialog
       title="Novo serviço"
-      subtitle={prefill.appointmentId ? "Criada a partir de um agendamento — confira os dados antes de salvar." : "Preencha o essencial; valores e peças podem ser completados depois."}
+      subtitle={prefill.appointmentId ? "Criado a partir de um agendamento — confira os dados antes de salvar." : "Preencha o essencial; valores e peças podem ser completados depois."}
       size="lg"
       onClose={onClose}
       footer={

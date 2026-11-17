@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, CalendarPlus, CarFront, CheckCircle2, CircleDollarSign, Clock3, PackageCheck, Wrench } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, CalendarPlus, CarFront, CheckCircle2, CircleDollarSign, Clock3, PackageCheck, Wrench } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, useState } from "react";
@@ -9,7 +9,7 @@ import { Badge, Button, Card, CardHeader, EmptyState, Input, PageHeader, Stat } 
 import { ReadableText } from "@/components/accessibility/accessibility-controls";
 import { MetricCard } from "@/components/ui/metric-card";
 import { useWidgetPrefs, type Widget, WidgetGrid, WidgetGridToolbar, type WidgetPrefs } from "@/components/ui/widget-grid";
-import { APPOINTMENT_STATUS_LABELS, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from "@/domain/labels";
+import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from "@/domain/labels";
 import type { ServiceOrder } from "@/domain/types";
 import { PaymentDialog } from "@/features/orders/order-dialogs";
 import { QuickOrderAction } from "@/features/orders/quick-order-action";
@@ -20,6 +20,7 @@ import {
 import { financeSummary, listReceivables } from "@/services/finance";
 import { changeOrderStatus } from "@/services/orders";
 import { partSituation } from "@/services/stock";
+import { TodayPanel } from "./today-panel";
 
 function OrderLink({ order }: { order: ServiceOrder }) {
   const { openOrder } = useApp();
@@ -68,33 +69,6 @@ function OpenOrdersTable({ orders, empty, emptyAction }: { orders: ServiceOrder[
         </tbody>
       </table>
     </div>
-  );
-}
-
-function TodayAgenda() {
-  const { view, userOf } = useApp();
-  const today = todayISO();
-  const list = view.appointments.filter((a) => a.date === today && a.status !== "cancelled").sort((a, b) => a.time.localeCompare(b.time));
-  return (
-    <Card>
-      <CardHeader title="Agenda de hoje" subtitle={`${list.length} ${list.length === 1 ? "atendimento previsto" : "atendimentos previstos"}`} actions={<Link href="/agenda" className="text-sm font-medium text-primary hover:underline">Ver agenda</Link>} />
-      {list.length === 0 ? (
-        <EmptyState icon={<CalendarDays className="size-7" aria-hidden />} title="Ninguém marcado para hoje" description="Quando um cliente ligar para marcar, registre na Agenda." />
-      ) : (
-        <ul className="divide-y divide-line">
-          {list.map((a) => (
-            <li key={a.id} className="flex items-center gap-3 px-4 py-2 text-sm">
-              <span className="w-11 font-semibold tabular-nums">{a.time}</span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-medium">{a.customerName} · {a.brand} {a.model}</span>
-                <span className="block truncate text-xs text-muted">{a.service}{a.mechanicId ? ` · ${userOf(a.mechanicId)?.name.split(" ")[0]}` : ""}</span>
-              </span>
-              <Badge tone={a.status === "confirmed" ? "success" : a.status === "attended" ? "neutral" : "info"}>{APPOINTMENT_STATUS_LABELS[a.status]}</Badge>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
   );
 }
 
@@ -164,10 +138,7 @@ function OperationalDashboard({ editing, prefs }: { editing: boolean; prefs: Wid
   const open = active.filter((o) => o.status !== "done").sort((a, b) => a.openedAt.localeCompare(b.openedAt));
   const doneToday = active.filter((o) => o.status === "done" && o.completedAt && dateOf(o.completedAt) === today).length;
   const doneWeek = active.filter((o) => o.status === "done" && o.completedAt && dateOf(o.completedAt) >= addDays(today, -6)).length;
-  const lowStock = view.parts.filter((p) => partSituation(p) !== "ok").length;
-  const todayAppointments = view.appointments.filter((a) => a.date === today && a.status !== "cancelled").length;
   const showStock = can("stock.view") && settings.activeModules.includes("stock");
-  const showAgenda = can("schedule.manage") && settings.activeModules.includes("schedule");
   const receivable = listReceivables(view).flatMap((r) => r.order ? [r.order] : []);
   const source = filter === "receivable" ? receivable : filter === "done" ? active.filter((o) => o.status === "done" && o.completedAt && dateOf(o.completedAt) >= addDays(today, -6)) : filter === "open" ? open : open.filter((o) => o.status === filter);
   const visible = source.filter((o) => {
@@ -202,16 +173,12 @@ function OperationalDashboard({ editing, prefs }: { editing: boolean; prefs: Wid
       ),
     },
     { id: "activity", title: "Atividade recente", layout: { x: 0, y: 14, w: 9, h: 7, minW: 3, minH: 3 }, render: () => <RecentActivity /> },
-    ...(showAgenda ? [{ id: "agenda", title: "Agenda de hoje", layout: { x: 9, y: 3, w: 3, h: 7, minW: 3, minH: 3 }, render: () => <TodayAgenda /> }] : []),
     ...(showStock ? [{ id: "stock", title: "Alertas de estoque", layout: { x: 9, y: 10, w: 3, h: 9, minW: 3, minH: 3 }, render: () => <StockAlerts /> }] : []),
   ];
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 py-1 text-sm text-muted">
-        {showAgenda && <span>Agendamentos do dia <strong className="ml-1 text-ink tabular-nums">{todayAppointments}</strong></span>}
-        {showStock && <span>Peças com estoque baixo <strong className={`ml-1 tabular-nums ${lowStock ? "text-danger" : "text-ink"}`}>{lowStock}</strong></span>}
-      </div>
+      <h2 className="today-section">Na oficina agora</h2>
       <WidgetGrid prefs={prefs} editing={editing} widgets={widgets} />
     </>
   );
@@ -363,7 +330,7 @@ export function DashboardPage() {
   return (
     <>
       <PageHeader
-        title={membership.role === "mechanic" ? `Meus serviços, ${user.name.split(" ")[0]}` : "Atendimento"}
+        title={membership.role === "mechanic" ? `Meus serviços, ${user.name.split(" ")[0]}` : "Hoje"}
         description={`${weekdayName(today)}, ${formatDate(today)}`}
         actions={
           <>
@@ -377,6 +344,7 @@ export function DashboardPage() {
           </>
         }
       />
+      {(variant === "operational" || variant === "finance") && !editing && <TodayPanel />}
       {variant === "mechanic" && <MechanicDashboard />}
       {variant === "finance" && <FinanceDashboard editing={editing} prefs={prefs} />}
       {variant === "operational" && <OperationalDashboard editing={editing} prefs={prefs} />}

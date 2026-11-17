@@ -92,7 +92,7 @@ function WorkshopSettingsForm() {
               <span className="truncate">{displayName}</span>
               <span className="ml-auto opacity-80">Pré-visualização</span>
             </div>
-            <div className="flex gap-4 border-b border-line bg-white px-4 py-3 text-xs font-semibold"><span style={{ color: primary }}>Início</span><span>Serviços</span><span>Estoque</span></div>
+            <div className="flex gap-4 border-b border-line bg-white px-4 py-3 text-xs font-semibold"><span style={{ color: primary }}>Hoje</span><span>Serviços</span><span>Estoque</span></div>
             <div className="flex items-center gap-3 bg-bg px-3 py-3">
               <span className="rounded-md px-3 py-1.5 text-xs font-semibold" style={{ background: primary, color: contrastOn(primary) }}>Novo serviço</span>
               <span className="text-xs font-semibold text-ink">Serviços da oficina</span>

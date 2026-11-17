@@ -71,7 +71,7 @@ export interface ModuleInfo {
 }
 
 export const MODULES: ModuleInfo[] = [
-  { key: "dashboard", label: "Início", href: "/inicio", anyOf: [], required: true },
+  { key: "dashboard", label: "Hoje", href: "/inicio", anyOf: [], required: true },
   { key: "orders", label: "Serviços", href: "/ordens", anyOf: ["os.view"] },
   { key: "stock", label: "Estoque", href: "/estoque", anyOf: ["stock.view"] },
   { key: "finance", label: "Financeiro", href: "/financeiro", anyOf: ["finance.view"] },

@@ -10,7 +10,7 @@ import { useReducedMotion } from "@/components/ui/use-reduced-motion";
 type Position = { x: number; y: number; vertical: boolean };
 const subscribe = (cb: () => void) => { window.addEventListener("gavyo-navigation", cb); window.addEventListener("storage", cb); window.addEventListener("resize", cb); return () => { window.removeEventListener("gavyo-navigation", cb); window.removeEventListener("storage", cb); window.removeEventListener("resize", cb); }; };
 
-export function MovableNavigation({ children, preferenceKey }: { children: ReactNode; preferenceKey: string }) {
+export function MovableNavigation({ children, preferenceKey, onDockSide }: { children: ReactNode; preferenceKey: string; /** Fixar como barra lateral (só em telas largas). */ onDockSide?: () => void }) {
   const key = `gavyo:navigation-position:v1:${preferenceKey}`;
   const raw = useSyncExternalStore(subscribe, () => { try { return localStorage.getItem(key) ?? ""; } catch { return ""; } }, () => "");
   const size = useSyncExternalStore(subscribe, () => `${innerWidth}:${innerHeight}`, () => "1366:768");
@@ -22,12 +22,14 @@ export function MovableNavigation({ children, preferenceKey }: { children: React
   const frame = useRef<HTMLDivElement>(null);
   const home = useRef<HTMLDivElement>(null);
   const [nearTop, setNearTop] = useState(false);
+  const [nearSide, setNearSide] = useState(false);
+  const inSideZone = (x: number) => !!onDockSide && x <= 96;
   const [options, setOptions] = useState(false);
   const reducedMotion = useReducedMotion();
   const ignoreClick = useRef(false);
   const gesture = useRef<{ pointerId: number; x: number; y: number; left: number; top: number; moved: boolean; vertical: boolean } | null>(null);
   useEffect(() => {
-    const cancel = () => { gesture.current = null; setDraft(undefined); setNearTop(false); };
+    const cancel = () => { gesture.current = null; setDraft(undefined); setNearTop(false); setNearSide(false); };
     window.addEventListener("blur", cancel);
     return () => window.removeEventListener("blur", cancel);
   }, []);
@@ -52,6 +54,7 @@ export function MovableNavigation({ children, preferenceKey }: { children: React
   };
   return <div ref={home} className="movable-nav-slot">
     {nearTop && <div className="nav-dock-target" role="status">Solte para encaixar no topo</div>}
+    {nearSide && <div className="nav-side-target" role="status"><span>Solte para fixar na lateral</span></div>}
     <div ref={frame} style={style} className={cx("movable-nav-frame", position && "nav-floating", position?.vertical && "nav-vertical", draft && "nav-moving", position && clamp(position).y > height / 2 && "nav-menu-up")}>
       <button type="button" className="nav-move-handle" aria-label="Mover barra de navegação" aria-haspopup="dialog" title="Clique para posicionar a barra. Você também pode arrastar ou usar as setas; Home retorna ao topo." onClick={() => { if (ignoreClick.current) { ignoreClick.current = false; return; } setOptions(true); }} onPointerDown={e => {
         if (e.button !== 0 || gesture.current) return;
@@ -65,6 +68,7 @@ export function MovableNavigation({ children, preferenceKey }: { children: React
         if (!g.moved && Math.hypot(dx, dy) < 6) return;
         g.moved = true;
         setNearTop(inTopZone(e.clientY));
+        setNearSide(!inTopZone(e.clientY) && inSideZone(e.clientX));
         setDraft(clamp({ x: g.left + dx, y: g.top + dy, vertical: g.vertical }));
       }} onPointerUp={e => {
         const g = gesture.current; if (!g || g.pointerId !== e.pointerId) return;
@@ -72,9 +76,10 @@ export function MovableNavigation({ children, preferenceKey }: { children: React
         ignoreClick.current = g.moved;
         if (g?.moved) {
           if (inTopZone(e.clientY)) dock();
+          else if (inSideZone(e.clientX)) { setDraft(undefined); setNearSide(false); onDockSide?.(); }
           else save(clamp({ x: g.left + e.clientX - g.x, y: g.top + e.clientY - g.y, vertical: g.vertical }));
         }
-        setNearTop(false);
+        setNearTop(false); setNearSide(false);
         if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
       }} onLostPointerCapture={() => { gesture.current = null; setDraft(undefined); setNearTop(false); }} onPointerCancel={() => { gesture.current = null; setDraft(undefined); setNearTop(false); }} onKeyDown={e => {
         if (e.key === "Escape") { gesture.current = null; setDraft(undefined); setNearTop(false); return; }
@@ -89,6 +94,7 @@ export function MovableNavigation({ children, preferenceKey }: { children: React
     {options && <Dialog title="Posicionar navegação" subtitle="Escolha uma posição sem precisar arrastar." size="sm" onClose={() => setOptions(false)} footer={<Button onClick={() => setOptions(false)}>Fechar</Button>}>
       <div className="grid gap-3">
         <Button onClick={() => { dock(); setOptions(false); }}>Encaixar no topo</Button>
+        {onDockSide && <Button variant="primary" onClick={() => { setOptions(false); onDockSide(); }}>Fixar na lateral (empurra a página)</Button>}
         <Button onClick={() => { save(clamp({ x: 8, y: height / 3, vertical: true })); setOptions(false); }}>Flutuar à esquerda</Button>
         <Button onClick={() => { save(clamp({ x: width - 240, y: height / 3, vertical: true })); setOptions(false); }}>Flutuar à direita</Button>
       </div>

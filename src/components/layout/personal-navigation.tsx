@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { MovableNavigation } from "./movable-navigation";
+import { setNavMode, useNavMode } from "./side-navigation";
 import { cx } from "@/components/ui/primitives";
 import { MoreMenu } from "@/components/ui/more-menu";
 import type { ModuleInfo } from "@/domain/permissions";
@@ -16,7 +17,7 @@ const WIDTHS = ["(max-width: 767px)", "(max-width: 1099px)"];
 const visibleFor = () => (typeof window === "undefined" ? 6 : window.matchMedia(WIDTHS[0]).matches ? 4 : window.matchMedia(WIDTHS[1]).matches ? 6 : 8);
 const subscribeWidth = (cb: () => void) => { const lists = WIDTHS.map((q) => window.matchMedia(q)); lists.forEach((l) => l.addEventListener("change", cb)); return () => lists.forEach((l) => l.removeEventListener("change", cb)); };
 
-const icons = { dashboard: LayoutDashboard, orders: ClipboardList, stock: Boxes, finance: CircleDollarSign, schedule: CalendarDays, customers: Users, reports: BarChart3, settings: Settings2 };
+export const NAV_ICONS = { dashboard: LayoutDashboard, orders: ClipboardList, stock: Boxes, finance: CircleDollarSign, schedule: CalendarDays, customers: Users, reports: BarChart3, settings: Settings2 };
 const subscribe = (cb: () => void) => { window.addEventListener("gavyo-navigation", cb); window.addEventListener("storage", cb); return () => { window.removeEventListener("gavyo-navigation", cb); window.removeEventListener("storage", cb); }; };
 
 export function PersonalNavigation({ modules, preferenceKey }: { modules: ModuleInfo[]; preferenceKey: string }) {
@@ -37,17 +38,18 @@ export function PersonalNavigation({ modules, preferenceKey }: { modules: Module
     more = [shown[shown.length - 1], ...more.filter((m) => m !== hiddenActive)];
     shown = [...shown.slice(0, -1), hiddenActive];
   }
-  return <MovableNavigation preferenceKey={preferenceKey}>
+  const { wide } = useNavMode(preferenceKey);
+  return <MovableNavigation preferenceKey={preferenceKey} onDockSide={wide ? () => setNavMode(preferenceKey, "side") : undefined}>
     <div className="personal-navigation bg-surface text-ink"><div className="personal-nav-inner">
       <nav aria-label="Navegação principal" className="personal-nav-track">{shown.map(item => {
         const active = activeOf(item.href);
-        const Icon = icons[item.key];
+        const Icon = NAV_ICONS[item.key];
         const label = SHORT[item.key] ?? item.label;
         return <div key={item.key} className={cx("personal-nav-item", active && "is-active")}><Link href={item.href} data-tour={`nav-${item.key}`} aria-current={active ? "page" : undefined} title={label !== item.label ? item.label : undefined}><span className="personal-nav-icon"><Icon size={18} aria-hidden /></span><span className="personal-nav-label">{label}</span></Link></div>;
       })}
       {more.length > 0 && (
         <div className="personal-nav-item personal-nav-more">
-          <MoreMenu text="Mais" label="Mais módulos" items={more.map((m) => { const Icon = icons[m.key]; return { label: m.label, icon: <Icon size={16} />, onSelect: () => router.push(m.href) }; })} />
+          <MoreMenu text="Mais" label="Mais módulos" items={more.map((m) => { const Icon = NAV_ICONS[m.key]; return { label: m.label, icon: <Icon size={16} />, onSelect: () => router.push(m.href) }; })} />
         </div>
       )}
       </nav>

@@ -1,9 +1,10 @@
 "use client";
 
 import {
-  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, LayoutDashboard, Lightbulb, Lock, Settings2, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
+  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, LayoutDashboard, Lightbulb, Lock, PanelLeft, PanelTop, Settings2, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
 } from "lucide-react";
 import Link from "next/link";
+import { setNavMode, SideNavigation, useNavMode } from "./side-navigation";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useApp } from "@/app-state/app-context";
@@ -239,6 +240,8 @@ function Header() {
   const { settings, user, membership, connection, online, can, openNewOrder } = useApp();
   const router = useRouter();
   const modules = useVisibleModules();
+  const pref = `${membership.workshopId}:${user.id}`;
+  const nav = useNavMode(pref);
   // Encolhe as cápsulas ao rolar (como as barras do iOS 26).
   const [compact, setCompact] = useState(false);
   useEffect(() => {
@@ -255,10 +258,10 @@ function Header() {
   }[connection];
 
   return (
-    <header className={cx("island-header no-print", compact && "is-compact")}>
+    <header className={cx("island-header no-print", compact && "is-compact", nav.side && "is-side")}>
       {/* Ilha flutuante (referência: Liquid Glass do macOS Tahoe/iOS 26 e barras flutuantes do Safari 26):
           três cápsulas sobre a página — oficina, menu e ferramentas. Encolhem ao rolar. */}
-        <Link href="/inicio" className="island island-brand app-brand" aria-label={`${settings.displayName} — início`}>
+        {!nav.side && <Link href="/inicio" className="island island-brand app-brand" aria-label={`${settings.displayName} — início`}>
           {settings.logoDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={settings.logoDataUrl} alt="" className="app-brand-logo bg-white object-contain" />
@@ -269,9 +272,9 @@ function Header() {
             <span className="app-brand-name" title={settings.displayName}>{settings.displayName}</span>
             <span className="app-brand-product">GAVYO Auto</span>
           </span>
-        </Link>
+        </Link>}
       <div className="island-search-slot"><OrderSearch /></div>
-      <PersonalNavigation modules={modules} preferenceKey={`${membership.workshopId}:${user.id}`} />
+      {!nav.side && <PersonalNavigation modules={modules} preferenceKey={pref} />}
       <div className="island island-actions">
         <div className="island-tools">
           {can("os.create") && settings.activeModules.includes("orders") && (
@@ -309,6 +312,12 @@ function Header() {
                   <p className="text-sm text-muted">{user.email}</p>
                   <p className="mt-1 flex items-center gap-1.5 text-sm text-muted"><span className={cx("size-2 rounded-full", conn.dot)} aria-hidden />{conn.label}</p>
                 </div>
+                {nav.wide && (
+                  <button type="button" role="menuitem" className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50" onClick={() => { close(); setNavMode(pref, nav.side ? "top" : "side"); }}>
+                    {nav.side ? <PanelTop className="size-4" aria-hidden /> : <PanelLeft className="size-4" aria-hidden />}
+                    {nav.side ? "Menu no topo" : "Menu na lateral"}
+                  </button>
+                )}
                 {membership.role !== "mechanic" && (
                   <Link role="menuitem" href="/inicio?organizar=1" onClick={close} className="widget-customize flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50">
                     <LayoutDashboard className="size-4" aria-hidden />
@@ -372,10 +381,13 @@ function ConnectionBanner() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { settings } = useApp();
+  const { settings, user, membership } = useApp();
   const { preferences } = useAccessibility();
   const pathname = usePathname();
   const main = useRef<HTMLElement>(null);
+  const modules = useVisibleModules();
+  const pref = `${membership.workshopId}:${user.id}`;
+  const nav = useNavMode(pref);
 
   useEffect(() => { main.current?.focus({ preventScroll: true }); }, [pathname]);
 
@@ -404,7 +416,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <TrayProvider>
     <PipProvider>
-    <div className="flex min-h-screen flex-col">
+    <div className={cx("app-frame flex min-h-screen flex-col", nav.side && "with-sidebar")}>
+      {nav.side && <SideNavigation modules={modules} pref={pref} />}
       <a href="#conteudo" className="skip-link">
         Pular para o conteúdo
       </a>

@@ -204,18 +204,19 @@ function Notifications() {
 
   return (
     <Menu
-      label={`Notificações (${items.length})`}
-      buttonClassName="topbar-icon"
+      label={`Avisos (${items.length})`}
+      buttonClassName="topbar-icon topbar-labeled"
       button={
         <>
-          <Bell className="size-5" aria-hidden />
-          {items.length > 0 && <span className="topbar-badge" aria-hidden>{items.length}</span>}
+          <span className="relative inline-flex"><Bell className="size-5" aria-hidden />
+          {items.length > 0 && <span className="topbar-badge" aria-hidden>{items.length}</span>}</span>
+          <span className="topbar-label" aria-hidden>Avisos</span>
         </>
       }
     >
       {(close) =>
         items.length === 0 ? (
-          <p className="px-3 py-3 text-sm text-muted">Nenhuma notificação no momento.</p>
+          <p className="px-3 py-3 text-sm text-muted">Nenhum aviso agora.</p>
         ) : (
           items.map((it) => (
             <Link key={it.href} href={it.href} onClick={close} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50">
@@ -265,9 +266,9 @@ function Header() {
             <span className="app-brand-product">GAVYO Auto</span>
           </span>
         </Link>
+      <div className="island-search-slot"><OrderSearch /></div>
       <PersonalNavigation modules={modules} preferenceKey={`${membership.workshopId}:${user.id}`} />
       <div className="island island-actions">
-        <OrderSearch />
         <div className="island-tools">
           {can("os.create") && settings.activeModules.includes("orders") && (
             <Button variant="primary" size="sm" className="topbar-primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()} aria-keyshortcuts="N" title="Novo serviço (N)">
@@ -283,7 +284,7 @@ function Header() {
           <AccessibilityControls />
           <Notifications />
           <Menu
-            label={`Conta de ${user.name} (${ROLE_LABELS[membership.role]})`}
+            label={`Minha conta — ${user.name}, ${ROLE_LABELS[membership.role]}`}
             buttonClassName="topbar-account"
             button={
               <>
@@ -291,6 +292,7 @@ function Header() {
                   {user.name.split(" ").slice(0, 2).map((p) => p[0]).join("")}
                   <span className={cx("topbar-avatar-dot", conn.dot)} aria-hidden />
                 </span>
+                <span className="topbar-label" aria-hidden>Minha conta</span>
                 <ChevronDown className="size-4 opacity-70" aria-hidden />
               </>
             }

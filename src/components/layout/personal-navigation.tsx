@@ -11,7 +11,10 @@ import type { ModuleInfo } from "@/domain/permissions";
 
 /** Rótulos curtos para caber na ilha; o nome completo fica no título e no "Mais". */
 const SHORT: Partial<Record<string, string>> = { customers: "Clientes" };
-const VISIBLE = 6;
+/** Quantas abas cabem com o nome escrito: celular 4, tablet 6, notebook/desktop todas. O resto vai para "Mais". */
+const WIDTHS = ["(max-width: 767px)", "(max-width: 1099px)"];
+const visibleFor = () => (typeof window === "undefined" ? 6 : window.matchMedia(WIDTHS[0]).matches ? 4 : window.matchMedia(WIDTHS[1]).matches ? 6 : 8);
+const subscribeWidth = (cb: () => void) => { const lists = WIDTHS.map((q) => window.matchMedia(q)); lists.forEach((l) => l.addEventListener("change", cb)); return () => lists.forEach((l) => l.removeEventListener("change", cb)); };
 
 const icons = { dashboard: LayoutDashboard, orders: ClipboardList, stock: Boxes, finance: CircleDollarSign, schedule: CalendarDays, customers: Users, reports: BarChart3, settings: Settings2 };
 const subscribe = (cb: () => void) => { window.addEventListener("gavyo-navigation", cb); window.addEventListener("storage", cb); return () => { window.removeEventListener("gavyo-navigation", cb); window.removeEventListener("storage", cb); }; };
@@ -24,7 +27,8 @@ export function PersonalNavigation({ modules, preferenceKey }: { modules: Module
   let saved: string[] = [];
   try { const parsed: unknown = JSON.parse(raw); if (Array.isArray(parsed)) saved = parsed.filter((v): v is string => typeof v === "string"); } catch { /* Préférence indisponível: ordem padrão. */ }
   const ordered = [...modules].sort((a, b) => { const ai = saved.indexOf(a.key), bi = saved.indexOf(b.key); return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi); });
-  // Na ilha cabem 6 módulos; os demais vão para "Mais" (a tela atual sempre fica à vista).
+  // Os módulos que não cabem vão para "Mais" (a tela atual sempre fica à vista).
+  const VISIBLE = useSyncExternalStore(subscribeWidth, visibleFor, () => 6);
   const activeOf = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   let shown = ordered.slice(0, VISIBLE);
   let more = ordered.slice(VISIBLE);

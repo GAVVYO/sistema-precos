@@ -16,6 +16,7 @@ import {
   canChangeStatus, changeOrderStatus, orderTotals, PAYMENT_SITUATION_LABELS, paymentSituation, setOrderItems,
 } from "@/services/orders";
 import { CancelOrderDialog, EditOrderDialog, PaymentDialog, WhatsAppDialog } from "./order-dialogs";
+import { QuickOrderAction } from "./quick-order-action";
 import { DraftItem, draftsToItems, orderTotalText, PartsEditor, PaymentBadge, StatusBadge, toDrafts, vehicleLabel } from "./shared";
 
 function Info({ label, children }: { label: string; children: ReactNode }) {
@@ -127,7 +128,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
           <>
             {!cancelled && (
               <label className="mr-auto flex items-center gap-2 text-xs text-muted">
-                Etapa
+                Mudar etapa
                 <Select
                   className="h-8 w-40"
                   value={order.status}
@@ -152,9 +153,10 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
             )}
             {can("finance.payment") && situation === "pending" && (
               <Button variant="primary" icon={<CircleDollarSign className="size-4" aria-hidden />} disabled={!online} onClick={() => setSub("pay")}>
-                Registrar pagamento
+                Receber
               </Button>
             )}
+            {!cancelled && <QuickOrderAction order={order} size="md" statusOnly />}
           </>
         }
       >
@@ -295,7 +297,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
       {sub === "cancel" && <CancelOrderDialog order={order} hasParts={items.length > 0} onClose={() => setSub(null)} />}
       {sub === "quote" && customer && (
         <WhatsAppDialog
-          title={`Orçamento da ${number}`}
+          title={`Orçamento do ${number}`}
           phone={customer.phone}
           text={quoteMessage({ ...whatsappBase, description: order.description, laborCents: totals.laborCents, partsCents: totals.partsCents, totalCents: totals.totalCents })}
           onClose={() => setSub(null)}
@@ -303,7 +305,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
       )}
       {sub === "update" && customer && (
         <WhatsAppDialog
-          title={`Atualização da ${number}`}
+          title={`Atualização do ${number}`}
           phone={customer.phone}
           text={statusMessage({ ...whatsappBase, orderNumber: order.number, statusLabel: ORDER_STATUS_LABELS[order.status] })}
           onClose={() => setSub(null)}

@@ -158,7 +158,7 @@ export function OrderPeek({
   };
 
   return (
-    <aside ref={panel} className="order-peek" style={{ width }} aria-label={`Resumo da ${number}`}>
+    <aside ref={panel} className="order-peek" style={{ width }} aria-label={`Resumo do ${number}`}>
       <div
         role="separator"
         aria-orientation="vertical"
@@ -256,7 +256,7 @@ export function OrderPeek({
             </ul>
           )}
           {draggingPart && canParts && <p className="peek-drop-hint" aria-hidden>Solte para lançar 1 unidade</p>}
-          {!canParts && !locked && doneLock && <p className="peek-empty">Serviço pronto: para corrigir peças, abra o serviço completo e escreva o motivo.</p>}
+          {!canParts && !locked && doneLock && <p className="peek-empty">Serviço pronto: para corrigir peças, clique em “Ver serviço completo” e escreva o motivo.</p>}
         </section>
 
         <div className="peek-labor">
@@ -296,8 +296,8 @@ export function OrderPeek({
       </div>
 
       <footer className="peek-footer">
-        <Button icon={<Maximize2 className="size-4" aria-hidden />} onClick={() => openOrder(order.id)}>Abrir completo</Button>
-        <QuickOrderAction order={order} />
+        <Button className="peek-full" icon={<Maximize2 className="size-4" aria-hidden />} onClick={() => openOrder(order.id)}>Ver serviço completo</Button>
+        <QuickOrderAction order={order} size="md" />
       </footer>
     </aside>
   );

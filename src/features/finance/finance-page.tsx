@@ -321,7 +321,7 @@ export function FinancePage() {
                         <td className="text-right">
                           {can("finance.payment") && (
                             <Button size="sm" variant="primary" disabled={!online} onClick={() => (r.order ? setPayOrder(r.order.id) : setSettle(r.transaction))}>
-                              Registrar pagamento
+                              Receber
                             </Button>
                           )}
                         </td>

@@ -302,7 +302,7 @@ function FinanceDashboard({ editing, prefs }: { editing: boolean; prefs: WidgetP
                     <td className="num">{formatBRL(r.amountCents)}</td>
                     <td className="text-right">
                       {r.order && can("finance.payment") && (
-                        <Button size="sm" disabled={!online} onClick={() => setPayOrder(r.order!.id)}>Registrar pagamento</Button>
+                        <Button size="sm" variant="primary" disabled={!online} onClick={() => setPayOrder(r.order!.id)}>Receber</Button>
                       )}
                     </td>
                   </tr>

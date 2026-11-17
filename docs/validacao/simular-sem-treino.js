@@ -76,7 +76,7 @@ const ROLE = process.argv[3] || 'Proprietário';
   else {
   const who = await pay.locator('xpath=ancestor::li').locator('.today-name-link, strong').first().innerText();
   await click(pay, `Receber (${who})`);
-  await click(p.locator('dialog[open]').getByRole('button', { name: /PIX/ }).first(), 'PIX');
+  await click(p.locator('dialog[open]').getByText('PIX', { exact: true }), 'PIX');
   await p.screenshot({ path: OUT + TAG + '-3-receber.png' });
   await click(p.locator('dialog[open]').getByRole('button', { name: /^Recebi/ }), 'Recebi R$ …');
   const received = await p.getByText(/^Recebido R\$/).count();

@@ -2,43 +2,28 @@
 
 import { celebratePayment } from "@/lib/celebrate";
 import { withTransition } from "@/lib/view-transition";
+import { CashChange, cashShort, PaymentMethodTiles, PaymentStage } from "./payment-stage";
 import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
-import { Button, cx, Field, Input, Select, Textarea } from "@/components/ui/primitives";
+import { Button, Field, Input, Select, Textarea } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
-import { PAYMENT_METHOD_LABELS, PAYMENT_METHODS } from "@/domain/labels";
 import type { ID, PaymentMethod, ServiceOrder } from "@/domain/types";
 import { centsToInput, formatBRL, formatOrderNumber, formatPhone, formatPlate, normalizePhone, parseBRL } from "@/lib/format";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { cancelOrder, orderTotals, registerPayment, updateOrder } from "@/services/orders";
 import { vehicleLabel } from "./shared";
 
-export function PaymentMethodPicker({ value, onChange }: { value: PaymentMethod; onChange: (m: PaymentMethod) => void }) {
-  return (
-    <div role="group" aria-label="Forma de pagamento" className="grid grid-cols-2 gap-2">
-      {PAYMENT_METHODS.map((m) => (
-        <button
-          key={m}
-          type="button"
-          aria-pressed={value === m}
-          onClick={() => onChange(m)}
-          className={cx(
-            "min-h-11 rounded-md border px-2 text-sm font-medium",
-            value === m ? "border-primary bg-primary-soft text-primary" : "border-line hover:bg-slate-50",
-          )}
-        >
-          {PAYMENT_METHOD_LABELS[m]}
-        </button>
-      ))}
-    </div>
-  );
+/** Escolha da forma de pagamento (botões grandes com ícone). */
+export function PaymentMethodPicker({ value, onChange, legend = "Forma de pagamento" }: { value: PaymentMethod; onChange: (m: PaymentMethod) => void; legend?: string }) {
+  return <PaymentMethodTiles value={value} onChange={onChange} legend={legend} />;
 }
 
 export function PaymentDialog({ orderId, onClose }: { orderId: ID; onClose: () => void }) {
-  const { view, act, customerOf, vehicleOf, online } = useApp();
+  const { view, act, customerOf, vehicleOf, online, settings } = useApp();
   const [method, setMethod] = useState<PaymentMethod>("pix");
+  const [given, setGiven] = useState("");
   const [busy, setBusy] = useState(false);
   const order = view.orders.find((o) => o.id === orderId);
   if (!order) return null;
@@ -49,7 +34,7 @@ export function PaymentDialog({ orderId, onClose }: { orderId: ID; onClose: () =
     <Dialog
       title="Receber"
       subtitle={`${formatOrderNumber(order.number)} · ${customerOf(order.customerId)?.name} · ${vehicleLabel(vehicle)} ${vehicle ? formatPlate(vehicle.plate) : ""}`}
-      size="sm"
+      size="md"
       onClose={onClose}
       footer={
         <>
@@ -57,7 +42,7 @@ export function PaymentDialog({ orderId, onClose }: { orderId: ID; onClose: () =
           <Button
             variant="primary"
             loading={busy}
-            disabled={!online}
+            disabled={!online || (method === "cash" && cashShort(totals.totalCents, given))}
             onClick={(e) => {
               if (busy) return;
               setBusy(true);
@@ -76,14 +61,15 @@ export function PaymentDialog({ orderId, onClose }: { orderId: ID; onClose: () =
         </>
       }
     >
-      <dl className="mb-4 space-y-1 text-sm">
-        <div className="flex justify-between"><dt className="text-muted">Mão de obra</dt><dd>{formatBRL(totals.laborCents ?? 0)}</dd></div>
-        <div className="flex justify-between"><dt className="text-muted">Peças</dt><dd>{formatBRL(totals.partsCents)}</dd></div>
-        <div className="flex justify-between border-t border-line pt-1 text-base font-semibold"><dt>Total a receber</dt><dd>{formatBRL(totals.totalCents)}</dd></div>
+      <PaymentStage method={method} amountCents={totals.totalCents} customerName={customerOf(order.customerId)?.name ?? ""} workshopName={settings.displayName} />
+      <dl className="pay-summary">
+        <div><dt>Mão de obra</dt><dd>{formatBRL(totals.laborCents ?? 0)}</dd></div>
+        <div><dt>Peças</dt><dd>{formatBRL(totals.partsCents)}</dd></div>
+        <div className="is-total"><dt>Total a receber</dt><dd>{formatBRL(totals.totalCents)}</dd></div>
       </dl>
-      <p className="mb-2 text-sm font-medium">Como o cliente pagou?</p>
-      <PaymentMethodPicker value={method} onChange={setMethod} />
-      <p className="mt-3 text-xs text-muted">Só marque depois de receber o valor inteiro. O sistema não cobra o cliente sozinho.</p>
+      <PaymentMethodTiles value={method} onChange={setMethod} />
+      {method === "cash" && <CashChange totalCents={totals.totalCents} given={given} onGiven={setGiven} />}
+      <p className="pay-note-text">Só marque depois de receber o valor inteiro. O sistema não cobra o cliente sozinho.</p>
     </Dialog>
   );
 }

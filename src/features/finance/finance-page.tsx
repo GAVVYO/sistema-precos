@@ -13,6 +13,7 @@ import { toast } from "@/components/ui/toast";
 import { EXPENSE_CATEGORIES, PAYMENT_METHOD_LABELS } from "@/domain/labels";
 import type { FinancialTransaction, PaymentMethod } from "@/domain/types";
 import { PaymentDialog, PaymentMethodPicker } from "@/features/orders/order-dialogs";
+import { CashChange, cashShort, PaymentMethodTiles, PaymentStage } from "@/features/orders/payment-stage";
 import { vehicleLabel } from "@/features/orders/shared";
 import { addDays, formatBRL, formatDate, formatOrderNumber, formatPlate, inRange, parseBRL, startOfWeek, todayISO } from "@/lib/format";
 import { createExpense, createIncome, financeSummary, listReceivables, settleIncome } from "@/services/finance";
@@ -140,8 +141,7 @@ function TransactionDialog({ kind, onClose }: { kind: "income" | "expense"; onCl
           </Field>
         )}
         <div className="col-span-2">
-          <p className="mb-1 text-xs font-medium">Forma de pagamento</p>
-          <PaymentMethodPicker value={method} onChange={setMethod} />
+          <PaymentMethodPicker value={method} onChange={setMethod} legend={kind === "expense" ? "Como foi pago?" : "Como o cliente pagou?"} />
         </div>
         <Field label="Observações" optional className="col-span-2">{(p) => <Textarea {...p} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />}</Field>
       </div>
@@ -150,32 +150,34 @@ function TransactionDialog({ kind, onClose }: { kind: "income" | "expense"; onCl
 }
 
 export function SettleDialog({ tx, onClose }: { tx: FinancialTransaction; onClose: () => void }) {
-  const { act, online } = useApp();
+  const { act, online, customerOf, settings } = useApp();
   const [method, setMethod] = useState<PaymentMethod>(tx.method);
+  const [given, setGiven] = useState("");
   return (
     <Dialog
       title="Receber"
       subtitle={`${tx.description} · ${formatBRL(tx.amountCents)}`}
-      size="sm"
+      size="md"
       onClose={onClose}
       footer={
         <>
           <Button onClick={onClose}>Voltar</Button>
           <Button
             variant="primary"
-            disabled={!online}
+            disabled={!online || (method === "cash" && cashShort(tx.amountCents, given))}
             onClick={() => {
               const r = act((db, ctx) => settleIncome(db, ctx, tx.id, { method, date: todayISO() }), "Recebimento registrado.");
               if (r.ok) onClose();
             }}
           >
-            Confirmar recebimento
+            Recebi {formatBRL(tx.amountCents)}
           </Button>
         </>
       }
     >
-      <p className="mb-1 text-xs font-medium">Forma de pagamento</p>
-      <PaymentMethodPicker value={method} onChange={setMethod} />
+      <PaymentStage method={method} amountCents={tx.amountCents} customerName={customerOf(tx.customerId)?.name ?? tx.description} workshopName={settings.displayName} />
+      <PaymentMethodTiles value={method} onChange={setMethod} />
+      {method === "cash" && <CashChange totalCents={tx.amountCents} given={given} onGiven={setGiven} />}
     </Dialog>
   );
 }

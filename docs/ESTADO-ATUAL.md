@@ -56,12 +56,13 @@ Validação: typecheck, lint, 32 testes e build aprovados. No navegador (1366 ×
 - **Arrastar para ajustar:** quantidade e mão de obra no painel da OS (Shift = passo maior; teclado ← → e Enter).
 - **Mini janela:** botão ao lado do fechar no painel da OS (Chrome/Edge); fica por cima de outros programas.
 
-## Cabeçalho limpo
+## Cabeçalho "ilha flutuante"
 
-- Uma faixa: oficina à esquerda, busca no centro, Nova OS, acessibilidade, avisos e conta (avatar com ponto de conexão).
-- Status "Offline/Reconectando" aparece escrito só quando necessário; detalhes no menu da conta.
-- Abas finas com sublinhado na ativa; a alça de mover a barra ficou no fim, discreta.
-- Até 900 px "Nova OS" vira só o ícone +; no celular a busca vai para a segunda linha.
+- Três cápsulas presas no topo: oficina · menu · busca/Nova OS/acessibilidade/avisos/conta. Encolhem ao rolar.
+- Busca: ícone de lupa que se expande (clique ou Ctrl/⌘+K). Menu com 6 módulos e "Mais"; a tela atual nunca fica escondida no "Mais".
+- Aba ativa e avatar na cor secundária da oficina (Configurações › Cor secundária).
+- A cápsula do menu ainda pode ser arrastada para flutuar e encaixada de volta no topo.
+- Celular: menu vira barra flutuante embaixo; só o logo da oficina aparece no topo.
 
 ## Executar
 

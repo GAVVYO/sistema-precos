@@ -86,7 +86,7 @@ function WorkshopSettingsForm() {
             </div>
           </div>
           <ColorField label="Cor principal (botões, destaques e links)" value={primary} onChange={setPrimary} presets={PRIMARY_PRESETS} />
-          <ColorField label="Cor secundária (cabeçalho)" value={secondary} onChange={setSecondary} />
+          <ColorField label="Cor secundária (aba ativa e avatar)" value={secondary} onChange={setSecondary} />
           <div className="overflow-hidden rounded-md border border-line" aria-label="Pré-visualização">
             <div className="flex items-center gap-2 px-4 py-4 text-sm font-semibold" style={{ background: secondary, color: contrastOn(secondary) }}>
               <span className="truncate">{displayName}</span>

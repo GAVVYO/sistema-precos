@@ -234,6 +234,14 @@ function Header() {
   const { settings, user, membership, connection, online, can, openNewOrder } = useApp();
   const router = useRouter();
   const modules = useVisibleModules();
+  // Encolhe as cápsulas ao rolar (como as barras do iOS 26).
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setCompact(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const conn = {
     online: { label: "Online", dot: "bg-emerald-400" },
@@ -242,11 +250,10 @@ function Header() {
   }[connection];
 
   return (
-    <header className="app-header no-print">
-      <div className="app-topbar">
-        {/* Barra unificada (referência: toolbar unificada do macOS, GitHub, Shopify Admin):
-            oficina à esquerda, busca no centro, ação principal e conta à direita. */}
-        <Link href="/inicio" className="app-brand" aria-label={`${settings.displayName} — início`}>
+    <header className={cx("island-header no-print", compact && "is-compact")}>
+      {/* Ilha flutuante (referência: Liquid Glass do macOS Tahoe/iOS 26 e barras flutuantes do Safari 26):
+          três cápsulas sobre a página — oficina, menu e ferramentas. Encolhem ao rolar. */}
+        <Link href="/inicio" className="island island-brand app-brand" aria-label={`${settings.displayName} — início`}>
           {settings.logoDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={settings.logoDataUrl} alt="" className="app-brand-logo bg-white object-contain" />
@@ -258,9 +265,10 @@ function Header() {
             <span className="app-brand-product">GAVYO Auto</span>
           </span>
         </Link>
-
+      <PersonalNavigation modules={modules} preferenceKey={`${membership.workshopId}:${user.id}`} />
+      <div className="island island-actions">
         <OrderSearch />
-        <div className="account-controls">
+        <div className="island-tools">
           {can("os.create") && settings.activeModules.includes("orders") && (
             <Button variant="primary" size="sm" className="topbar-primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()} aria-keyshortcuts="N" title="Nova OS (N)">
               <span className="topbar-primary-label">Nova OS</span>
@@ -313,7 +321,6 @@ function Header() {
           </Menu>
         </div>
       </div>
-      <PersonalNavigation modules={modules} preferenceKey={`${membership.workshopId}:${user.id}`} />
     </header>
   );
 }

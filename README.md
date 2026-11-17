@@ -27,7 +27,6 @@ Abra http://localhost:3000. Na tela de acesso, escolha a oficina e o usuário fi
 | `npm test` | Testes automatizados (Vitest) |
 | `npm run typecheck` | Checagem de tipos (TypeScript strict) |
 | `npm run lint` | ESLint |
-
 | `npm run build:hostinger` | Gera `out/` e `gavyo-hostinger.zip` para publicar na Hostinger ([passo a passo](docs/DEPLOY-HOSTINGER.md)) |
 
 Nenhuma variável de ambiente é necessária para a demonstração. Veja [.env.example](.env.example).

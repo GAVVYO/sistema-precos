@@ -30,7 +30,7 @@ Depois das correções: **axe sem violações** em Hoje, Serviços e detalhes do
 Observação: no celular, o axe acusava alvos enquanto passavam **por baixo do cabeçalho fixo** durante a rolagem; com a página parada não há sobreposição. O foco do teclado não fica escondido (scroll-padding, WCAG 2.4.11).
 
 ## Pontos que dependem de decisão
-- **Recepcionista não recebe pagamento** (cargo padrão sem `finance.payment`). A tela Hoje mostra a lista com o aviso "Quem recebe: dono ou financeiro". Se a recepção do balcão deve receber, o dono libera em Configurações ou muda-se o cargo padrão (é regra, não layout).
+- **Recepcionista não recebia pagamento** (cargo padrão sem `finance.payment`). **Decidido em 17/11:** o cargo padrão passou a receber (decisão 46). Funcionários já cadastrados: o dono aplica o modelo em Configurações.
 - **Tour na 1ª vez** soma 3 a 5 cliques de "Próximo". Aceito: aparece uma vez e pode ser pulado (Pular, ✕ ou Esc).
 
 ## Roteiro para teste com uma pessoa real (15 minutos)

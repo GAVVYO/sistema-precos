@@ -47,6 +47,8 @@ export const ROLE_TEMPLATES: Record<Role, PermissionKey[]> = {
     "schedule.manage",
     "customers.view",
     "stock.view",
+    // Recepção recebe no balcão (decisão do dono, 17/11/2026); não vê o Financeiro.
+    "finance.payment",
   ],
   mechanic: ["os.view", "os.status", "os.parts", "os.complete", "stock.view", "customers.view"],
   financial: [

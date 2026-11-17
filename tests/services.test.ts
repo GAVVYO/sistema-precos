@@ -201,7 +201,9 @@ describe("permissões", () => {
   it("cada cargo só executa o que seu modelo permite", () => {
     const order = newOrder();
     expectError(() => createExpense(db, ctx("u-raimundo"), { description: "Teste", category: "Aluguel", amountCents: 100, date: "2026-11-16", method: "pix" }), "forbidden");
-    expectError(() => registerPayment(db, ctx("u-juliana"), order.id, { method: "pix" }), "forbidden");
+    // Recepção recebe no balcão (decisão 46), mas não lança despesa; mecânico não recebe.
+    expectError(() => registerPayment(db, ctx("u-raimundo"), order.id, { method: "pix" }), "forbidden");
+    expectError(() => createExpense(db, ctx("u-juliana"), { description: "Teste", category: "Aluguel", amountCents: 100, date: "2026-11-16", method: "pix" }), "forbidden");
     expectError(() => changeOrderStatus(db, ctx("u-juliana"), order.id, "done"), "forbidden");
     expectError(() => cancelOrder(db, ctx("u-raimundo"), order.id, { reason: "teste", returnParts: true }), "forbidden");
     changeOrderStatus(db, ctx("u-raimundo"), order.id, "done");

@@ -9,14 +9,22 @@ import { canChangeStatus, changeOrderStatus } from "@/services/orders";
 import { vtName, withTransition } from "@/lib/view-transition";
 
 /** Cartão voa da coluna atual para a nova, assenta e brilha ao chegar. */
-function animateCardMove(orderId: string, run: () => void) {
+function animateCardMove(orderId: string, nextLabel: string, run: () => void) {
   const name = vtName("card", orderId);
   const style = document.createElement("style");
   style.textContent = `::view-transition-group(${name}){z-index:20;animation-duration:560ms;animation-timing-function:cubic-bezier(.34,1.25,.64,1)}::view-transition-old(${name}){animation:none;opacity:0}::view-transition-new(${name}){animation:card-land 560ms cubic-bezier(.34,1.25,.64,1) both}`;
+  // Só as duas colunas envolvidas entram na animação (menos "fotos" = troca mais leve).
+  const cols: Element[] = [];
+  const mark = (el: Element | null | undefined) => { if (el) { el.setAttribute("data-vt-col", ""); cols.push(el); } };
   withTransition("move", run, {
-    before: () => document.head.appendChild(style),
+    before: () => {
+      document.head.appendChild(style);
+      mark(document.querySelector(`.kanban-board [data-order-id="${orderId}"]`)?.closest(".kanban-column"));
+    },
+    after: () => mark(document.querySelector(`.kanban-board .kanban-column[aria-label^="${nextLabel}:"]`)),
     done: () => {
       style.remove();
+      cols.forEach((c) => c.removeAttribute("data-vt-col"));
       const card = document.querySelector<HTMLElement>(`.kanban-board [data-order-id="${orderId}"]`);
       if (!card) return;
       card.classList.add("just-moved");
@@ -38,7 +46,7 @@ export function useMoveOrder() {
     const run = () => { res = act((d, c) => changeOrderStatus(d, c, order.id, next)); };
     // O cartão "anda" até a próxima coluna (no arraste ele já está na mão: sem animação).
     if (opts.animate === false || !document.querySelector(`.kanban-board [data-order-id="${order.id}"]`)) run();
-    else animateCardMove(order.id, run);
+    else animateCardMove(order.id, ORDER_STATUS_LABELS[next], run);
     if (!res.ok) return;
     const undoable = canChangeStatus(db, { workshopId: order.workshopId, userId: user.id }, next, from);
     toast(

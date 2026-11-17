@@ -49,6 +49,10 @@ Regras aprendidas:
 6. **Fallback**: sem suporte (Firefox antigo) ou com movimento reduzido, `withTransition` só executa a mudança.
 7. **Acessibilidade**: animação nunca é a única informação — o aviso escrito (toast) continua.
 
+## Desempenho
+
+Medido com CPU 4× mais lenta: tela parada e rolagem a ~60 quadros/s; mover cartão ~65–85 ms (maior parte é o React). **`npm run dev` é ~4× mais pesado** — para julgar fluidez use `npm run build && npm run start`. Regra: só dê nome de transição ao que realmente muda de lugar (ex.: colunas marcadas com `data-vt-col`).
+
 ## Testes
 
 Roteiros Playwright usados (fora do repositório, recriáveis a partir de `docs/validacao/simular-sem-treino.js`): capturas no meio de cada animação, contagem de transições com `reducedMotion: 'reduce'` (deve ser 0) e axe nas telas com menu lateral e janela Receber.

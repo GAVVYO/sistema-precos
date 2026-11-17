@@ -42,6 +42,13 @@ Validação: typecheck, lint, 32 testes e build aprovados. No navegador (1366 ×
 - **Tabelas:** ocupam a largura do cartão em Estoque, Financeiro, Clientes e Relatórios.
 - **Relatórios:** tipos em faixa horizontal; tabela de OS cabe inteira em 1366 px.
 
+## Ordens: painel lateral, peças e responsáveis por arrasto
+
+- Clique no cartão (ou Espaço) abre o resumo da OS ao lado; ↑ ↓ trocam de OS; Esc fecha; a borda esquerda ajusta a largura.
+- No painel: arraste peças do estoque para "Peças utilizadas" (ou use +); − e a lixeira devolvem ao estoque. Desfazer disponível.
+- Faixa de responsáveis acima do quadro: clique filtra; solte uma OS para atribuir. Campo "Responsável" no painel faz o mesmo sem arrasto.
+- Offline ou sem permissão, os alvos e botões de alteração ficam desativados.
+
 ## Executar
 
 Requisitos e instalação estão no README. Na demo, não é necessário arquivo .env com credenciais.

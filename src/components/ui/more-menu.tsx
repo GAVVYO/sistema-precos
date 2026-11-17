@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal } from "lucide-react";
+import { ChevronDown, MoreHorizontal } from "lucide-react";
 import { ReactNode, useId, useRef } from "react";
 import { cx } from "./primitives";
 
@@ -22,7 +22,7 @@ export interface MoreMenuItem {
  * não o cortam), fecha com Esc ou clique fora e volta o foco ao botão.
  * Setas ↑ ↓ percorrem os itens.
  */
-export function MoreMenu({ label, items, className }: { label: string; items: MoreMenuItem[]; className?: string }) {
+export function MoreMenu({ label, items, className, text }: { label: string; items: MoreMenuItem[]; className?: string; /** Rótulo visível (vira botão com texto + seta). */ text?: string }) {
   const id = useId();
   const button = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLDivElement>(null);
@@ -56,9 +56,9 @@ export function MoreMenu({ label, items, className }: { label: string; items: Mo
         aria-haspopup="menu"
         aria-label={label}
         title={label}
-        className={cx("more-menu-trigger", className)}
+        className={cx(text ? "more-menu-trigger-text" : "more-menu-trigger", className)}
       >
-        <MoreHorizontal className="size-5" aria-hidden />
+        {text ? <>{text}<ChevronDown className="size-4" aria-hidden /></> : <MoreHorizontal className="size-5" aria-hidden />}
       </button>
       <div
         ref={menu}

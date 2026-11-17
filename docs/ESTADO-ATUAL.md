@@ -49,6 +49,13 @@ Validação: typecheck, lint, 32 testes e build aprovados. No navegador (1366 ×
 - Faixa de responsáveis acima do quadro: clique filtra; solte uma OS para atribuir. Campo "Responsável" no painel faz o mesmo sem arrasto.
 - Offline ou sem permissão, os alvos e botões de alteração ficam desativados.
 
+## Ordens: seleção, bandeja, ajuste por arrasto e mini janela
+
+- **Seleção múltipla:** Ctrl/⌘/Shift+clique, X ou a caixa do cartão; arraste uma para levar todas; barra com Mover/Atribuir/Bandeja; Esc limpa.
+- **Bandeja:** canto inferior esquerdo, em todas as telas; arraste OS ou peças para guardar e depois para onde precisar; "Guardar na bandeja" também no ⋯ das OS e das peças.
+- **Arrastar para ajustar:** quantidade e mão de obra no painel da OS (Shift = passo maior; teclado ← → e Enter).
+- **Mini janela:** botão ao lado do fechar no painel da OS (Chrome/Edge); fica por cima de outros programas.
+
 ## Executar
 
 Requisitos e instalação estão no README. Na demo, não é necessário arquivo .env com credenciais.

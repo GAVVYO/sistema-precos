@@ -3,12 +3,13 @@
 import {
   CollisionDetection, DndContext, DragEndEvent, pointerWithin, rectIntersection, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors,
 } from "@dnd-kit/core";
-import { ArrowRight, ClipboardList, ExternalLink, GripVertical, Plus, Search, SearchX, User } from "lucide-react";
-import { createContext, useContext, useMemo, useState } from "react";
+import { ArrowRight, Check, CheckSquare, ClipboardList, ExternalLink, GripVertical, Inbox, Plus, Search, SearchX, User, UserCheck } from "lucide-react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Button, cx, EmptyState, Input, PageHeader, Select } from "@/components/ui/primitives";
 import { MoreMenu, type MoreMenuItem } from "@/components/ui/more-menu";
+import { TrayDock, useTray } from "@/components/layout/tray";
 import { ORDER_STATUS_LABELS, ORDER_STATUSES } from "@/domain/labels";
 import type { ID, OrderStatus, ServiceOrder } from "@/domain/types";
 import { addDays, dateOf, formatDate, formatOrderNumber, formatPlate, todayISO } from "@/lib/format";
@@ -36,14 +37,23 @@ const collision: CollisionDetection = (args) => {
 };
 
 /** OS aberta no painel lateral (espiar). */
-const PeekContext = createContext<{ peekId: ID | null; setPeek: (id: ID | null) => void }>({ peekId: null, setPeek: () => {} });
+interface Board {
+  peekId: ID | null;
+  setPeek: (id: ID | null) => void;
+  /** Seleção múltipla (Finder/Drive): Ctrl/⌘/Shift+clique ou tecla X. */
+  picked: Set<ID>;
+  togglePick: (id: ID) => void;
+}
+const PeekContext = createContext<Board>({ peekId: null, setPeek: () => {}, picked: new Set(), togglePick: () => {} });
 
 function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggable: boolean; overlay?: boolean }) {
   const { db, view, user, online, customerOf, vehicleOf, userOf, openOrder } = useApp();
   const moveOrder = useMoveOrder();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: order.id, data: { type: "order" }, disabled: !draggable || overlay });
-  const { peekId, setPeek } = useContext(PeekContext);
+  const { peekId, setPeek, picked, togglePick } = useContext(PeekContext);
+  const tray = useTray();
   const selected = peekId === order.id;
+  const isPicked = picked.has(order.id);
   const vehicle = vehicleOf(order.vehicleId);
   const totals = orderTotals(view, order);
   const number = formatOrderNumber(order.number);
@@ -54,6 +64,10 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
   const mechanic = userOf(order.mechanicId)?.name.split(" ").slice(0, 2).join(" ") ?? "Sem responsável";
   const menuItems: MoreMenuItem[] = [
     { label: "Abrir completo", icon: <ExternalLink className="size-4" />, onSelect: () => openOrder(order.id) },
+    { label: isPicked ? "Tirar da seleção" : "Selecionar (X)", icon: <CheckSquare className="size-4" />, onSelect: () => togglePick(order.id) },
+    tray.has({ type: "order", id: order.id })
+      ? { label: "Tirar da bandeja", icon: <Inbox className="size-4" />, onSelect: () => tray.remove({ type: "order", id: order.id }) }
+      : { label: "Guardar na bandeja", icon: <Inbox className="size-4" />, onSelect: () => tray.add([{ type: "order", id: order.id }]) },
     ...targets.map((s, i) => ({
       label: ORDER_STATUS_LABELS[s],
       group: i === 0 ? "Mover para" : undefined,
@@ -72,11 +86,17 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
       className={cx(
         "order-card order-card-compact rounded-md border border-line bg-surface text-sm",
         selected && !overlay && "is-selected",
+        isPicked && !overlay && "is-picked",
         !overlay && "order-enter",
         isDragging && !overlay && "opacity-40",
         overlay && "rotate-1 shadow-xl",
       )}
     >
+      {!overlay && (
+        <button type="button" className="pick-box" aria-pressed={isPicked} aria-label={`${isPicked ? "Tirar" : "Incluir"} ${number} na seleção`} title="Selecionar (X, ou Ctrl/⌘+clique)" onClick={() => togglePick(order.id)}>
+          {isPicked && <Check className="size-3.5" aria-hidden />}
+        </button>
+      )}
       <div className="flex items-start gap-1">
         {draggable && (
           <button
@@ -89,7 +109,14 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
             <GripVertical className="size-4" aria-hidden />
           </button>
         )}
-        <button type="button" className="min-w-0 flex-1 rounded text-left" aria-label={`Ver ${number}, ${customer}, no painel ao lado`} aria-expanded={selected} onClick={() => setPeek(selected ? null : order.id)} onDoubleClick={() => openOrder(order.id)}>
+        <button type="button" className="min-w-0 flex-1 rounded text-left" aria-label={`Ver ${number}, ${customer}, no painel ao lado`} aria-expanded={selected} onClick={(e) => {
+            if (e.ctrlKey || e.metaKey || e.shiftKey) togglePick(order.id);
+            else setPeek(selected ? null : order.id);
+          }}
+          onKeyDown={(e) => {
+            if (e.key.toLowerCase() === "x" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); togglePick(order.id); }
+          }}
+          onDoubleClick={() => openOrder(order.id)}>
           <span className="flex items-baseline justify-between gap-2">
             <span className="shrink-0 font-semibold whitespace-nowrap text-primary">{number}</span>
             <span className="text-right font-semibold tabular-nums">{orderTotalText(totals)}</span>
@@ -156,13 +183,17 @@ const PERIODS = [
 ];
 
 export function OrdersPage() {
-  const { view, can, online, customerOf, vehicleOf, openOrder, openNewOrder, membership, user } = useApp();
+  const { view, can, online, mechanics, customerOf, vehicleOf, openOrder, openNewOrder, membership, user } = useApp();
   const moveOrder = useMoveOrder();
   const [search, setSearch] = useState("");
   const [mechanic, setMechanic] = useState("");
   const [period, setPeriod] = useState("all");
   const [dragging, setDragging] = useState<{ type: "order"; order: ServiceOrder } | { type: "part"; partId: ID } | null>(null);
   const [peekId, setPeek] = useState<ID | null>(null);
+  const [picked, setPicked] = useState<Set<ID>>(new Set());
+  const togglePick = (id: ID) => setPicked((cur) => { const n = new Set(cur); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const tray = useTray();
+  const { moveMany, assignMany } = useOrderActions();
   const [peekWidth, setPeekWidth] = usePref<number>(`os-peek-width:${membership.workshopId}:${user.id}`, 400);
   const { assign, addPart } = useOrderActions();
   const [showCancelled, setShowCancelled] = useState(false);
@@ -195,36 +226,63 @@ export function OrdersPage() {
 
   const canDrag = online && (can("os.status") || can("os.complete"));
 
+  type DragData = { type?: string; partId?: ID; orderId?: ID; fromTray?: boolean } | undefined;
+  const orderIdOf = (e: { active: { id: unknown; data: { current: unknown } } }) => (e.active.data.current as DragData)?.orderId ?? String(e.active.id);
+
+  /** OS levadas no arraste: a seleção inteira, se o cartão arrastado fizer parte dela. */
+  const groupFor = (id: ID) => (picked.has(id) && picked.size > 1 ? active.filter((o) => picked.has(o.id)) : active.filter((o) => o.id === id));
+
   const onDragStart = (e: DragStartEvent) => {
-    const data = e.active.data.current as { type?: string; partId?: ID } | undefined;
+    const data = e.active.data.current as DragData;
     if (data?.type === "part" && data.partId) setDragging({ type: "part", partId: data.partId });
     else {
-      const order = active.find((o) => o.id === e.active.id);
+      const order = active.find((o) => o.id === orderIdOf(e));
       setDragging(order ? { type: "order", order } : null);
     }
   };
 
-  // Um só contexto de arraste: OS → etapa ou mecânico; peça → OS aberta no painel.
+  // Um só contexto de arraste: OS → etapa, responsável ou bandeja; peça → OS do painel ou bandeja.
   const onDragEnd = (e: DragEndEvent) => {
     setDragging(null);
     const over = e.over ? String(e.over.id) : null;
     if (!over) return;
-    const data = e.active.data.current as { type?: string; partId?: ID } | undefined;
-    if (data?.type === "part") {
+    const data = e.active.data.current as DragData;
+    const done = () => { if (data?.fromTray && over !== "tray") tray.remove(data.type === "part" ? { type: "part", id: data.partId! } : { type: "order", id: data.orderId! }); };
+    if (data?.type === "part" && data.partId) {
+      if (over === "tray") { tray.add([{ type: "part", id: data.partId }]); return; }
       const orderId = over.startsWith("os-parts:") ? over.slice(9) : null;
       const order = orderId ? view.orders.find((o) => o.id === orderId) : null;
-      if (order && data.partId) addPart(order, data.partId);
+      if (order) { addPart(order, data.partId); done(); }
       return;
     }
-    const order = active.find((o) => o.id === e.active.id);
-    if (!order) return;
+    const id = orderIdOf(e);
+    const group = groupFor(id);
+    if (!group.length) return;
+    if (over === "tray") { tray.add(group.map((o) => ({ type: "order" as const, id: o.id }))); setPicked(new Set()); return; }
     if (over.startsWith("mech:")) {
-      const id = over.slice(5);
-      assign(order, id === "none" ? null : id);
+      const mech = over.slice(5) === "none" ? null : over.slice(5);
+      if (group.length > 1) assignMany(group, mech); else assign(group[0], mech);
+      setPicked(new Set()); done();
       return;
     }
-    if ((ORDER_STATUSES as string[]).includes(over) && over !== order.status) moveOrder(order, over as OrderStatus);
+    if ((ORDER_STATUSES as string[]).includes(over)) {
+      if (group.length > 1) moveMany(group, over as OrderStatus);
+      else if (over !== group[0].status) moveOrder(group[0], over as OrderStatus);
+      setPicked(new Set()); done();
+    }
   };
+
+  // Esc limpa a seleção (fora de campos e modais).
+  useEffect(() => {
+    if (!picked.size) return;
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement;
+      if (e.key === "Escape" && !document.querySelector("dialog[open]") && !["INPUT", "SELECT", "TEXTAREA"].includes(t.tagName)) setPicked(new Set());
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [picked]);
+  const pickedOrders = active.filter((o) => picked.has(o.id));
 
   // Ordem de leitura do quadro (coluna por coluna) para ↑ ↓ no painel.
   const reading = ORDER_STATUSES.flatMap((st) => visible.filter((o) => o.status === st));
@@ -273,9 +331,23 @@ export function OrdersPage() {
         )}
       </div>
 
-      <PeekContext.Provider value={{ peekId, setPeek }}>
+      <PeekContext.Provider value={{ peekId, setPeek, picked, togglePick }}>
       <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
       <MechanicStrip value={mechanic} onChange={setMechanic} />
+      {pickedOrders.length > 0 && (
+        <div className="pick-bar" role="region" aria-label="Seleção de OS">
+          <strong>{pickedOrders.length} {pickedOrders.length === 1 ? "OS selecionada" : "OS selecionadas"}</strong>
+          <span className="text-muted">Arraste uma delas para levar todas.</span>
+          <span className="ml-auto flex flex-wrap items-center gap-2">
+            <MoreMenu text="Mover para" label="Mover selecionadas para" items={ORDER_STATUSES.map((st, i) => ({ label: ORDER_STATUS_LABELS[st], group: i === 0 ? "Mover para" : undefined, icon: <ArrowRight className="size-4" />, disabled: !online, onSelect: () => { moveMany(pickedOrders, st); setPicked(new Set()); } }))} />
+            {can("os.edit") && (
+              <MoreMenu text="Atribuir a" label="Atribuir selecionadas a" items={[...mechanics.map((m, i) => ({ label: m.name, group: i === 0 ? "Atribuir a" : undefined, icon: <UserCheck className="size-4" />, disabled: !online, onSelect: () => { assignMany(pickedOrders, m.id); setPicked(new Set()); } })), { label: "Sem responsável", icon: <UserCheck className="size-4" />, disabled: !online, onSelect: () => { assignMany(pickedOrders, null); setPicked(new Set()); } }]} />
+            )}
+            <Button size="sm" icon={<Inbox className="size-4" aria-hidden />} onClick={() => { tray.add(pickedOrders.map((o) => ({ type: "order" as const, id: o.id }))); setPicked(new Set()); }}>Guardar na bandeja</Button>
+            <Button size="sm" variant="ghost" onClick={() => setPicked(new Set())}>Limpar (Esc)</Button>
+          </span>
+        </div>
+      )}
       <div className="orders-workspace">
       <div className="min-w-0 flex-1">
       {active.length === 0 ? (
@@ -302,8 +374,14 @@ export function OrdersPage() {
       </div>
       {peekOrder && <OrderPeek key={peekOrder.id} order={peekOrder} width={peekWidth} onWidth={setPeekWidth} onClose={() => setPeek(null)} onStep={step} />}
       </div>
+      <TrayDock dnd />
       <DragOverlay dropAnimation={null}>
-        {dragging?.type === "order" && <OrderCard order={dragging.order} draggable overlay />}
+        {dragging?.type === "order" && (
+          <div className="relative">
+            <OrderCard order={dragging.order} draggable overlay />
+            {picked.has(dragging.order.id) && picked.size > 1 && <span className="drag-count" aria-hidden>{picked.size} OS</span>}
+          </div>
+        )}
         {dragging?.type === "part" && <PartDragPreview partId={dragging.partId} />}
       </DragOverlay>
       </DndContext>

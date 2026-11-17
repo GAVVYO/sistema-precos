@@ -12,6 +12,8 @@ import { Button, cx, EmptyState } from "@/components/ui/primitives";
 import { PersonalNavigation } from "./personal-navigation";
 import { OrderSearch } from "./order-search";
 import { GlobalShortcuts } from "./global-shortcuts";
+import { TrayDock, TrayProvider } from "./tray";
+import { PipProvider } from "./pip";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { toast } from "@/components/ui/toast";
 import { demoStore } from "@/demo/store";
@@ -364,6 +366,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   return (
+    <TrayProvider>
+    <PipProvider>
     <div className="flex min-h-screen flex-col">
       <a href="#conteudo" className="skip-link">
         Pular para o conteúdo
@@ -375,7 +379,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main ref={main} tabIndex={-1} id="conteudo" className="app-main mx-auto w-full max-w-[1600px] flex-1 px-6 py-6">
         <div key={pathname} className="page-enter">{children}</div>
       </main>
+      {/* Nas Ordens, a bandeja é renderizada dentro do quadro para aceitar arraste. */}
+      {pathname !== "/ordens" && <TrayDock />}
     </div>
+    </PipProvider>
+    </TrayProvider>
   );
 }
 

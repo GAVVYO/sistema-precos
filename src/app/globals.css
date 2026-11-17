@@ -599,3 +599,53 @@ body.is-resizing { cursor: col-resize; user-select: none; }
   .peek-resizer { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .order-peek, .mech-chip { animation: none; transition: none; } }
+
+/* Seleção múltipla (referência: Finder, Google Drive). */
+.order-card { position: relative; }
+.pick-box { position: absolute; top: -8px; left: -8px; z-index: 2; display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; border: 2px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--primary-fg); opacity: 0; transition: opacity 120ms; }
+.order-card:hover .pick-box, .order-card:focus-within .pick-box, .kanban-board:has(.is-picked) .pick-box { opacity: 1; }
+.pick-box[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); opacity: 1; }
+.order-card.is-picked { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 5%, var(--surface)); }
+.pick-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 16px; padding: 8px 12px 8px 16px; border: 1px solid var(--primary); border-radius: 12px; background: var(--color-primary-soft); font-size: 14px; }
+.drag-count { position: absolute; top: -10px; right: -10px; padding: 4px 10px; border-radius: 999px; background: var(--primary); color: var(--primary-fg); font-size: 14px; font-weight: 700; box-shadow: 0 4px 12px rgb(18 32 53 / 25%); }
+
+/* Bandeja "segurar para depois" (referência: Yoink, Dropover). */
+.tray-dock { position: fixed; left: 16px; bottom: 16px; z-index: 40; width: 300px; max-height: min(60vh, 460px); display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); box-shadow: 0 12px 36px rgb(18 32 53 / 18%); transition: border-color 140ms, background-color 140ms, transform 140ms; }
+.tray-dock.is-collapsed { width: auto; }
+.tray-dock.is-target { border: 2px dashed var(--primary); }
+.tray-dock.is-over { background: var(--color-primary-soft); transform: scale(1.02); }
+.tray-head { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 6px 6px 6px 8px; }
+.tray-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 2.5rem; padding: 0 8px; border-radius: 8px; font-size: 14px; font-weight: 700; }
+.tray-toggle:hover { background: var(--bg); }
+.tray-count { min-width: 1.5rem; padding: 0 6px; border-radius: 999px; background: var(--primary); color: var(--primary-fg); font-size: 13px; text-align: center; }
+.tray-empty, .tray-drop-hint { padding: 4px 14px 14px; font-size: 14px; color: var(--muted); }
+.tray-drop-hint { color: var(--primary); font-weight: 600; text-align: center; }
+.tray-list { overflow: auto; padding: 0 6px 8px; }
+.tray-row { display: flex; align-items: center; gap: 2px; border-radius: 8px; }
+.tray-row:hover { background: var(--bg); }
+.tray-grip { display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 2.5rem; cursor: grab; touch-action: none; color: var(--muted); }
+.tray-main { display: flex; flex: 1; min-width: 0; align-items: center; gap: 8px; padding: 6px 4px; text-align: left; font-size: 14px; }
+.tray-icon { display: inline-flex; color: var(--muted); }
+.tray-remove { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 7px; color: var(--muted); }
+.tray-remove:hover { color: var(--danger); background: var(--danger-soft, #fdecec); }
+@media (max-width: 767px) { .tray-dock { left: 8px; right: 8px; width: auto; bottom: 8px; } }
+@media (prefers-reduced-motion: reduce) { .tray-dock, .pick-box { transition: none; } }
+.more-menu-trigger-text { display: inline-flex; align-items: center; gap: 6px; min-height: 2.25rem; padding: 0 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); font-size: 14px; font-weight: 600; }
+.more-menu-trigger-text:hover { border-color: var(--primary); color: var(--primary); }
+
+/* Número ajustável arrastando (referência: Figma, Blender). */
+.scrub { display: inline-flex; align-items: center; gap: 4px; min-width: 2rem; min-height: 2.25rem; padding: 0 6px; border-radius: 6px; cursor: ew-resize; user-select: none; touch-action: none; font-weight: 600; }
+.scrub:hover, .scrub:focus-visible { background: var(--color-primary-soft); color: var(--primary); }
+.scrub.is-scrubbing { background: var(--primary); color: var(--primary-fg); }
+.scrub.is-disabled { cursor: default; }
+.scrub-icon { width: 14px; height: 14px; opacity: .55; }
+.qty-stepper .scrub { justify-content: center; padding: 0 4px; }
+.qty-stepper .scrub .scrub-icon { display: none; }
+.peek-labor { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; font-size: 14px; }
+
+/* Mini janela (Document Picture-in-Picture). */
+.pip-body { margin: 0; background: var(--surface); }
+.pip-order { display: grid; gap: 10px; padding: 16px; font-size: 14px; }
+.pip-desc { padding: 10px 12px; border-radius: 8px; background: var(--bg); }
+.pip-parts { display: grid; gap: 4px; }
+.pip-parts li { display: flex; justify-content: space-between; gap: 8px; }

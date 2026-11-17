@@ -1,10 +1,12 @@
 "use client";
 
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { ChevronDown, ChevronUp, GripVertical, Maximize2, Minus, PackagePlus, Phone, Plus, Search, Trash2, UserX, X } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical, Maximize2, Minus, PackagePlus, Phone, PictureInPicture2, Plus, Search, Trash2, UserX, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Button, cx, Input, Select } from "@/components/ui/primitives";
+import { ScrubNumber } from "@/components/ui/scrub-number";
+import { usePip } from "@/components/layout/pip";
 import type { ID, Part, ServiceOrder } from "@/domain/types";
 import { formatBRL, formatOrderNumber, formatPhone, formatPlate } from "@/lib/format";
 import { orderTotals } from "@/services/orders";
@@ -105,7 +107,8 @@ export function OrderPeek({
   onStep: (dir: 1 | -1) => void;
 }) {
   const { view, can, online, mechanics, customerOf, vehicleOf, partOf, openOrder } = useApp();
-  const { assign, setPartQty, addPart, itemsOf } = useOrderActions();
+  const { assign, setPartQty, addPart, itemsOf, setLabor } = useOrderActions();
+  const pip = usePip();
   const [query, setQuery] = useState("");
   const panel = useRef<HTMLElement>(null);
   const { setNodeRef, isOver, active } = useDroppable({ id: `os-parts:${order.id}` });
@@ -119,6 +122,7 @@ export function OrderPeek({
   const doneLock = order.status === "done";
   const canParts = online && (can("os.parts") || can("os.edit")) && !locked && !doneLock;
   const canAssign = online && can("os.edit") && !locked;
+  const canLabor = canAssign;
   const draggingPart = active?.data.current?.type === "part";
   const q = query.trim().toLocaleLowerCase("pt-BR");
   const shelf = view.parts
@@ -183,6 +187,9 @@ export function OrderPeek({
         <div className="flex shrink-0 items-start gap-0.5">
           <button type="button" className="peek-icon" onClick={() => onStep(-1)} aria-label="OS anterior" title="OS anterior (↑)"><ChevronUp className="size-4" aria-hidden /></button>
           <button type="button" className="peek-icon" onClick={() => onStep(1)} aria-label="Próxima OS" title="Próxima OS (↓)"><ChevronDown className="size-4" aria-hidden /></button>
+          {pip.supported && (
+            <button type="button" className="peek-icon" onClick={() => pip.open(order.id)} aria-label="Destacar em mini janela por cima de tudo" title="Mini janela por cima (útil com o WhatsApp aberto)"><PictureInPicture2 className="size-4" aria-hidden /></button>
+          )}
           <button type="button" className="peek-icon" onClick={onClose} aria-label="Fechar painel" title="Fechar (Esc)"><X className="size-4" aria-hidden /></button>
         </div>
       </header>
@@ -226,7 +233,17 @@ export function OrderPeek({
                         <button type="button" onClick={() => setPartQty(order, i.partId, i.quantity - 1, i.quantity - 1 <= 0 ? `${p?.name} removida. Estoque devolvido.` : `${p?.name}: ${i.quantity - 1} un.`)} aria-label={i.quantity === 1 ? `Remover ${p?.name}` : `Diminuir ${p?.name}`}>
                           {i.quantity === 1 ? <Trash2 className="size-4" aria-hidden /> : <Minus className="size-4" aria-hidden />}
                         </button>
-                        <span className="tabular-nums" aria-live="polite">{i.quantity}</span>
+                        <ScrubNumber
+                          value={i.quantity}
+                          min={0}
+                          max={i.quantity + (p?.quantity ?? 0)}
+                          step={1}
+                          bigStep={5}
+                          pxPerStep={14}
+                          label={`Quantidade de ${p?.name}`}
+                          format={(v) => String(v)}
+                          onCommit={(v) => setPartQty(order, i.partId, v, v <= 0 ? `${p?.name} removida. Estoque devolvido.` : `${p?.name}: ${v} un.`)}
+                        />
                         <button type="button" onClick={() => setPartQty(order, i.partId, i.quantity + 1, `${p?.name}: ${i.quantity + 1} un.`)} aria-label={`Aumentar ${p?.name}`}><Plus className="size-4" aria-hidden /></button>
                       </span>
                     ) : (
@@ -242,6 +259,22 @@ export function OrderPeek({
           {!canParts && !locked && doneLock && <p className="peek-empty">OS concluída: corrija peças em “Abrir completo”, informando o motivo.</p>}
         </section>
 
+        <div className="peek-labor">
+          <span className="text-muted">Mão de obra</span>
+          {canLabor ? (
+            <ScrubNumber
+              value={order.laborCents ?? 0}
+              step={500}
+              bigStep={5000}
+              pxPerStep={8}
+              label="Mão de obra"
+              format={(v) => (order.laborCents === null && v === 0 ? "A definir" : formatBRL(v))}
+              onCommit={(v) => setLabor(order, v)}
+            />
+          ) : (
+            <span className="tabular-nums">{order.laborCents === null ? "A definir" : formatBRL(order.laborCents)}</span>
+          )}
+        </div>
         <div className="peek-total">
           <span className="text-muted">Total</span>
           <strong className="text-lg tabular-nums">{orderTotalText(totals)}</strong>

@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowLeftRight, Boxes, History, Pencil, Plus, Search, SearchX } from "lucide-react";
+import { ArrowLeftRight, Boxes, History, Inbox, Pencil, Plus, Search, SearchX } from "lucide-react";
 import { useState } from "react";
 import { initialQuery } from "@/lib/query";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { MoreMenu } from "@/components/ui/more-menu";
+import { useTray } from "@/components/layout/tray";
 import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Segmented, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { SortHeader, TableSort } from "@/components/ui/sort-header";
@@ -147,6 +148,7 @@ export function StockPage() {
   const [editing, setEditing] = useState<Part | null | "new">(null);
   const [moving, setMoving] = useState<Part | null>(null);
   const canMove = can("stock.move");
+  const tray = useTray();
 
   const low = view.parts.filter((p) => partSituation(p) === "low").length;
   const out = view.parts.filter((p) => partSituation(p) === "out").length;
@@ -223,6 +225,7 @@ export function StockPage() {
                                   items={[
                                     { label: "Ver histórico", icon: <History className="size-4" />, onSelect: () => { setMovePart(p.id); setTab("moves"); } },
                                     { label: "Editar peça", icon: <Pencil className="size-4" />, disabled: !online, onSelect: () => setEditing(p) },
+                                    { label: "Guardar na bandeja", icon: <Inbox className="size-4" />, onSelect: () => tray.add([{ type: "part", id: p.id }]) },
                                   ]}
                                 />
                                 <Button size="sm" icon={<ArrowLeftRight className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setMoving(p)} aria-label={`Movimentar ${p.name}`}>Movimentar</Button>

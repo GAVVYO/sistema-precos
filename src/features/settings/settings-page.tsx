@@ -3,8 +3,9 @@
 import { ImageUp, Trash2, UserPlus } from "lucide-react";
 import { useRef, useState } from "react";
 import { useApp } from "@/app-state/app-context";
+import { ChoiceGroup } from "@/components/ui/choice";
 import { Dialog } from "@/components/ui/dialog";
-import { Badge, Button, Card, CardHeader, Field, Input, PageHeader, Select, Tabs } from "@/components/ui/primitives";
+import { Badge, Button, Card, CardHeader, Field, Input, PageHeader, Tabs } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { contrastOn } from "@/lib/theme";
@@ -14,6 +15,13 @@ import { formatPhone } from "@/lib/format";
 import { addMember, updateMember, updateSettings } from "@/services/admin";
 
 const ROLES = Object.keys(ROLE_LABELS) as Role[];
+const ROLE_HINTS: Record<Role, string> = {
+  owner: "Vê e faz tudo",
+  receptionist: "Balcão, agenda e receber",
+  mechanic: "Os carros do quadro",
+  financial: "Dinheiro e contas",
+};
+const roleOptions = (canOwner: boolean) => ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r], hint: ROLE_HINTS[r], disabled: r === "owner" && !canOwner }));
 const DEFAULT_COLORS = { primary: "#2563EB", secondary: "#172033" };
 const PRIMARY_PRESETS = ["#2563EB", "#0F766E", "#B45309", "#BE123C", "#6D28D9", "#15803D"];
 
@@ -166,23 +174,8 @@ function MemberDialog({ member, onClose }: { member: WorkshopMembership; onClose
     >
       {isSelf && <p className="mb-3 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">Você não pode alterar o seu próprio acesso. Peça a outro proprietário.</p>}
       <fieldset disabled={isSelf} className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Cargo" hint="O cargo é um modelo inicial; as permissões abaixo podem ser ajustadas individualmente.">
-            {(p) => (
-              <Select {...p} value={role} onChange={(e) => setRole(e.target.value as Role)}>
-                {ROLES.map((r) => <option key={r} value={r} disabled={r === "owner" && mine.role !== "owner"}>{ROLE_LABELS[r]}</option>)}
-              </Select>
-            )}
-          </Field>
-          <Field label="Situação">
-            {(p) => (
-              <Select {...p} value={active ? "1" : "0"} onChange={(e) => setActive(e.target.value === "1")}>
-                <option value="1">Ativo</option>
-                <option value="0">Inativo (sem acesso)</option>
-              </Select>
-            )}
-          </Field>
-        </div>
+        <ChoiceGroup label="Qual a função?" value={role} onChange={setRole} options={roleOptions(mine.role === "owner")} columns={2} hint="A função traz as permissões prontas; dá para ajustar abaixo." />
+        <ChoiceGroup label="Pode entrar no sistema?" value={active ? "1" : "0"} onChange={(v) => setActive(v === "1")} columns={2} options={[{ value: "1", label: "Sim, ativo" }, { value: "0", label: "Não, sem acesso" }]} />
         <div className="flex gap-2">
           <Button size="sm" onClick={() => setPermissions(ROLE_TEMPLATES[role].filter(grantable))}>Aplicar modelo de {ROLE_LABELS[role]}</Button>
           <Button size="sm" variant="ghost" onClick={() => setPermissions([])}>Remover todas</Button>
@@ -232,16 +225,10 @@ function NewMemberDialog({ onClose }: { onClose: () => void }) {
         </>
       }
     >
-      <div className="space-y-3">
+      <div className="space-y-4">
         <Field label="Nome">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoFocus />}</Field>
         <Field label="E-mail">{(p) => <Input {...p} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />}</Field>
-        <Field label="Cargo">
-          {(p) => (
-            <Select {...p} value={role} onChange={(e) => setRole(e.target.value as Role)}>
-              {ROLES.map((r) => <option key={r} value={r} disabled={r === "owner" && membership.role !== "owner"}>{ROLE_LABELS[r]}</option>)}
-            </Select>
-          )}
-        </Field>
+        <ChoiceGroup label="Qual a função?" value={role} onChange={setRole} options={roleOptions(membership.role === "owner")} columns={2} />
       </div>
     </Dialog>
   );

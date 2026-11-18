@@ -4,6 +4,7 @@ import { CircleDollarSign, Minus, Plus, Receipt } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useApp } from "@/app-state/app-context";
+import { ChoiceGroup, DayPicker, MoreDetails } from "@/components/ui/choice";
 import { Dialog } from "@/components/ui/dialog";
 import { Period, PeriodPicker, usePeriod } from "@/components/ui/period";
 import { Badge, Button, Card, CardHeader, EmptyState, Field, Input, PageHeader, Segmented, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
@@ -112,38 +113,33 @@ function TransactionDialog({ kind, onClose }: { kind: "income" | "expense"; onCl
         </>
       }
     >
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Descrição" className="col-span-2">{(p) => <Input {...p} value={description} onChange={(e) => setDescription(e.target.value)} autoFocus />}</Field>
-        {kind === "expense" ? (
-          <Field label="Categoria">
-            {(p) => <Select {...p} value={category} onChange={(e) => setCategory(e.target.value)}>{EXPENSE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</Select>}
-          </Field>
-        ) : (
-          <Field label="Cliente" optional>
-            {(p) => (
-              <Select {...p} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-                <option value="">Sem cliente vinculado</option>
-                {[...view.customers].sort((a, b) => a.name.localeCompare(b.name)).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
-            )}
-          </Field>
+      <div className="grid gap-4">
+        <Field label={kind === "expense" ? "Com o que gastou?" : "Do que é esse dinheiro?"} hint={kind === "expense" ? "Ex.: conta de luz de novembro" : "Ex.: venda de peça no balcão"}>{(p) => <Input {...p} value={description} onChange={(e) => setDescription(e.target.value)} autoFocus />}</Field>
+        <Field label="Quanto? (R$)">{(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}</Field>
+        {kind === "expense" && (
+          <ChoiceGroup label="Que tipo de gasto?" value={category} onChange={setCategory} options={EXPENSE_CATEGORIES.map((c) => ({ value: c, label: c }))} />
         )}
-        <Field label="Valor (R$)">{(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" />}</Field>
-        <Field label="Data">{(p) => <Input {...p} type="date" value={date} onChange={(e) => setDate(e.target.value)} />}</Field>
         {kind === "income" && (
-          <Field label="Situação">
-            {(p) => (
-              <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as "paid" | "pending")}>
-                <option value="paid">Recebida</option>
-                <option value="pending">A receber</option>
-              </Select>
-            )}
-          </Field>
+          <ChoiceGroup label="Já recebeu?" value={status} onChange={(v) => { setStatus(v); setDate(todayISO()); }} columns={2} options={[
+            { value: "paid", label: "Já recebi", hint: "O dinheiro entrou", icon: <CircleDollarSign size={20} /> },
+            { value: "pending", label: "Vou receber", hint: "Fica em Falta receber", icon: <Receipt size={20} /> },
+          ]} />
         )}
-        <div className="col-span-2">
-          <PaymentMethodPicker value={method} onChange={setMethod} legend={kind === "expense" ? "Como foi pago?" : "Como o cliente pagou?"} />
-        </div>
-        <Field label="Observações" optional className="col-span-2">{(p) => <Textarea {...p} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />}</Field>
+        <DayPicker past={kind === "expense" || status === "paid"} label={kind === "expense" ? "Quando foi?" : status === "paid" ? "Quando recebeu?" : "Quando vai receber?"} value={date} onChange={setDate} key={kind === "expense" || status === "paid" ? "past" : "future"} />
+        <PaymentMethodPicker value={method} onChange={setMethod} legend={kind === "expense" ? "Como foi pago?" : "Como o cliente pagou?"} />
+        <MoreDetails summary={kind === "income" ? "Mais detalhes (opcional): cliente e observações" : "Mais detalhes (opcional): observações"}>
+          {kind === "income" && (
+            <Field label="De qual cliente?" optional>
+              {(p) => (
+                <Select {...p} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
+                  <option value="">Nenhum cliente</option>
+                  {[...view.customers].sort((a, b) => a.name.localeCompare(b.name)).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </Select>
+              )}
+            </Field>
+          )}
+          <Field label="Observações" optional>{(p) => <Textarea {...p} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />}</Field>
+        </MoreDetails>
       </div>
     </Dialog>
   );

@@ -86,6 +86,16 @@ Enter continua; **Voltar** sempre visível; o aviso aparece em palavras simples 
 ![O que o cliente pediu](imagens/interface/novo-servico-servico.png)
 ![Conferir](imagens/interface/novo-servico-conferir.png)
 
+### Formulários: escolhas em botões (decisão 57)
+
+Todos os formulários seguem a linguagem do Novo serviço: **pergunta em tom de conversa** ("Que dia?", "Quem vai fazer?", "Com o que gastou?"), **escolhas em botões grandes** no lugar de listas suspensas (mecânico, categoria, tipo de movimento, função, situação), **Hoje / Amanhã / dias da semana** e **horários em botões** (calendário só em "Outro dia"), e o que é opcional dentro de **"Mais detalhes (opcional)"** com a lista do que tem lá. Lista suspensa só sobrou para listas longas (cliente). Peças de um serviço: **busca + lista com "Adicionar"**. Peças em `src/components/ui/choice.tsx` (`ChoiceGroup`, `DayPicker`, `TimePicker`, `MoreDetails`): por baixo são rádios de verdade (setas trocam, leitor de tela anuncia o grupo).
+
+![Agendamento](imagens/interface/form-agendamento.png)
+![Despesa](imagens/interface/form-despesa.png)
+![Entrada / Saída de peça](imagens/interface/form-entrada-saida.png)
+![Editar serviço](imagens/interface/form-editar-servico.png)
+![Peças do serviço](imagens/interface/form-pecas.png)
+
 ## 7. Demais telas
 
 - **Agenda**: dia, semana, mês e próximos. Clicar no agendamento: confirmar, cancelar, **Chegou: abrir serviço**. Mudar dia/horário: botão de calendário do cartão (ou arrastar).

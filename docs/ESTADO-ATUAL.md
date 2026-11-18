@@ -24,12 +24,16 @@
 | `e86cb17` | Janela Receber ilustrada (cartão, cédulas, PIX, comprovante) e troco |
 | `5411562` | Publicação estática na Hostinger (`npm run build:hostinger`) — publicada em demo.gavyo.me |
 | (18/11) | Serviço novo nasce no quadro, números que contam, **modo TV da parede** (`/tv`) |
+| `294afa4` | Auditoria leiga ([AUDITORIA-LEIGO-20261118.md](AUDITORIA-LEIGO-20261118.md)) item 1 — **Novo serviço passo a passo** |
+| (18/11) | Item 2 — **formulários com escolhas em botões**, dia/hora por atalhos, opcionais em "Mais detalhes" (decisão 57) |
 
 ### Validação vigente
 
-`npm run typecheck`, `npm run lint`, `npm test` (48 testes) e `npm run build` passam. Simulação das 4 tarefas sem treino (1366 e 390 px; Proprietário e Recepcionista) concluída; axe-core sem violações em Hoje, Serviços, detalhes, Receber e menu lateral; conferidos Mecânico, segunda oficina, sem internet e movimento reduzido. Script: [validacao/simular-sem-treino.js](validacao/simular-sem-treino.js).
+`npm run typecheck`, `npm run lint`, `npm test` (48 testes) e `npm run build` passam. Simulação das 4 tarefas sem treino (1366 e 390 px; Proprietário e Recepcionista) concluída; axe-core sem violações em Hoje, Serviços, detalhes, Receber, menu lateral, Novo serviço e todos os formulários (agendamento, peça, entrada/saída, despesa, entrada, peças do serviço, editar serviço, funcionário — 1366 e 390 px); conferidos Mecânico, segunda oficina, sem internet e movimento reduzido. Script: [validacao/simular-sem-treino.js](validacao/simular-sem-treino.js).
 
 ### Pendente / próximos
+
+- **Auditoria leiga, itens 3–6:** Hoje enxuto; Estoque e Clientes em cartões; Financeiro em frase; Agenda no Dia, busca única, editar no lugar, Configurações.
 
 - **Teste com uma pessoa real** (roteiro em [validacao/SEM-TREINO-20261117.md](validacao/SEM-TREINO-20261117.md)).
 - **Escolhidos pelo usuário, ainda não feitos:** quadro no celular por abas (Aguardando / Em andamento / Pronto); texto 12 → 14 px.

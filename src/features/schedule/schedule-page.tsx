@@ -7,12 +7,13 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
-import { Badge, Button, Card, cx, EmptyState, Field, Input, PageHeader, Segmented, Select, Textarea, Tone } from "@/components/ui/primitives";
+import { Badge, Button, Card, cx, EmptyState, Field, Input, PageHeader, Segmented, Textarea, Tone } from "@/components/ui/primitives";
 import { APPOINTMENT_STATUS_LABELS } from "@/domain/labels";
 import type { Appointment, AppointmentStatus, ISODate } from "@/domain/types";
 import {
   addDays, addMonths, formatDate, formatOrderNumber, formatPhone, formatPlate, monthName, startOfMonth, startOfWeek, todayISO, weekdayName,
 } from "@/lib/format";
+import { ChoiceGroup, DayPicker, MoreDetails, TimePicker } from "@/components/ui/choice";
 import { createAppointment, setAppointmentStatus, updateAppointment } from "@/services/appointments";
 
 const STATUS_TONE: Record<AppointmentStatus, Tone> = { scheduled: "info", confirmed: "success", attended: "neutral", cancelled: "danger" };
@@ -98,7 +99,7 @@ function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment:
         )}
         <fieldset disabled={readOnly} className="grid grid-cols-6 gap-3">
           <div className="relative col-span-4">
-            <Field label="Cliente">{(p) => <Input {...p} value={customerName} onChange={(e) => setCustomerName(e.target.value)} autoComplete="off" autoFocus={!a} />}</Field>
+            <Field label="Nome do cliente">{(p) => <Input {...p} value={customerName} onChange={(e) => setCustomerName(e.target.value)} autoComplete="off" autoFocus={!a} />}</Field>
             {matches.length > 0 && (
               <ul className="absolute top-full mt-1 right-0 left-0 z-10 rounded-md border border-line bg-surface py-1 shadow-lg" aria-label="Clientes cadastrados">
                 {matches.map((c) => {
@@ -122,22 +123,28 @@ function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment:
               </ul>
             )}
           </div>
-          <Field label="Telefone" className="col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="(85) 98888-7777" />}</Field>
-          <Field label="Marca" optional className="col-span-2">{(p) => <Input {...p} value={brand} onChange={(e) => setBrand(e.target.value)} />}</Field>
-          <Field label="Modelo do veículo" className="col-span-2">{(p) => <Input {...p} value={model} onChange={(e) => setModel(e.target.value)} />}</Field>
-          <Field label="Placa" optional className="col-span-2">{(p) => <Input {...p} value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} maxLength={8} />}</Field>
-          <Field label="Serviço pretendido" className="col-span-6">{(p) => <Input {...p} value={service} onChange={(e) => setService(e.target.value)} />}</Field>
-          <Field label="Data" className="col-span-2">{(p) => <Input {...p} type="date" value={date} onChange={(e) => setDate(e.target.value)} />}</Field>
-          <Field label="Horário" className="col-span-2">{(p) => <Input {...p} type="time" step={900} value={time} onChange={(e) => setTime(e.target.value)} />}</Field>
-          <Field label="Mecânico" optional className="col-span-2">
-            {(p) => (
-              <Select {...p} value={mechanicId} onChange={(e) => setMechanicId(e.target.value)}>
-                <option value="">A definir</option>
-                {mechanics.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-              </Select>
-            )}
-          </Field>
-          <Field label="Observações" optional className="col-span-6">{(p) => <Textarea {...p} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />}</Field>
+          <Field label="Telefone (WhatsApp)" className="col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />}</Field>
+          <Field label="Qual carro? (modelo)" className="col-span-6">{(p) => <Input {...p} value={model} onChange={(e) => setModel(e.target.value)} />}</Field>
+          <div className="col-span-6 grid gap-2">
+            <Field label="O que vai fazer?">{(p) => <Input {...p} value={service} onChange={(e) => setService(e.target.value)} />}</Field>
+            <div className="choice-chips" role="group" aria-label="Sugestões de serviço">
+              {QUICK_SERVICES.map((s) => (
+                <button key={s} type="button" className="choice-chip" aria-pressed={service === s} onClick={() => setService(s)}>{s}</button>
+              ))}
+            </div>
+          </div>
+          <div className="col-span-6"><DayPicker label="Que dia?" value={date} onChange={setDate} min={a ? undefined : todayISO()} /></div>
+          <div className="col-span-6"><TimePicker label="Que horas?" value={time} onChange={setTime} /></div>
+          <div className="col-span-6">
+            <MoreDetails summary="Mais detalhes (opcional): mecânico, marca, placa e observações">
+              <ChoiceGroup label="Quem vai atender?" value={mechanicId} onChange={setMechanicId} options={[{ value: "", label: "Ainda não sei" }, ...mechanics.map((m) => ({ value: m.id, label: m.name.split(" ").slice(0, 2).join(" ") }))]} />
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Marca">{(p) => <Input {...p} value={brand} onChange={(e) => setBrand(e.target.value)} />}</Field>
+                <Field label="Placa">{(p) => <Input {...p} value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} maxLength={8} />}</Field>
+              </div>
+              <Field label="Observações">{(p) => <Textarea {...p} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />}</Field>
+            </MoreDetails>
+          </div>
         </fieldset>
       </Dialog>
       {confirmCancel && a && (
@@ -159,6 +166,7 @@ function Chip({ a, onOpen, compact }: { a: Appointment; onOpen: (a: Appointment)
 }
 
 type View = "day" | "week" | "month" | "list";
+const QUICK_SERVICES = ["Troca de óleo", "Revisão", "Freios", "Alinhamento", "Diagnóstico elétrico", "Suspensão"];
 
 export function SchedulePage() {
   const { view, online, userOf, can } = useApp();

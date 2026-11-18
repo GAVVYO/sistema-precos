@@ -112,7 +112,7 @@ export function Field({
   const descId = `${id}-desc`;
   return (
     <div className={cx("flex flex-col gap-1", className)}>
-      <label htmlFor={id} className="text-sm font-medium text-ink">
+      <label htmlFor={id} className="field-label text-sm font-medium text-ink">
         {label}
         {optional && <span className="ml-1 font-normal text-muted">(opcional)</span>}
       </label>

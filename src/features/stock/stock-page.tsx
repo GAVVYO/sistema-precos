@@ -1,13 +1,14 @@
 "use client";
 
-import { ArrowLeftRight, Boxes, History, Inbox, Pencil, Plus, Search, SearchX } from "lucide-react";
+import { ChoiceGroup, MoreDetails } from "@/components/ui/choice";
+import { ArrowLeftRight, Boxes, ClipboardCheck, History, Inbox, PackageMinus, PackagePlus, Pencil, Plus, Search, SearchX } from "lucide-react";
 import { useState } from "react";
 import { initialQuery } from "@/lib/query";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { MoreMenu } from "@/components/ui/more-menu";
 import { useTray } from "@/components/layout/tray";
-import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Segmented, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
+import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { SortHeader, TableSort } from "@/components/ui/sort-header";
 import { MOVEMENT_TYPE_LABELS, PART_CATEGORIES } from "@/domain/labels";
@@ -37,8 +38,14 @@ function PartDialog({ part, onClose }: { part: Part | null; onClose: () => void 
   const save = () => {
     const costCents = parseBRL(cost);
     const priceCents = parseBRL(price);
-    if (costCents === null || priceCents === null) return toast("error", "Informe custo e preço de venda válidos. Ex.: 35,00");
-    const input = { name, code, category, description, minQuantity: Number(min), costCents, priceCents };
+    if (costCents === null || priceCents === null) return toast("error", "Diga quanto paga e quanto cobra pela peça. Exemplo: 35,00.");
+    // Código em branco: cria um a partir do tipo (ex.: Filtros → FIL-004), sem repetir.
+    const finalCode = code.trim() || (() => {
+      const prefix = category.normalize("NFD").replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase() || "PEC";
+      const used = new Set(view.parts.map((x) => x.code.toUpperCase()));
+      for (let n = 1; ; n++) { const c = `${prefix}-${String(n).padStart(3, "0")}`; if (!used.has(c)) return c; }
+    })();
+    const input = { name, code: finalCode, category, description, minQuantity: Number(min), costCents, priceCents };
     const r = part
       ? act((db, ctx) => updatePart(db, ctx, part.id, input), "Peça atualizada.")
       : act((db, ctx) => createPart(db, ctx, { ...input, initialQuantity: Number(initial) }), "Peça cadastrada.");
@@ -56,27 +63,25 @@ function PartDialog({ part, onClose }: { part: Part | null; onClose: () => void 
         </>
       }
     >
-      <div className="grid grid-cols-6 gap-3">
-        <Field label="Nome" className="col-span-4">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoFocus />}</Field>
-        <Field label="Código interno" className="col-span-2">{(p) => <Input {...p} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="FIL-001" />}</Field>
-        <Field label="Categoria" className="col-span-3">
-          {(p) => (
-            <Select {...p} value={category} onChange={(e) => setCategory(e.target.value)}>
-              {categories.map((c) => <option key={c}>{c}</option>)}
-            </Select>
+      <div className="grid gap-4">
+        <Field label="Nome da peça">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoFocus />}</Field>
+        <ChoiceGroup label="Que tipo de peça?" value={category} onChange={setCategory} options={categories.map((c) => ({ value: c, label: c }))} />
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Quanto você paga por uma? (R$)">{(p) => <Input {...p} inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} />}</Field>
+          <Field label="Quanto cobra do cliente? (R$)">{(p) => <Input {...p} inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />}</Field>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {part ? (
+            <Field label="Quantas tem agora" hint="Para mudar, use Entrada / Saída (fica no histórico).">{(p) => <Input {...p} value={part.quantity} disabled />}</Field>
+          ) : (
+            <Field label="Quantas tem agora?">{(p) => <Input {...p} type="number" min={0} value={initial} onChange={(e) => setInitial(e.target.value)} />}</Field>
           )}
-        </Field>
-        {part ? (
-          <Field label="Quantidade atual" className="col-span-3" hint="Altere pelo botão Entrada / Saída de peças, para manter o histórico.">
-            {(p) => <Input {...p} value={part.quantity} disabled />}
-          </Field>
-        ) : (
-          <Field label="Quantidade inicial" className="col-span-3">{(p) => <Input {...p} type="number" min={0} value={initial} onChange={(e) => setInitial(e.target.value)} />}</Field>
-        )}
-        <Field label="Quantidade mínima" className="col-span-2" hint="Abaixo ou igual gera alerta.">{(p) => <Input {...p} type="number" min={0} value={min} onChange={(e) => setMin(e.target.value)} />}</Field>
-        <Field label="Custo unitário (R$)" className="col-span-2">{(p) => <Input {...p} inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="0,00" />}</Field>
-        <Field label="Preço de venda (R$)" className="col-span-2">{(p) => <Input {...p} inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" />}</Field>
-        <Field label="Descrição" optional className="col-span-6">{(p) => <Textarea {...p} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />}</Field>
+          <Field label="Me avise quando chegar a" hint="unidades ou menos">{(p) => <Input {...p} type="number" min={0} value={min} onChange={(e) => setMin(e.target.value)} />}</Field>
+        </div>
+        <MoreDetails summary="Mais detalhes (opcional): código e descrição">
+          <Field label="Código" hint={part ? undefined : "Em branco, o sistema cria um (ex.: FIL-004)."}>{(p) => <Input {...p} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} />}</Field>
+          <Field label="Descrição">{(p) => <Textarea {...p} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />}</Field>
+        </MoreDetails>
       </div>
     </Dialog>
   );
@@ -106,7 +111,7 @@ function MoveDialog({ part, onClose }: { part: Part; onClose: () => void }) {
             variant="primary"
             disabled={!online || !validQty || (after !== null && after < 0)}
             onClick={() => {
-              const r = act((db, ctx) => moveStock(db, ctx, { partId: part.id, type, quantity: qty, reason }), "Pronto. Estoque atualizado.");
+              const r = act((db, ctx) => moveStock(db, ctx, { partId: part.id, type, quantity: qty, reason: reason.trim() || { in: "Peça chegou", out: "Peça saiu", adjust: "Contagem do estoque" }[type] }), "Pronto. Estoque atualizado.");
               if (r.ok) onClose();
             }}
           >
@@ -115,21 +120,26 @@ function MoveDialog({ part, onClose }: { part: Part; onClose: () => void }) {
         </>
       }
     >
-      <div className="space-y-3">
-        <Segmented
-          label="O que aconteceu"
+      <div className="space-y-5">
+        <ChoiceGroup
+          label="O que aconteceu?"
           value={type}
           onChange={setType}
-          options={[{ value: "in", label: "Chegou peça" }, { value: "out", label: "Saiu peça" }, { value: "adjust", label: "Contei o estoque" }]}
+          columns={3}
+          options={[
+            { value: "in", label: "Chegou peça", hint: "Comprei / repus", icon: <PackagePlus /> },
+            { value: "out", label: "Saiu peça", hint: "Quebrou / perdeu", icon: <PackageMinus /> },
+            { value: "adjust", label: "Contei", hint: "Acertar o número", icon: <ClipboardCheck /> },
+          ]}
         />
         <Field
-          label={type === "adjust" ? "Quantas tem agora (contadas)" : "Quantidade"}
+          label={type === "adjust" ? "Quantas você contou?" : type === "in" ? "Quantas chegaram?" : "Quantas saíram?"}
           error={after !== null && after < 0 ? `Não dá: só tem ${part.quantity} em estoque.` : undefined}
           hint={after !== null ? `Vai ficar com: ${after}` : undefined}
         >
           {(p) => <Input {...p} type="number" min={0} step={1} value={quantity} onChange={(e) => setQuantity(e.target.value)} autoFocus />}
         </Field>
-        <Field label="Motivo">
+        <Field label="Por quê? (opcional)">
           {(p) => <Input {...p} value={reason} onChange={(e) => setReason(e.target.value)} placeholder={type === "in" ? "Ex.: Compra de reposição" : type === "out" ? "Ex.: Peça danificada" : "Ex.: Contagem de inventário"} />}
         </Field>
       </div>

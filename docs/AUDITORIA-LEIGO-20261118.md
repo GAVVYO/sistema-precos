@@ -37,7 +37,7 @@ Receitas recebidas → **Entrou** · Despesas pagas → **Saiu** · Contas a rec
 
 ## 4. Proposta de ordem (sem função nova)
 1. ✅ **Novo serviço passo a passo** (F1, F4, F5, F8) — feito em 18/11 (decisão 56).
-2. **Selects → botões** e **opcionais em "Mais detalhes"** em todos os formulários (F2, F3, F6).
+2. ✅ **Selects → botões** e **opcionais em "Mais detalhes"** em todos os formulários (F2, F3, F6) — feito em 18/11 (decisão 57).
 3. **Hoje enxuto** (G1).
 4. **Estoque e Clientes em cartões** (G2–G4).
 5. **Financeiro em frase** + palavras (G5, seção 3).

@@ -6,8 +6,9 @@ import { CashChange, cashShort, PaymentMethodTiles, PaymentStage } from "./payme
 import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
+import { ChoiceGroup, MoreDetails } from "@/components/ui/choice";
 import { Dialog } from "@/components/ui/dialog";
-import { Button, Field, Input, Select, Textarea } from "@/components/ui/primitives";
+import { Button, Field, Input, Textarea } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import type { ID, PaymentMethod, ServiceOrder } from "@/domain/types";
 import { centsToInput, formatBRL, formatOrderNumber, formatPhone, formatPlate, normalizePhone, parseBRL } from "@/lib/format";
@@ -130,14 +131,15 @@ export function EditOrderDialog({ order, onClose }: { order: ServiceOrder; onClo
   const { act, mechanics, online } = useApp();
   const [description, setDescription] = useState(order.description);
   const [mechanicId, setMechanicId] = useState(order.mechanicId ?? "");
-  const [labor, setLabor] = useState(centsToInput(order.laborCents));
+  const [labor, setLabor] = useState(order.laborCents ? centsToInput(order.laborCents) : "");
+  const [laborMode, setLaborMode] = useState<"later" | "value" | "free">(order.laborCents === null ? "later" : order.laborCents === 0 ? "free" : "value");
   const [mileage, setMileage] = useState(order.mileage?.toString() ?? "");
   const [notes, setNotes] = useState(order.notes);
-  const laborCents = labor.trim() === "" ? null : parseBRL(labor);
-  const laborInvalid = labor.trim() !== "" && laborCents === null;
+  const laborCents = laborMode === "later" ? null : laborMode === "free" ? 0 : labor.trim() === "" ? null : parseBRL(labor);
+  const laborInvalid = laborMode === "value" && (labor.trim() === "" || laborCents === null);
 
   const save = () => {
-    if (laborInvalid) return toast("error", "Valor de mão de obra inválido. Use o formato 150,00.");
+    if (laborInvalid) return toast("error", "Escreva o valor da mão de obra. Ex.: 150,00");
     const km = mileage.trim() === "" ? null : Number(mileage);
     if (km !== null && !Number.isInteger(km)) return toast("error", "Quilometragem deve ser um número inteiro.");
     const r = act(
@@ -160,34 +162,46 @@ export function EditOrderDialog({ order, onClose }: { order: ServiceOrder; onClo
         </>
       }
     >
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Descrição do serviço" className="col-span-2">
+      <div className="grid gap-4">
+        <Field label="O que vai ser feito?">
           {(p) => <Input {...p} value={description} onChange={(e) => setDescription(e.target.value)} />}
         </Field>
-        <Field label="Mecânico responsável" optional>
-          {(p) => (
-            <Select {...p} value={mechanicId} onChange={(e) => setMechanicId(e.target.value)}>
-              <option value="">A definir</option>
-              {mechanics.map((m) => (
-                <option key={m.id} value={m.id}>{m.name}</option>
-              ))}
-            </Select>
-          )}
-        </Field>
-        <Field
-          label="Mão de obra (R$)"
-          optional
-          error={laborInvalid ? "Valor inválido. Ex.: 150,00" : undefined}
-          hint={order.paymentId ? "Serviço pago: o valor não pode ser alterado." : "Em branco = a definir. 0 = serviço gratuito."}
-        >
-          {(p) => <Input {...p} value={labor} onChange={(e) => setLabor(e.target.value)} inputMode="decimal" disabled={!!order.paymentId} placeholder="A definir" />}
-        </Field>
-        <Field label="Quilometragem" optional>
-          {(p) => <Input {...p} value={mileage} onChange={(e) => setMileage(e.target.value)} inputMode="numeric" />}
-        </Field>
-        <Field label="Observações" optional className="col-span-2">
-          {(p) => <Textarea {...p} rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />}
-        </Field>
+        <ChoiceGroup
+          label="Quem vai fazer?"
+          value={mechanicId}
+          onChange={setMechanicId}
+          options={[{ value: "", label: "Ainda não sei" }, ...mechanics.map((m) => ({ value: m.id, label: m.name }))]}
+        />
+        {order.paymentId ? (
+          <p className="choice-help">Serviço já pago: a mão de obra não pode mudar.</p>
+        ) : (
+          <>
+            <ChoiceGroup
+              label="Quanto vai cobrar de mão de obra?"
+              value={laborMode}
+              onChange={setLaborMode}
+              columns={3}
+              options={[
+                { value: "value", label: "Já sei o valor" },
+                { value: "later", label: "Ainda não sei" },
+                { value: "free", label: "Não vai cobrar" },
+              ]}
+            />
+            {laborMode === "value" && (
+              <Field label="Valor da mão de obra (R$)" error={labor.trim() !== "" && laborCents === null ? "Valor inválido. Ex.: 150,00" : undefined}>
+                {(p) => <Input {...p} value={labor} onChange={(e) => setLabor(e.target.value)} inputMode="decimal" autoFocus />}
+              </Field>
+            )}
+          </>
+        )}
+        <MoreDetails summary="Mais detalhes (opcional): quilometragem e observações" defaultOpen={!!order.notes || order.mileage !== null}>
+          <Field label="Quilometragem" optional>
+            {(p) => <Input {...p} value={mileage} onChange={(e) => setMileage(e.target.value)} inputMode="numeric" />}
+          </Field>
+          <Field label="Observações" optional>
+            {(p) => <Textarea {...p} rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />}
+          </Field>
+        </MoreDetails>
       </div>
     </Dialog>
   );

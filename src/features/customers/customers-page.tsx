@@ -4,6 +4,7 @@ import { Car, Pencil, Plus, Search, SearchX, UserPlus, Users } from "lucide-reac
 import { useMemo, useState } from "react";
 import { initialQuery } from "@/lib/query";
 import { useApp } from "@/app-state/app-context";
+import { MoreDetails } from "@/components/ui/choice";
 import { Dialog } from "@/components/ui/dialog";
 import { Button, Card, EmptyState, Field, Input, PageHeader, Select, Tabs } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
@@ -73,20 +74,26 @@ function VehicleForm({ customerId, vehicle, onDone }: { customerId: ID; vehicle:
 
   return (
     <div className="grid grid-cols-6 gap-3 rounded-md border border-primary/40 bg-primary-soft/40 p-3">
-      <Field label="Placa" className="col-span-2">{(p) => <Input {...p} value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} maxLength={8} autoFocus />}</Field>
-      <Field label="Marca" className="col-span-2">{(p) => <Input {...p} value={brand} onChange={(e) => setBrand(e.target.value)} />}</Field>
-      <Field label="Modelo" className="col-span-2">{(p) => <Input {...p} value={model} onChange={(e) => setModel(e.target.value)} />}</Field>
-      <Field label="Ano" optional className="col-span-2">{(p) => <Input {...p} value={year} onChange={(e) => setYear(e.target.value)} inputMode="numeric" maxLength={4} />}</Field>
-      <Field label="Quilometragem" optional className="col-span-2">{(p) => <Input {...p} value={mileage} onChange={(e) => setMileage(e.target.value)} inputMode="numeric" />}</Field>
-      {vehicle && (
-        <Field label="Proprietário atual" className="col-span-2">
-          {(p) => (
-            <Select {...p} value={owner} onChange={(e) => setOwner(e.target.value)}>
-              {[...view.customers].sort((a, b) => a.name.localeCompare(b.name)).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </Select>
+      <Field label="Placa" className="col-span-6 sm:col-span-2">{(p) => <Input {...p} value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} maxLength={8} autoFocus />}</Field>
+      <Field label="Marca" className="col-span-3 sm:col-span-2">{(p) => <Input {...p} value={brand} onChange={(e) => setBrand(e.target.value)} />}</Field>
+      <Field label="Modelo" className="col-span-3 sm:col-span-2">{(p) => <Input {...p} value={model} onChange={(e) => setModel(e.target.value)} />}</Field>
+      <div className="col-span-6">
+        <MoreDetails summary={vehicle ? "Mais detalhes (opcional): ano, quilometragem e troca de dono" : "Mais detalhes (opcional): ano e quilometragem"}>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Ano" optional>{(p) => <Input {...p} value={year} onChange={(e) => setYear(e.target.value)} inputMode="numeric" maxLength={4} />}</Field>
+            <Field label="Quilometragem" optional>{(p) => <Input {...p} value={mileage} onChange={(e) => setMileage(e.target.value)} inputMode="numeric" />}</Field>
+          </div>
+          {vehicle && (
+            <Field label="O carro mudou de dono? Escolha o novo dono" hint="Lista com todos os clientes, em ordem alfabética.">
+              {(p) => (
+                <Select {...p} value={owner} onChange={(e) => setOwner(e.target.value)}>
+                  {[...view.customers].sort((a, b) => a.name.localeCompare(b.name)).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </Select>
+              )}
+            </Field>
           )}
-        </Field>
-      )}
+        </MoreDetails>
+      </div>
       <div className="col-span-6 flex justify-end gap-2">
         <Button size="sm" onClick={onDone}>Descartar</Button>
         <Button size="sm" variant="primary" disabled={!online} onClick={save}>Salvar veículo</Button>

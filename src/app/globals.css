@@ -1373,3 +1373,157 @@ html[data-motion="reduce"] .order-card.just-born, html[data-motion="reduce"] .or
 @media (max-width: 900px) { .tv-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tv-board { grid-template-columns: 1fr; } .tv-head { flex-wrap: wrap; } }
 @media (prefers-reduced-motion: reduce) { .tv *, .tv *::before, .tv *::after { animation: none !important; transition: none !important; } }
 html[data-motion="reduce"] .tv *, html[data-motion="reduce"] .tv *::before { animation: none !important; transition: none !important; }
+
+/* ---------- Novo serviço passo a passo (uma pergunta por vez) ---------- */
+.wiz { display: grid; gap: 18px; min-height: 340px; }
+.wiz-progress { display: flex; align-items: center; gap: 6px; }
+.wiz-progress span { flex: 1; height: 6px; border-radius: 999px; background: var(--border); transition: background-color 240ms; }
+.wiz-progress span[data-on] { background: var(--primary); }
+.wiz-progress small { margin-left: 8px; font-size: .875rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.wiz-step { display: grid; gap: 12px; align-content: start; animation: wiz-in 260ms cubic-bezier(.16,1,.3,1) both; }
+.wiz-step[data-dir="-1"] { animation-name: wiz-in-back; }
+@keyframes wiz-in { from { opacity: 0; transform: translateX(18px); } }
+@keyframes wiz-in-back { from { opacity: 0; transform: translateX(-18px); } }
+.wiz-q { font-size: 1.625rem; font-weight: 750; line-height: 1.25; letter-spacing: -.01em; margin-bottom: 4px; }
+.wiz-label { margin-top: 6px; font-size: 1.0625rem; font-weight: 650; }
+.wiz-input { width: 100%; min-height: 58px; padding: 0 18px; border: 2px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); font-size: 1.25rem; font-weight: 600; outline: none; transition: border-color 140ms, box-shadow 140ms; }
+.wiz-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent); }
+.wiz-input[aria-invalid] { border-color: var(--danger); }
+.wiz-plate { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 1.75rem; letter-spacing: .12em; text-transform: uppercase; }
+.wiz-hint { font-size: .9375rem; color: var(--muted); }
+.wiz-found, .wiz-new { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; font-size: 1rem; animation: tour-fade 200ms ease-out; }
+.wiz-found { background: color-mix(in srgb, var(--success, #15803d) 12%, var(--surface)); color: var(--text); }
+.wiz-found svg { flex-shrink: 0; width: 22px; height: 22px; color: var(--success, #15803d); }
+.wiz-new { background: var(--color-primary-soft); }
+.wiz-new svg { width: 20px; height: 20px; color: var(--primary); }
+.wiz-link { justify-self: start; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; font-size: 1rem; font-weight: 600; color: var(--primary); }
+.wiz-link svg { width: 18px; height: 18px; }
+.wiz-link:hover { text-decoration: underline; }
+.wiz-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.wiz-chip { min-height: 44px; padding: 0 16px; border: 1.5px solid var(--border); border-radius: 999px; background: var(--surface); font-size: 1rem; font-weight: 600; transition: border-color 120ms, background-color 120ms; }
+.wiz-chip:hover { border-color: color-mix(in srgb, var(--primary) 50%, var(--border)); }
+.wiz-chip[aria-pressed="true"] { border-color: var(--primary); background: var(--color-primary-soft); color: var(--primary); }
+.wiz-list { display: grid; gap: 8px; }
+.wiz-option { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 8px 16px; border: 1.5px solid var(--border); border-radius: 14px; background: var(--surface); text-align: left; }
+.wiz-option:hover { border-color: var(--primary); }
+.wiz-option[data-on] { border-color: var(--primary); background: var(--color-primary-soft); }
+.wiz-option svg { flex-shrink: 0; width: 22px; height: 22px; color: var(--muted); }
+.wiz-option b { display: block; font-size: 1.0625rem; }
+.wiz-option small { display: block; font-size: .9375rem; color: var(--muted); }
+.wiz-subopts { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0 4px 34px; }
+.wiz-people { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.wiz-person { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 14px; border: 2px solid var(--border); border-radius: 16px; background: var(--surface); font-size: 1.0625rem; font-weight: 650; text-align: left; }
+.wiz-person:hover { border-color: color-mix(in srgb, var(--primary) 50%, var(--border)); }
+.wiz-person[aria-checked="true"] { border-color: var(--primary); background: var(--color-primary-soft); }
+.wiz-avatar { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 999px; background: var(--secondary); color: var(--secondary-fg); font-size: .9375rem; font-weight: 800; }
+.wiz-person.is-later .wiz-avatar { background: var(--bg); color: var(--muted); }
+.wiz-avatar svg { width: 20px; height: 20px; }
+.wiz-review { display: grid; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.wiz-review > div { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 16px; }
+.wiz-review > div + div { border-top: 1px solid var(--border); }
+.wiz-review dt { font-size: .9375rem; color: var(--muted); }
+.wiz-review dd { font-size: 1.0625rem; font-weight: 650; overflow-wrap: anywhere; }
+.wiz-edit { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 10px; font-size: .9375rem; font-weight: 600; color: var(--primary); }
+.wiz-edit:hover { background: var(--color-primary-soft); }
+.wiz-edit svg { width: 16px; height: 16px; }
+.wiz-more { border: 1px solid var(--border); border-radius: 14px; padding: 4px 16px; background: var(--bg); }
+.wiz-more > summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; font-size: 1rem; font-weight: 650; color: var(--primary); }
+.wiz-more[open] { padding-bottom: 16px; }
+.wiz-more[open] > *:not(summary) + * { margin-top: 14px; }
+.wiz-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.wiz-label-sm { display: grid; gap: 6px; font-size: .9375rem; font-weight: 600; }
+.wiz-input-sm { width: 100%; min-height: 46px; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface); font-size: 1rem; outline: none; }
+.wiz-input-sm:focus { border-color: var(--primary); }
+.wiz-labor { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+.wiz-labor legend { margin-bottom: 8px; font-size: .9375rem; font-weight: 600; }
+.wiz-total { font-size: 1.0625rem; }
+.wiz-error { display: flex; gap: 8px; padding: 10px 14px; border-radius: 12px; background: var(--danger-soft, #fdecec); color: var(--danger); font-size: 1rem; font-weight: 600; animation: tour-fade 160ms ease-out; }
+.wiz-next { min-width: 160px; height: 48px; font-size: 1.0625rem; }
+@media (max-width: 520px) { .wiz-q { font-size: 1.375rem; } .wiz-review > div { grid-template-columns: 1fr auto; } .wiz-review dt { grid-column: 1 / -1; } .wiz-two { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .wiz-step, .wiz-found, .wiz-new, .wiz-error { animation: none; } }
+html[data-motion="reduce"] :is(.wiz-step, .wiz-found, .wiz-new, .wiz-error) { animation: none; }
+
+/* ---------- Novo serviço: visual estilizado (prevalece sobre o bloco acima) ---------- */
+.wiz-dialog { background:
+  radial-gradient(520px 220px at 50% -60px, color-mix(in srgb, var(--primary) 16%, transparent), transparent 70%),
+  var(--surface); }
+.wiz-dialog > header { border-bottom: 0; }
+.wiz { gap: 22px; min-height: 380px; }
+/* Etapas com ícone */
+.wiz-stepper { display: flex; align-items: flex-start; margin: 0; padding: 0; list-style: none; }
+.wiz-stepper li { position: relative; flex: 1; display: grid; justify-items: center; gap: 6px; text-align: center; }
+.wiz-stepper li + li::before { content: ""; position: absolute; top: 19px; right: calc(50% + 24px); left: calc(-50% + 24px); height: 3px; border-radius: 3px; background: var(--border); transition: background-color 300ms; }
+.wiz-stepper li[data-state="done"] + li::before, .wiz-stepper li[data-state="now"]::before { background: var(--primary); }
+.wiz-stepper-dot { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 999px; border: 2px solid var(--border); background: var(--surface); color: var(--muted); transition: all 260ms cubic-bezier(.34,1.4,.64,1); }
+.wiz-stepper-dot svg { width: 19px; height: 19px; }
+.wiz-stepper li[data-state="done"] .wiz-stepper-dot { border-color: var(--primary); background: var(--primary); color: var(--primary-fg); }
+.wiz-stepper li[data-state="now"] .wiz-stepper-dot { border-color: var(--primary); background: var(--color-primary-soft); color: var(--primary); transform: scale(1.12); box-shadow: 0 0 0 6px color-mix(in srgb, var(--primary) 14%, transparent); }
+.wiz-stepper-label { font-size: .8125rem; font-weight: 650; color: var(--muted); }
+.wiz-stepper li[data-state="now"] .wiz-stepper-label { color: var(--primary); }
+.wiz-q { font-size: 1.75rem; }
+/* Placa de carro desenhada */
+.wiz-plate-frame { position: relative; width: min(440px, 100%); border: 3px solid #1f2937; border-radius: 14px; background: #fff; overflow: hidden; box-shadow: 0 10px 28px rgb(15 23 42 / 14%), inset 0 -3px 0 rgb(15 23 42 / 6%); transition: box-shadow 200ms, border-color 200ms; }
+.wiz-plate-frame:focus-within { box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary) 22%, transparent), 0 10px 28px rgb(15 23 42 / 14%); }
+.wiz-plate-frame[data-ok] { border-color: #15803d; }
+.wiz-plate-band { display: flex; align-items: center; justify-content: center; gap: 8px; height: 24px; background: linear-gradient(90deg, #1e3a8a, #1d4ed8); color: #fff; font-size: .6875rem; font-weight: 800; letter-spacing: .3em; }
+.wiz-plate-band i { width: 10px; height: 10px; border-radius: 999px; background: #22c55e; box-shadow: 0 0 0 2px #facc15; }
+.wiz-plate { display: block; width: 100%; height: 76px; border: 0; outline: none; background: transparent; color: #111827; text-align: center; font: 800 2.5rem/1 ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: .14em; text-transform: uppercase; }
+.wiz-plate::placeholder { color: #d1d5db; }
+.wiz-plate[aria-invalid] { color: var(--danger); }
+/* Carro encontrado */
+.wiz-found { gap: 14px; padding: 14px 16px; border: 1px solid color-mix(in srgb, #15803d 30%, var(--border)); background: linear-gradient(135deg, color-mix(in srgb, #22c55e 14%, var(--surface)), var(--surface)); animation: wiz-pop 420ms cubic-bezier(.34,1.56,.64,1) both; }
+.wiz-found > span:last-child { display: grid; gap: 1px; }
+.wiz-found small { font-size: .8125rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #15803d; }
+.wiz-found b { font-size: 1.1875rem; }
+.wiz-found > span:last-child > span { color: var(--muted); }
+.wiz-found-icon { position: relative; display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 16px; background: #15803d; color: #fff; }
+.wiz-found-icon > svg:first-child { width: 28px; height: 28px; color: #fff; }
+.wiz-found-check { position: absolute; right: -6px; bottom: -6px; width: 22px !important; height: 22px !important; padding: 3px; border-radius: 999px; background: #fff; color: #15803d !important; box-shadow: 0 2px 6px rgb(0 0 0 / 15%); animation: wiz-pop 420ms 160ms cubic-bezier(.34,1.56,.64,1) both; }
+.wiz-new { animation: wiz-pop 360ms cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes wiz-pop { from { opacity: 0; transform: scale(.92) translateY(6px); } }
+/* Avatar que se forma com o nome */
+.wiz-with-avatar { display: flex; align-items: center; gap: 12px; }
+.wiz-avatar.is-big { width: 58px; height: 58px; font-size: 1.25rem; transition: transform 240ms cubic-bezier(.34,1.56,.64,1), background-color 200ms; }
+.wiz-avatar.is-big[data-empty] { background: var(--bg); color: var(--muted); border: 2px dashed var(--border); }
+.wiz-avatar.is-big:not([data-empty]) { transform: scale(1.04); }
+.wiz-avatar.is-big svg { width: 26px; height: 26px; }
+/* Sugestões de serviço em blocos com ícone */
+.wiz-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.wiz-tile { display: grid; justify-items: center; align-content: start; gap: 8px; min-height: 96px; padding: 14px 8px; border: 1.5px solid var(--border); border-radius: 16px; background: var(--surface); text-align: center; font-size: .9375rem; font-weight: 650; line-height: 1.25; transition: border-color 140ms, transform 140ms, background-color 140ms; }
+.wiz-tile svg { width: 40px; height: 40px; padding: 9px; border-radius: 12px; background: var(--color-primary-soft); color: var(--primary); }
+.wiz-tile:hover { border-color: color-mix(in srgb, var(--primary) 55%, var(--border)); transform: translateY(-2px); }
+.wiz-tile[aria-pressed="true"] { border-color: var(--primary); background: var(--color-primary-soft); box-shadow: inset 0 0 0 1px var(--primary); }
+.wiz-tile[aria-pressed="true"] svg { background: var(--primary); color: var(--primary-fg); }
+/* Mecânicos */
+.wiz-person { position: relative; min-height: 72px; }
+.wiz-person-text { display: grid; gap: 1px; }
+.wiz-person-text b { font-size: 1.0625rem; }
+.wiz-person-text small { font-size: .875rem; font-weight: 500; color: var(--muted); }
+.wiz-person-check { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; padding: 3px; border-radius: 999px; background: var(--primary); color: var(--primary-fg); animation: wiz-pop 300ms cubic-bezier(.34,1.56,.64,1) both; }
+/* Prévia do cartão que vai nascer no quadro */
+.wiz-preview { display: grid; gap: 8px; padding: 16px; border-radius: 18px; background: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--muted) 22%, transparent) 1px, transparent 0) 0 0 / 14px 14px, var(--bg); }
+.wiz-preview-tag { display: inline-flex; align-items: center; gap: 8px; font-size: .875rem; font-weight: 700; color: var(--muted); }
+.wiz-dot { width: 9px; height: 9px; border-radius: 999px; background: var(--warning, #b45309); }
+.wiz-preview-card { display: grid; gap: 3px; max-width: 360px; padding: 12px 14px; border: 1px solid var(--border); border-left: 4px solid var(--warning, #b45309); border-radius: 12px; background: var(--surface); box-shadow: 0 10px 24px rgb(15 23 42 / 12%); transform: rotate(-1deg); animation: wiz-card-in 520ms cubic-bezier(.34,1.4,.64,1) both; }
+@keyframes wiz-card-in { from { opacity: 0; transform: rotate(-4deg) translateY(16px) scale(.94); } }
+.wiz-preview-top { display: flex; justify-content: space-between; gap: 10px; font-size: .9375rem; }
+.wiz-preview-top b { color: var(--primary); }
+.wiz-preview-top span { font-weight: 700; }
+.wiz-preview-name { font-size: 1.0625rem; font-weight: 650; }
+.wiz-preview-car { font-size: .875rem; color: var(--muted); }
+.wiz-preview-desc { font-size: .9375rem; }
+.wiz-preview-foot { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; font-size: .875rem; color: var(--muted); }
+.wiz-preview-foot svg { width: 14px; height: 14px; }
+@media (max-width: 560px) {
+  .wiz-stepper-label { display: none; }
+  .wiz-stepper li[data-state="now"] .wiz-stepper-label { display: block; position: absolute; top: 46px; white-space: nowrap; }
+  .wiz-stepper { margin-bottom: 14px; }
+  .wiz-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wiz-plate { font-size: 2rem; height: 68px; }
+}
+@media (prefers-reduced-motion: reduce) { .wiz-found, .wiz-found-check, .wiz-new, .wiz-preview-card, .wiz-person-check { animation: none; } .wiz-stepper-dot { transition: none; } }
+html[data-motion="reduce"] :is(.wiz-found, .wiz-found-check, .wiz-new, .wiz-preview-card, .wiz-person-check) { animation: none; }
+.wiz-review > div { grid-template-columns: 110px minmax(0, 1fr); }
+.wiz-review-value { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.wiz-review-value > span { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .wiz-review > div { grid-template-columns: 1fr; } }

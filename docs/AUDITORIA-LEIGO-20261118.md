@@ -36,7 +36,7 @@ As telas principais (Hoje, quadro, Receber) já falam a língua do balcão, mas 
 Receitas recebidas → **Entrou** · Despesas pagas → **Saiu** · Contas a receber → **Falta receber** · Fluxo de caixa → **Entradas e saídas** · Custo unitário → **Quanto paguei** · Preço de venda → **Quanto cobro** · Código interno → **Código (opcional)** · Quantidade mínima → **Avisar quando tiver menos de** · Histórico de alterações → **O que aconteceu** · Situação/Etapa (em listas) → manter "Etapa" só no quadro · Margem estimada / faturamento → esconder para quem não é dono.
 
 ## 4. Proposta de ordem (sem função nova)
-1. **Novo serviço passo a passo** (F1, F4, F5, F8) — o formulário mais usado.
+1. ✅ **Novo serviço passo a passo** (F1, F4, F5, F8) — feito em 18/11 (decisão 56).
 2. **Selects → botões** e **opcionais em "Mais detalhes"** em todos os formulários (F2, F3, F6).
 3. **Hoje enxuto** (G1).
 4. **Estoque e Clientes em cartões** (G2–G4).

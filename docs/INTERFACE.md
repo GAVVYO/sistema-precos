@@ -69,9 +69,22 @@ Ao confirmar: check verde, moedas, o valor **voa até a aba Financeiro** e a lin
 ![Receber com cartão](imagens/interface/receber-cartao.png)
 ![Receber em dinheiro com troco](imagens/interface/receber-troco.png)
 
-## 6. Novo serviço
+## 6. Novo serviço (passo a passo)
 
-Campos: **Nome** (busca cliente existente ou cria), **Telefone**, **Placa / Marca / Modelo** (ou carro já cadastrado), **O que o cliente pediu**; opcionais: mecânico, mão de obra, observações, ano, quilometragem, peças. Se faltar algo, aparece de uma vez: "Falta preencher: nome, placa, marca, modelo e o que o cliente pediu." e cada campo fica vermelho com a frase do que escrever.
+Uma pergunta por vez, em tom de conversa, com etapas de ícone no topo (**Placa → Carro → Cliente → Serviço → Quem faz → Conferir**):
+
+1. **Qual a placa do carro?** — digitada numa placa desenhada. Se o carro já existe, aparece **"Achamos o carro: Jeep Renegade 2019 de Larissa…"** e os passos de carro e cliente são pulados. Sem placa? **Procurar pelo nome do cliente** (e escolher o carro, se ele tiver mais de um).
+2. **Que carro é?** (só carro novo) — marca com atalhos (Fiat, Volkswagen…) e modelo; ano e quilometragem em "Mais detalhes".
+3. **De quem é o carro?** (só cliente novo) — o avatar se forma com as iniciais; se o nome já existe, oferece "Já é cliente? Toque no nome"; telefone com DDD.
+4. **O que o cliente pediu?** — texto livre ou blocos com ícone (Troca de óleo, Revisão, Freios…).
+5. **Quem vai fazer o serviço?** — cartões de cada mecânico com "Livre agora / 2 carros agora", ou "Ainda não sei".
+6. **Está tudo certo?** — prévia do cartão que vai entrar em Aguardando, respostas com **Alterar**, e "Mais detalhes (opcional)": mão de obra (**Ainda não sei / Já sei o valor / Não vai cobrar**), peças e observações.
+
+Enter continua; **Voltar** sempre visível; o aviso aparece em palavras simples e o cursor volta para o campo. Vindo de **Chegou: abrir serviço**, já começa preenchido.
+
+![Placa reconhecida](imagens/interface/novo-servico-placa.png)
+![O que o cliente pediu](imagens/interface/novo-servico-servico.png)
+![Conferir](imagens/interface/novo-servico-conferir.png)
 
 ## 7. Demais telas
 

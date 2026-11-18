@@ -21,7 +21,7 @@ Termos usados na tela (decisão 37): **Serviço** (nunca "OS"), "Serviço nº 11
 - **Sem internet**: aparece o selo "Sem internet" e uma faixa vermelha dizendo o que fica bloqueado (abrir serviço, mudar etapa, receber, estoque). Consultar continua possível.
 - No celular: a linha 1 vira logo + Novo serviço + ícones; a busca vai para uma linha própria; as abas viram barra flutuante embaixo, com ícone e nome.
 
-![Tela Hoje](imagens/interface/hoje.png)
+![Tela Hoje](imagens/interface/hoje-patio.png)
 
 ## 2. Menu: topo, lateral ou flutuante
 
@@ -39,12 +39,21 @@ Termos usados na tela (decisão 37): **Serviço** (nunca "OS"), "Serviço nº 11
 ![Menu lateral recolhido](imagens/interface/menu-lateral.png)
 ![Menu lateral aberto com o mouse](imagens/interface/menu-lateral-aberto.png)
 
-## 3. Hoje (primeira tela depois de entrar)
+## 3. Hoje = o pátio (primeira tela depois de entrar)
 
-- **Quem chega hoje**: horário grande, nome, carro e placa, o que foi marcado, selo **Próximo / Atrasado / Já chegou**. Botão **Chegou: abrir serviço** abre o Novo serviço já preenchido pelo agendamento; depois vira **Ver Serviço nº X**.
-- **Quem falta pagar**: carros **prontos** ainda não pagos (e entradas a receber, para quem vê o Financeiro), com valor e "Pronto ontem / desde 12/11". Botão **Receber**. Recepção recebe (decisão 46); quem não tem permissão vê "Quem recebe: dono ou financeiro".
-- Abaixo, **Na oficina agora**: indicadores, lista de serviços com a próxima ação, atividade recente e alertas de estoque. Pode ser reorganizado em **Minha conta › Organizar tela inicial** (arrastar ou botões em cada bloco; **Terminar** sai).
-- Mecânico vê **Meus serviços** (só os dele, com Começar / Marcar como pronto).
+Decisão 58. A tela responde **"que carros estão aqui e o que cada um precisa agora?"**.
+
+- Subtítulo em frase: "quarta, 18/11 · 6 carros na oficina · 2 prontos esperando o cliente". Não há mais cartões coloridos de números.
+- **O pátio**: os carros em **linhas largas**, agrupados pelo caminho do carro: **Esperando começar** (âmbar) → **Sendo feito** (azul fixo) → **Pronto, esperando o cliente** (verde). Uma "estrada" tracejada liga os grupos. Cada linha tem a **placa desenhada** (a mesma do Novo serviço), o carro e o cliente, o serviço, o caminho em 3 tracinhos, quem está fazendo e há quanto tempo o carro chegou, e **um botão só**: Começar → Marcar como pronto → **Receber** (com o valor). Ao clicar, a linha desce para o próximo grupo e brilha. O carro sai do pátio quando é pago.
+- **Coluna ao lado** (abaixo no celular): **Quem chega hoje** (Chegou: abrir serviço) e avisos de uma linha: "5 peças acabando → Ver estoque" e valores a receber fora de serviço (para o Financeiro).
+- Saíram: a tabela com 5 filtros e busca (o quadro de Serviços já faz isso), a atividade recente e o cartão de alertas de estoque.
+- **Mecânico** vê **"Seus carros, Nome"**: só os carros dele (Você está fazendo / Para você começar), sem dinheiro, e uma frase "1 carro está esperando alguém pegar — ver no quadro".
+- Recepção sem permissão para concluir vê "O mecânico marca quando ficar pronto" no lugar do botão.
+- Financeiro continua com o painel de números e "Organizar tela inicial" (só ele tem essa opção).
+
+![Hoje — pátio](imagens/interface/hoje-patio.png)
+![Hoje — mecânico](imagens/interface/hoje-mecanico.png)
+![Hoje — celular](imagens/interface/hoje-patio-celular.png)
 
 ## 4. Serviços (quadro)
 
@@ -118,7 +127,7 @@ Todos os formulários seguem a linguagem do Novo serviço: **pergunta em tom de 
 
 ## 9. Dicas de primeira vez (tour)
 
-Balões em sequência ("1 de 5") que escurecem a tela, recortam o elemento e apontam com seta animada, com pequenas ilustrações. Telas: **Hoje** (3 passos), **Serviços** (5), **painel do serviço** (4). Pular, ✕ ou Esc encerram; ← → navegam. Aparecem uma vez por usuário e oficina; não aparecem por baixo de uma janela aberta. **Minha conta › Ver as dicas de novo** mostra de novo.
+Balões em sequência ("1 de 5") que escurecem a tela, recortam o elemento e apontam com seta animada, com pequenas ilustrações. Telas: **Hoje** (4 passos), **Serviços** (5), **painel do serviço** (4). Pular, ✕ ou Esc encerram; ← → navegam. Aparecem uma vez por usuário e oficina; não aparecem por baixo de uma janela aberta. **Minha conta › Ver as dicas de novo** mostra de novo.
 
 ![Tour](imagens/interface/tour.png)
 

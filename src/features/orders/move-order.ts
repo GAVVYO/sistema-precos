@@ -33,6 +33,18 @@ function animateCardMove(orderId: string, nextLabel: string, run: () => void) {
   });
 }
 
+/** Na tela Hoje, a linha do carro desce para o grupo da próxima etapa e brilha ao chegar. */
+function animateYardMove(orderId: string, run: () => void) {
+  withTransition("yard", run, {
+    done: () => {
+      const row = document.querySelector<HTMLElement>(`.yard [data-order-id="${orderId}"]`);
+      if (!row) return;
+      row.classList.add("just-moved");
+      window.setTimeout(() => row.classList.remove("just-moved"), 1100);
+    },
+  });
+}
+
 /**
  * Muda a etapa da OS e oferece "Desfazer" (também Ctrl/⌘+Z) quando a volta
  * à etapa anterior é permitida pelas mesmas regras do serviço.
@@ -45,7 +57,8 @@ export function useMoveOrder() {
     let res = { ok: false } as ReturnType<typeof act>;
     const run = () => { res = act((d, c) => changeOrderStatus(d, c, order.id, next)); };
     // O cartão "anda" até a próxima coluna (no arraste ele já está na mão: sem animação).
-    if (opts.animate === false || !document.querySelector(`.kanban-board [data-order-id="${order.id}"]`)) run();
+    if (opts.animate !== false && document.querySelector(`.yard [data-order-id="${order.id}"]`)) animateYardMove(order.id, run);
+    else if (opts.animate === false || !document.querySelector(`.kanban-board [data-order-id="${order.id}"]`)) run();
     else animateCardMove(order.id, ORDER_STATUS_LABELS[next], run);
     if (!res.ok) return;
     const undoable = canChangeStatus(db, { workshopId: order.workshopId, userId: user.id }, next, from);

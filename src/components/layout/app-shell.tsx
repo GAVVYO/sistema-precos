@@ -328,7 +328,7 @@ function Header() {
                     Modo TV da parede
                   </a>
                 )}
-                {membership.role !== "mechanic" && (
+                {membership.role === "financial" && (
                   <Link role="menuitem" href="/inicio?organizar=1" onClick={close} className="widget-customize flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50">
                     <LayoutDashboard className="size-4" aria-hidden />
                     Organizar tela inicial

@@ -1,26 +1,19 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ArrowUpDown, CalendarPlus, CarFront, CheckCircle2, CircleDollarSign, Clock3, PackageCheck, Wrench } from "lucide-react";
+import { CalendarPlus, CircleDollarSign } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, useState } from "react";
 import { useApp } from "@/app-state/app-context";
-import { Badge, Button, Card, CardHeader, EmptyState, Input, PageHeader, Stat } from "@/components/ui/primitives";
-import { ReadableText } from "@/components/accessibility/accessibility-controls";
-import { MetricCard } from "@/components/ui/metric-card";
+import { Button, Card, CardHeader, EmptyState, PageHeader, Stat } from "@/components/ui/primitives";
 import { useWidgetPrefs, type Widget, WidgetGrid, WidgetGridToolbar, type WidgetPrefs } from "@/components/ui/widget-grid";
-import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from "@/domain/labels";
+import { PAYMENT_METHOD_LABELS } from "@/domain/labels";
 import type { ServiceOrder } from "@/domain/types";
 import { PaymentDialog } from "@/features/orders/order-dialogs";
-import { QuickOrderAction } from "@/features/orders/quick-order-action";
-import { StatusBadge, vehicleLabel } from "@/features/orders/shared";
-import {
-  addDays, dateOf, formatBRL, formatDate, formatDateTime, formatOrderNumber, formatPlate, formatTime, startOfMonth, todayISO, weekdayName,
-} from "@/lib/format";
+import { formatBRL, formatDate, formatOrderNumber, startOfMonth, todayISO, weekdayName } from "@/lib/format";
 import { financeSummary, listReceivables } from "@/services/finance";
-import { changeOrderStatus } from "@/services/orders";
-import { partSituation } from "@/services/stock";
-import { TodayPanel } from "./today-panel";
+import { TodayPanel, TodayRail } from "./today-panel";
+import { MechanicYard, useYard, Yard } from "./yard";
 
 function OrderLink({ order }: { order: ServiceOrder }) {
   const { openOrder } = useApp();
@@ -28,211 +21,6 @@ function OrderLink({ order }: { order: ServiceOrder }) {
     <button type="button" className="font-semibold whitespace-nowrap text-primary hover:underline" onClick={() => openOrder(order.id)}>
       {formatOrderNumber(order.number)}
     </button>
-  );
-}
-
-function OpenOrdersTable({ orders, empty, emptyAction }: { orders: ServiceOrder[]; empty: string; emptyAction?: ReactNode }) {
-  const { customerOf, vehicleOf, userOf } = useApp();
-  const [sort, setSort] = useState<{ key: "openedAt" | "customer" | "service" | "status"; desc: boolean }>({ key: "openedAt", desc: false });
-  const columns = [
-    { key: "openedAt", label: "Serviço / abertura" },
-    { key: "customer", label: "Cliente / veículo" },
-    { key: "service", label: "Serviço / responsável" },
-    { key: "status", label: "Etapa" },
-  ] as const;
-  const value = (o: ServiceOrder): string => sort.key === "customer" ? customerOf(o.customerId)?.name ?? "" : sort.key === "service" ? o.description : sort.key === "status" ? ORDER_STATUS_LABELS[o.status] : o.openedAt;
-  const sorted = [...orders].sort((a, b) => (sort.desc ? -1 : 1) * value(a).localeCompare(value(b), "pt-BR", { numeric: true }));
-  if (orders.length === 0) return <EmptyState icon={<Wrench className="size-7" aria-hidden />} title={empty} action={emptyAction} />;
-  return (
-    <div className="overflow-x-auto">
-      <table className="data-table service-table">
-        <thead>
-          <tr>{columns.map((c) => <th key={c.key} aria-sort={sort.key === c.key ? sort.desc ? "descending" : "ascending" : "none"}>
-            <button type="button" className="inline-flex items-center gap-1.5 rounded hover:text-primary" onClick={() => setSort({ key: c.key, desc: sort.key === c.key ? !sort.desc : false })}>
-              {c.label}{sort.key !== c.key ? <ArrowUpDown className="size-3 opacity-50" aria-hidden /> : sort.desc ? <ArrowDown className="size-3 text-primary" aria-hidden /> : <ArrowUp className="size-3 text-primary" aria-hidden />}
-            </button>
-          </th>)}<th className="text-right">Próxima ação</th></tr>
-        </thead>
-        <tbody>
-          {sorted.map((o) => {
-            const v = vehicleOf(o.vehicleId);
-            return (
-              <tr key={o.id}>
-                <td className="whitespace-nowrap"><OrderLink order={o} /><span className="mt-1 block text-xs text-muted">{dateOf(o.openedAt) === todayISO() ? `Hoje, ${formatTime(o.openedAt)}` : formatDateTime(o.openedAt)}</span></td>
-                <td><span className="block font-medium">{customerOf(o.customerId)?.name}</span><span className="mt-1 block text-xs text-muted">{vehicleLabel(v)} · <ReadableText label="placa" text={v ? formatPlate(v.plate) : "—"}><span className="vehicle-plate">{v ? formatPlate(v.plate) : "—"}</span></ReadableText></span></td>
-                <td><span className="block max-w-72"><ReadableText label="descrição do serviço" text={o.description} /></span><span className="mt-1 block text-xs text-muted">{userOf(o.mechanicId)?.name ?? "Responsável a definir"}</span></td>
-                <td><StatusBadge order={o} /></td>
-                <td className="text-right"><QuickOrderAction order={o} /></td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function StockAlerts() {
-  const { view } = useApp();
-  const low = view.parts.filter((p) => partSituation(p) !== "ok").sort((a, b) => a.quantity - b.quantity);
-  return (
-    <Card>
-      <CardHeader title="Alertas de estoque" subtitle="Peças abaixo ou no limite mínimo" actions={<Link href="/estoque" className="text-sm font-medium text-primary hover:underline">Ver estoque</Link>} />
-      {low.length === 0 ? (
-        <EmptyState icon={<PackageCheck className="size-7" aria-hidden />} title="Estoque em dia" description="Nenhuma peça abaixo da quantidade mínima." />
-      ) : (
-        <ul className="divide-y divide-line">
-          {low.map((p) => (
-            <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-2 text-sm">
-              <span className="min-w-0">
-                <span className="block truncate font-medium">{p.name}</span>
-                <span className="text-xs text-muted">{p.code} · mínimo {p.minQuantity}</span>
-              </span>
-              <Badge tone={p.quantity <= 0 ? "danger" : "warning"}>{p.quantity <= 0 ? "Sem estoque" : `${p.quantity} em estoque`}</Badge>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
-  );
-}
-
-function RecentActivity() {
-  const { view, userOf, openOrder } = useApp();
-  const relevant = view.orderEvents
-    .filter((e) => /^(OS aberta|Serviço aberto|Status alterado para Concluído|Etapa mudou para Pronto|Pagamento|OS cancelada|Serviço cancelado)/.test(e.message))
-    .sort((a, b) => b.at.localeCompare(a.at))
-    .slice(0, 8);
-  return (
-    <Card>
-      <CardHeader title="Atividade recente" />
-      {relevant.length === 0 ? (
-        <EmptyState title="Nada aconteceu ainda" description="Quando alguém abrir, terminar ou receber um serviço, aparece aqui." />
-      ) : (
-        <ul className="activity-feed divide-y divide-line">
-          {relevant.map((e) => {
-            const order = view.orders.find((o) => o.id === e.orderId);
-            return (
-              <li key={e.id} className="relative py-2.5 pr-4 pl-9 text-sm"><span className="activity-dot" aria-hidden />
-                <button type="button" className="font-semibold text-primary hover:underline" onClick={() => order && openOrder(order.id)}>
-                  {order ? formatOrderNumber(order.number) : "Serviço"}
-                </button>{" "}
-                {e.message.replace(/^(OS aberta|Serviço aberto)\.$/, "aberto.").replace(/^(Status alterado para Concluído|Etapa mudou para Pronto)\.$/, "está pronto.").replace(/^(OS cancelada|Serviço cancelado)/, "cancelado")}
-                <span className="block text-xs text-muted">{formatDateTime(e.at)} · {userOf(e.userId)?.name ?? "Usuário"}</span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </Card>
-  );
-}
-
-function OperationalDashboard({ editing, prefs }: { editing: boolean; prefs: WidgetPrefs }) {
-  const { view, can, settings } = useApp();
-  const [filter, setFilter] = useState<"open" | "waiting" | "in_progress" | "receivable" | "done">("open");
-  const [search, setSearch] = useState("");
-  const { customerOf, vehicleOf } = useApp();
-  const today = todayISO();
-  const active = view.orders.filter((o) => !o.cancelledAt);
-  const open = active.filter((o) => o.status !== "done").sort((a, b) => a.openedAt.localeCompare(b.openedAt));
-  const doneToday = active.filter((o) => o.status === "done" && o.completedAt && dateOf(o.completedAt) === today).length;
-  const doneWeek = active.filter((o) => o.status === "done" && o.completedAt && dateOf(o.completedAt) >= addDays(today, -6)).length;
-  const showStock = can("stock.view") && settings.activeModules.includes("stock");
-  const receivable = listReceivables(view).flatMap((r) => r.order ? [r.order] : []);
-  const source = filter === "receivable" ? receivable : filter === "done" ? active.filter((o) => o.status === "done" && o.completedAt && dateOf(o.completedAt) >= addDays(today, -6)) : filter === "open" ? open : open.filter((o) => o.status === filter);
-  const visible = source.filter((o) => {
-    const v = vehicleOf(o.vehicleId);
-    const text = `${formatOrderNumber(o.number)} ${customerOf(o.customerId)?.name ?? ""} ${vehicleLabel(v)} ${v?.plate ?? ""} ${v ? formatPlate(v.plate) : ""}`;
-    return text.toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR").trim());
-  });
-
-  const metric = (id: string, x: number, node: ReactNode, title: string): Widget => ({ id, title, layout: { x, y: 0, w: 3, h: 3, minW: 2, minH: 3 }, render: () => node });
-  const widgets: Widget[] = [
-    metric("m-waiting", 0, <MetricCard onSelect={() => setFilter("waiting")} selected={filter === "waiting"} appearance="waiting" icon={<Clock3 />} label="Serviços aguardando" value={open.filter((o) => o.status === "waiting").length} note="Na fila" footer={<>Serviços abertos: <strong>{open.length}</strong></>} />, "Serviços aguardando"),
-    metric("m-progress", 3, <MetricCard onSelect={() => setFilter("in_progress")} selected={filter === "in_progress"} appearance="active" icon={<Wrench />} label="Serviços em andamento" value={open.filter((o) => o.status === "in_progress").length} note="Sendo feitos" footer={<>Responsáveis: <strong>{new Set(open.filter((o) => o.status === "in_progress" && o.mechanicId).map((o) => o.mechanicId)).size}</strong></>} />, "Serviços em andamento"),
-    metric("m-done", 6, <MetricCard onSelect={() => setFilter("done")} selected={filter === "done"} appearance="done" icon={<CheckCircle2 />} label="Serviços prontos" value={doneWeek} note={`${doneToday} hoje`} footer={<>Período: <strong>últimos 7 dias</strong></>} />, "Serviços prontos"),
-    metric("m-vehicles", 9, <MetricCard onSelect={() => setFilter("open")} selected={filter === "open"} appearance="neutral" icon={<CarFront />} label="Carros na oficina" value={new Set(open.map((o) => o.vehicleId)).size} footer={<>Com serviço <strong>em aberto</strong></>} />, "Carros na oficina"),
-    {
-      id: "services",
-      title: "Serviços da oficina",
-      layout: { x: 0, y: 3, w: 9, h: 11, minW: 5, minH: 5 },
-      render: () => (
-        <Card>
-          <CardHeader title="Serviços da oficina" subtitle={`${open.length} em aberto · acompanhe a próxima etapa`} actions={<Link href="/ordens" className="text-sm font-semibold text-primary hover:underline">Abrir quadro →</Link>} />
-          <div className="work-filter" role="group" aria-label="Filtrar serviços do início">
-            <button type="button" aria-pressed={filter === "open"} onClick={() => setFilter("open")}>Em aberto</button>
-            <button type="button" aria-pressed={filter === "waiting"} onClick={() => setFilter("waiting")}>Aguardando</button>
-            <button type="button" aria-pressed={filter === "in_progress"} onClick={() => setFilter("in_progress")}>Em andamento</button>
-            {(can("finance.view") || can("finance.payment")) && <button type="button" aria-pressed={filter === "receivable"} onClick={() => setFilter("receivable")}>A receber ({receivable.length})</button>}
-            <button type="button" aria-pressed={filter === "done"} onClick={() => setFilter("done")}>Prontos</button>
-            <Input aria-label="Buscar serviços do início" placeholder="Placa ou nome do cliente" value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
-          <OpenOrdersTable orders={visible} empty={search ? "Nenhum serviço com essa placa ou nome. Confira o que foi digitado." : "Nenhum serviço nesta situação."} emptyAction={search ? <Button onClick={() => setSearch("")}>Limpar busca</Button> : filter !== "open" ? <Button onClick={() => setFilter("open")}>Ver todos em aberto</Button> : undefined} />
-        </Card>
-      ),
-    },
-    { id: "activity", title: "Atividade recente", layout: { x: 0, y: 14, w: 9, h: 7, minW: 3, minH: 3 }, render: () => <RecentActivity /> },
-    ...(showStock ? [{ id: "stock", title: "Alertas de estoque", layout: { x: 9, y: 10, w: 3, h: 9, minW: 3, minH: 3 }, render: () => <StockAlerts /> }] : []),
-  ];
-
-  return (
-    <>
-      <h2 className="today-section">Na oficina agora</h2>
-      <WidgetGrid prefs={prefs} editing={editing} widgets={widgets} />
-    </>
-  );
-}
-
-function MechanicDashboard() {
-  const { view, user, act, can, online } = useApp();
-  const today = todayISO();
-  const mine = view.orders.filter((o) => !o.cancelledAt && o.mechanicId === user.id);
-  const open = mine.filter((o) => o.status !== "done").sort((a, b) => a.openedAt.localeCompare(b.openedAt));
-  const doneToday = mine.filter((o) => o.status === "done" && o.completedAt && dateOf(o.completedAt) === today);
-  const { customerOf, vehicleOf, openOrder } = useApp();
-
-  return (
-    <>
-      <div className="mb-4 grid grid-cols-3 gap-3">
-        <Stat label="Aguardando você" value={open.filter((o) => o.status === "waiting").length} tone="warning" />
-        <Stat label="Em andamento" value={open.filter((o) => o.status === "in_progress").length} />
-        <Stat label="Prontos hoje" value={doneToday.length} tone="success" />
-      </div>
-      <Card>
-        <CardHeader title="Meus serviços" subtitle="Serviços com você como responsável" />
-        {open.length === 0 ? (
-          <EmptyState icon={<CheckCircle2 className="size-7" aria-hidden />} title="Nenhum serviço pendente" description="Quando um serviço for passado para você, ele aparece aqui." />
-        ) : (
-          <ul className="divide-y divide-line">
-            {open.map((o) => {
-              const v = vehicleOf(o.vehicleId);
-              const next = o.status === "waiting" ? "in_progress" : "done";
-              const allowed = next === "done" ? can("os.complete") : can("os.status") || can("os.complete");
-              return (
-                <li key={o.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
-                  <div className="min-w-0 flex-1">
-                    <p><OrderLink order={o} /> <StatusBadge order={o} /></p>
-                    <p className="mt-0.5 font-medium">{o.description}</p>
-                    <p className="text-xs text-muted">{vehicleLabel(v)} · {v ? formatPlate(v.plate) : ""} · {customerOf(o.customerId)?.name}</p>
-                  </div>
-                  <Button onClick={() => openOrder(o.id)}>Ver detalhes e peças</Button>
-                  {allowed && (
-                    <Button
-                      variant="primary"
-                      disabled={!online}
-                      onClick={() => act((d, c) => changeOrderStatus(d, c, o.id, next), `${formatOrderNumber(o.number)} movido para ${ORDER_STATUS_LABELS[next]}.`)}
-                    >
-                      {next === "in_progress" ? "Começar" : "Marcar como pronto"}
-                    </Button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </Card>
-    </>
   );
 }
 
@@ -319,22 +107,28 @@ export function DashboardPage() {
   const today = todayISO();
   const variant =
     membership.role === "mechanic" ? "mechanic" : membership.role === "financial" && can("finance.view") ? "finance" : can("os.view") ? "operational" : "none";
-  // "Organizar tela inicial" fica no menu da conta (Minha conta) e chega aqui por ?organizar=1.
+  // "Organizar tela inicial" (só no painel do financeiro) fica no menu da conta e chega aqui por ?organizar=1.
   const params = useSearchParams();
   const router = useRouter();
-  const editing = params.has("organizar");
+  const editing = params.has("organizar") && variant === "finance";
   const setEditing = (on: boolean) => router.replace(on ? "/inicio?organizar=1" : "/inicio", { scroll: false });
   const prefs = useWidgetPrefs(`${variant}:${membership.workshopId}:${user.id}`);
-  const customizable = variant === "operational" || variant === "finance";
+  const yard = useYard();
+  const ready = yard.ready.length;
+  const day = `${weekdayName(today)}, ${formatDate(today).slice(0, 5)}`;
+  const summary =
+    variant === "operational"
+      ? `${day} · ${yard.count === 0 ? "nenhum carro na oficina" : `${yard.count} ${yard.count === 1 ? "carro" : "carros"} na oficina`}${ready ? ` · ${ready} ${ready === 1 ? "pronto" : "prontos"} esperando o cliente` : ""}`
+      : `${weekdayName(today)}, ${formatDate(today)}`;
 
   return (
     <>
       <PageHeader
-        title={membership.role === "mechanic" ? `Meus serviços, ${user.name.split(" ")[0]}` : "Hoje"}
-        description={`${weekdayName(today)}, ${formatDate(today)}`}
+        title={membership.role === "mechanic" ? `Seus carros, ${user.name.split(" ")[0]}` : "Hoje"}
+        description={summary}
         actions={
           <>
-            {customizable && <WidgetGridToolbar prefs={prefs} editing={editing} onEditingChange={setEditing} />}
+            {variant === "finance" && <WidgetGridToolbar prefs={prefs} editing={editing} onEditingChange={setEditing} />}
             {!editing && can("schedule.manage") && settings.activeModules.includes("schedule") && (
               <Link href="/agenda?novo=1" className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-surface px-3.5 text-sm font-medium hover:bg-slate-50">
                 <CalendarPlus className="size-4" aria-hidden />
@@ -344,10 +138,15 @@ export function DashboardPage() {
           </>
         }
       />
-      {(variant === "operational" || variant === "finance") && !editing && <TodayPanel />}
-      {variant === "mechanic" && <MechanicDashboard />}
+      {variant === "operational" && (
+        <div className="hoje-layout">
+          <Yard />
+          <TodayRail />
+        </div>
+      )}
+      {variant === "mechanic" && <MechanicYard />}
+      {variant === "finance" && !editing && <TodayPanel />}
       {variant === "finance" && <FinanceDashboard editing={editing} prefs={prefs} />}
-      {variant === "operational" && <OperationalDashboard editing={editing} prefs={prefs} />}
       {variant === "none" && (
         <Card>
           <EmptyState title="Nada para exibir" description="Seu usuário ainda não possui permissões para os módulos desta oficina. Fale com o proprietário." />

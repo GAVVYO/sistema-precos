@@ -1607,3 +1607,90 @@ dialog .field-label > span { font-size: .875rem; }
 .choice-options[data-cols="3"] .choice-option[data-rich] .choice-text, .choice-options[data-cols="4"] .choice-option[data-rich] .choice-text { text-align: center; }
 .choice-options[data-cols="3"] .choice-option[data-rich]::after, .choice-options[data-cols="4"] .choice-option[data-rich]::after { top: 8px; right: 8px; margin-top: 0; width: 18px; height: 18px; }
 @media (max-width: 460px) { .choice-options[data-cols="3"] .choice-option[data-rich] { flex-direction: row; justify-content: flex-start; min-height: 62px; padding: 10px 40px 10px 12px; } .choice-options[data-cols="3"] .choice-option[data-rich] .choice-text { text-align: left; } .choice-options[data-cols="3"] .choice-option[data-rich]::after { top: 50%; right: 12px; margin-top: -9px; } }
+
+/* ===== Hoje = Pátio (auditoria leiga G1, decisão 58) =====
+   Carros em linhas largas agrupados pelo caminho (esperando → fazendo → pronto),
+   ligados por uma "estrada" vertical. Placa desenhada como âncora; um botão por carro. */
+.hoje-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 360px); gap: 24px; align-items: start; }
+@media (max-width: 1099px) { .hoje-layout { grid-template-columns: minmax(0, 1fr); } }
+.hoje-rail { display: grid; gap: 12px; position: sticky; top: 88px; }
+@media (max-width: 1099px) { .hoje-rail { position: static; } }
+
+.yard { --lane: var(--warning); display: grid; gap: 22px; min-width: 0; }
+.yard-lane { position: relative; padding-left: 26px; }
+.yard-lane[data-lane="waiting"] { --lane: var(--warning); }
+.yard-lane[data-lane="doing"] { --lane: #2563eb; } /* fixo: a cor da oficina pode ser verde e confundir com Pronto */
+.yard-lane[data-lane="ready"] { --lane: var(--success); }
+/* a estrada: linha tracejada que liga os grupos */
+.yard-lane::before { content: ""; position: absolute; left: 6px; top: 22px; bottom: -22px; border-left: 2px dashed color-mix(in srgb, var(--muted) 35%, transparent); }
+.yard-lane:last-child::before { bottom: 8px; }
+.yard-lane-title { position: relative; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 10px; font-size: 1.125rem; font-weight: 750; }
+.yard-dot { position: absolute; left: -26px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 999px; background: var(--lane); box-shadow: 0 0 0 4px color-mix(in srgb, var(--lane) 18%, var(--bg)); }
+.yard-count { display: inline-grid; place-items: center; min-width: 28px; height: 24px; padding: 0 8px; border-radius: 999px; background: color-mix(in srgb, var(--lane) 13%, var(--surface)); color: color-mix(in srgb, var(--lane) 85%, var(--text)); font-size: .875rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.yard-lane-hint { font-size: .875rem; font-weight: 500; color: var(--muted); }
+.yard-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.yard-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px 18px; padding: 14px 16px; border: 1px solid var(--border); border-left: 4px solid var(--lane); border-radius: 14px; background: var(--surface); transition: border-color 140ms, box-shadow 140ms; }
+.yard-row:hover { border-color: color-mix(in srgb, var(--lane) 45%, var(--border)); border-left-color: var(--lane); box-shadow: 0 4px 16px rgb(23 32 51 / 6%); }
+.yard-row.just-moved { animation: card-glow .9s ease-out; }
+html[data-vt="yard"] .yard-row { view-transition-name: var(--vt); view-transition-class: yard-row; }
+::view-transition-group(*.yard-row) { animation-duration: 340ms; animation-timing-function: cubic-bezier(.34, 1.2, .64, 1); }
+
+.mini-plate { display: grid; width: 104px; border: 2px solid #1f2937; border-radius: 7px; background: #fff; overflow: hidden; box-shadow: inset 0 -2px 0 rgb(15 23 42 / 6%); }
+.mini-plate-band { height: 11px; background: linear-gradient(90deg, #1e3a8a, #1d4ed8); color: #fff; font-size: 7px; font-weight: 800; letter-spacing: .3em; line-height: 11px; text-align: center; }
+.mini-plate-text { padding: 3px 0 4px; color: #111827; font: 800 1rem/1 ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: .08em; text-align: center; white-space: nowrap; }
+
+.yard-main { display: grid; gap: 3px; min-width: 0; }
+.yard-car { justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.0625rem; font-weight: 750; text-align: left; color: var(--text); }
+.yard-car:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+.yard-owner { font-weight: 500; color: var(--muted); }
+.yard-owner strong { font-weight: 600; color: var(--text); }
+.yard-what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .9375rem; }
+.yard-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0 6px; font-size: .8125rem; color: var(--muted); }
+.yard-track { display: inline-flex; gap: 3px; margin-right: 2px; }
+.yard-track i { width: 14px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--muted) 22%, transparent); }
+.yard-track i[data-on] { background: var(--lane); }
+.yard-action { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.yard-action .ui-button { height: 42px; padding-inline: 18px; font-size: .9375rem; }
+.yard-value { font-size: 1.125rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.yard-hint { font-size: .8125rem; color: var(--muted); text-align: right; }
+
+.yard-empty { display: grid; justify-items: center; gap: 6px; padding: 48px 16px; border: 2px dashed var(--border); border-radius: 18px; text-align: center; }
+.yard-empty-art { display: grid; place-items: center; width: 72px; height: 72px; margin-bottom: 6px; border-radius: 22px; background: var(--color-primary-soft); color: var(--primary); }
+.yard-empty-art svg { width: 36px; height: 36px; }
+.yard-empty-title { font-size: 1.25rem; font-weight: 750; }
+.yard-empty-text { max-width: 36ch; color: var(--muted); margin-bottom: 8px; }
+.yard-foot { margin: 0; padding-left: 26px; font-size: .9375rem; color: var(--muted); }
+.yard-foot:empty { display: none; }
+.yard-link, .rail-line-go { font-weight: 650; color: var(--primary); }
+.yard-link:hover { text-decoration: underline; }
+
+/* Coluna "Também hoje" */
+.today-card.is-rail .today-head { padding: 14px 16px; }
+.today-card.is-rail .today-title { font-size: 1.0625rem; }
+.today-card.is-rail .today-icon { width: 36px; height: 36px; border-radius: 10px; }
+.today-card.is-rail .today-row { grid-template-columns: auto minmax(0, 1fr) auto; padding: 12px 16px; }
+.today-card.is-rail .today-action { grid-column: 1 / -1; }
+.today-card.is-rail .today-action .ui-button { width: 100%; }
+.today-card.is-rail .today-time { font-size: 1.125rem; min-width: 3rem; }
+.rail-empty { margin: 0; padding: 12px 16px; font-size: .9375rem; color: var(--muted); }
+.rail-line { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 10px 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); font-size: .9375rem; }
+.rail-line > svg { flex-shrink: 0; width: 20px; height: 20px; color: var(--warning); }
+.rail-line > span:nth-child(2) { flex: 1; min-width: 0; }
+.rail-line:hover { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); }
+.rail-line-go { flex-shrink: 0; font-size: .875rem; }
+
+@media (max-width: 640px) {
+  .yard-lane { padding-left: 20px; }
+  .yard-dot { left: -20px; width: 12px; height: 12px; margin-top: -6px; }
+  .yard-lane::before { left: 5px; }
+  .yard-row { grid-template-columns: minmax(0, 1fr); padding: 12px 14px; gap: 8px; }
+  .mini-plate { width: 86px; }
+  .mini-plate-text { font-size: .8125rem; }
+  .yard-action { grid-column: 1 / -1; justify-content: space-between; }
+  .yard-action .ui-button { flex: 1; height: 46px; }
+  .yard-action:has(.yard-value) .ui-button { flex: 0 1 60%; }
+  .yard-what, .yard-car { white-space: normal; }
+  .yard-foot { padding-left: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .yard-row.just-moved { animation: none; } }
+html[data-motion="reduce"] .yard-row.just-moved { animation: none; }

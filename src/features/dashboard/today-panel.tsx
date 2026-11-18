@@ -14,6 +14,7 @@ import { vehicleLabel } from "@/features/orders/shared";
 import { addDays, formatBRL, formatDate, formatOrderNumber, formatPhone, formatPlate, todayISO } from "@/lib/format";
 import { listReceivables } from "@/services/finance";
 import { vtName } from "@/lib/view-transition";
+import { StockLine } from "./yard";
 
 const nowHHMM = () => {
   const d = new Date();
@@ -28,7 +29,7 @@ function sinceLabel(date: string): string {
 }
 
 /** Quem chega hoje e a que horas. Só reorganiza a agenda existente. */
-function Arrivals() {
+function Arrivals({ compact = false }: { compact?: boolean }) {
   const { view, can, settings, online, openNewOrder, openOrder } = useApp();
   const today = todayISO();
   const list = view.appointments.filter((a) => a.date === today && a.status !== "cancelled").sort((a, b) => a.time.localeCompare(b.time));
@@ -41,7 +42,7 @@ function Arrivals() {
     openNewOrder({ appointmentId: a.id, customerName: a.customerName, phone: a.phone, plate: a.plate, brand: a.brand, model: a.model, description: a.service, mechanicId: a.mechanicId });
 
   return (
-    <section className="today-card" aria-labelledby="today-arrivals">
+    <section className={compact ? "today-card is-rail" : "today-card"} aria-labelledby="today-arrivals">
       <header className="today-head">
         <span className="today-icon"><CalendarDays aria-hidden /></span>
         <div className="min-w-0 flex-1">
@@ -50,7 +51,9 @@ function Arrivals() {
         </div>
         <Link href="/agenda" className="today-link">Ver agenda</Link>
       </header>
-      {list.length === 0 ? (
+      {list.length === 0 && compact ? (
+        <p className="rail-empty">Ninguém marcado. <Link href="/agenda?novo=1" className="today-link">Agendar</Link></p>
+      ) : list.length === 0 ? (
         <EmptyState
           icon={<CalendarDays className="size-7" aria-hidden />}
           title="Ninguém marcado para hoje"
@@ -150,8 +153,71 @@ function Payments() {
   );
 }
 
+/** Valores a receber que não são de serviço (o resto aparece no pátio, na linha do carro). */
+function OtherReceivables() {
+  const { view, can } = useApp();
+  if (!can("finance.view")) return null;
+  const list = listReceivables(view).filter((r) => !r.order);
+  if (list.length === 0) return null;
+  const total = list.reduce((s, r) => s + r.amountCents, 0);
+  return (
+    <Link href="/financeiro" className="rail-line">
+      <CircleDollarSign aria-hidden />
+      <span><strong>{formatBRL(total)}</strong> a receber fora de serviço ({list.length})</span>
+      <span className="rail-line-go">Ver →</span>
+    </Link>
+  );
+}
+
+/** Coluna ao lado do pátio: quem chega hoje + avisos de uma linha. */
+export function TodayRail() {
+  const { can, settings } = useApp();
+  const showArrivals = can("schedule.manage") && settings.activeModules.includes("schedule");
+  return (
+    <aside className="hoje-rail" aria-label="Também hoje">
+      {showArrivals && <Arrivals compact />}
+      <StockLine />
+      <OtherReceivables />
+      <TodayTour />
+    </aside>
+  );
+}
+
+function TodayTour() {
+  return (
+    <GuidedTour
+      id="hoje"
+      steps={[
+        {
+          target: "[data-tour=arrived]",
+          title: "O cliente chegou? Clique aqui",
+          body: <p>Abre o serviço já preenchido com o nome, o carro e o que foi marcado. É só conferir e salvar.</p>,
+          illustration: <IllusTap label="Chegou: abrir serviço" />,
+        },
+        {
+          target: "[data-tour=next-step]",
+          title: "Cada carro tem um botão só",
+          body: <p>O carro anda sozinho: <strong>Começar</strong> → <strong>Marcar como pronto</strong> → <strong>Receber</strong>. É sempre o botão azul da linha.</p>,
+          illustration: <IllusTap label="Começar" />,
+        },
+        {
+          target: "[data-tour=receive]",
+          title: "Na hora de pagar, clique em Receber",
+          body: <p>Escolha como o cliente pagou (dinheiro, PIX, cartão) e confirme. O valor vai sozinho para o Financeiro.</p>,
+          illustration: <IllusTap label="Receber" />,
+        },
+        {
+          target: "[data-tour=nav-orders]",
+          title: "O quadro completo",
+          body: <p>Em <strong>Serviços</strong> você vê todos os carros por etapa e pode arrastar.</p>,
+        },
+      ]}
+    />
+  );
+}
+
 /**
- * Tela "Hoje": a primeira coisa depois de entrar. Duas perguntas do balcão —
+ * Tela "Hoje" do financeiro: a primeira coisa depois de entrar. Duas perguntas do balcão —
  * quem chega e quem falta pagar — com o botão da ação ao lado de cada nome.
  */
 export function TodayPanel() {

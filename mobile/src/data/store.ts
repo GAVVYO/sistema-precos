@@ -1,3 +1,4 @@
+import "./polyfills";
 import { useSyncExternalStore } from "react";
 import { buildSeed, DEMO_WORKSHOP_ID } from "@core/demo/seed";
 import type { Database, ID, PermissionKey } from "@core/domain/types";
@@ -17,7 +18,8 @@ const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
 export function act(fn: (db: Database, ctx: Ctx) => void): { ok: true } | { ok: false; message: string } {
-  const copy = structuredClone(state.db);
+  // structuredClone pode faltar em versões do Hermes; JSON basta (o banco é só dados).
+  const copy: Database = typeof structuredClone === "function" ? structuredClone(state.db) : JSON.parse(JSON.stringify(state.db));
   try {
     fn(copy, { userId: state.userId, workshopId: state.workshopId, now: new Date() });
   } catch (e) {

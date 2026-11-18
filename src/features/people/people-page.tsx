@@ -40,7 +40,7 @@ type Tab = "customers" | "staff" | "vehicles";
 /** Depois do carimbo, espera a pessoa ver e fecha. */
 function stampThenClose(setStamped: (v: boolean) => void, onClose: () => void) {
   setStamped(true);
-  window.setTimeout(onClose, motionReduced() ? 1100 : 2200);
+  window.setTimeout(onClose, motionReduced() ? 1100 : 1900);
 }
 
 function NewCustomerDialog({ onClose }: { onClose: () => void }) {

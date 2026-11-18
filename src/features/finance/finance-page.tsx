@@ -211,10 +211,10 @@ export function FinancePage() {
       />
 
       <div className="mb-4 grid grid-cols-4 gap-3">
-        <Stat label="Receitas recebidas" value={formatBRL(summary.receivedCents)} tone="success" hint="Entradas de caixa no período" />
-        <Stat label="Despesas pagas" value={formatBRL(summary.expensesCents)} tone="danger" hint="Saídas de caixa no período" />
-        <Stat label="Contas a receber" value={formatBRL(summary.receivableCents)} tone={receivables.length ? "warning" : "neutral"} hint={`${receivables.length} em aberto hoje`} />
-        <Stat label="Sobrou no caixa" value={formatBRL(summary.cashResultCents)} tone={summary.cashResultCents < 0 ? "danger" : "neutral"} hint="Recebido − despesas pagas" />
+        <Stat label="Receitas recebidas" value={summary.receivedCents} format={formatBRL} tone="success" hint="Entradas de caixa no período" />
+        <Stat label="Despesas pagas" value={summary.expensesCents} format={formatBRL} tone="danger" hint="Saídas de caixa no período" />
+        <Stat label="Contas a receber" value={summary.receivableCents} format={formatBRL} tone={receivables.length ? "warning" : "neutral"} hint={`${receivables.length} em aberto hoje`} />
+        <Stat label="Sobrou no caixa" value={summary.cashResultCents} format={formatBRL} tone={summary.cashResultCents < 0 ? "danger" : "neutral"} hint="Recebido − despesas pagas" />
       </div>
 
       <Card className="mb-4">

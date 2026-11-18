@@ -246,10 +246,10 @@ function FinanceDashboard({ editing, prefs }: { editing: boolean; prefs: WidgetP
 
   const stat = (id: string, x: number, title: string, node: ReactNode): Widget => ({ id, title, layout: { x, y: 0, w: 3, h: 2, minW: 2, minH: 2 }, render: () => node });
   const widgets: Widget[] = [
-    stat("f-received", 0, "Recebido no mês", <Stat label="Recebido no mês" value={formatBRL(summary.receivedCents)} tone="success" />),
-    stat("f-expenses", 3, "Despesas pagas no mês", <Stat label="Despesas pagas no mês" value={formatBRL(summary.expensesCents)} tone="danger" />),
-    stat("f-receivable", 6, "Contas a receber", <Stat label="Contas a receber" value={formatBRL(summary.receivableCents)} tone="warning" hint={`${receivables.length} em aberto`} />),
-    stat("f-result", 9, "Sobrou no caixa no mês", <Stat label="Sobrou no caixa no mês" value={formatBRL(summary.cashResultCents)} hint="Recebido − despesas pagas" />),
+    stat("f-received", 0, "Recebido no mês", <Stat label="Recebido no mês" value={summary.receivedCents} format={formatBRL} tone="success" />),
+    stat("f-expenses", 3, "Despesas pagas no mês", <Stat label="Despesas pagas no mês" value={summary.expensesCents} format={formatBRL} tone="danger" />),
+    stat("f-receivable", 6, "Contas a receber", <Stat label="Contas a receber" value={summary.receivableCents} format={formatBRL} tone="warning" hint={`${receivables.length} em aberto`} />),
+    stat("f-result", 9, "Sobrou no caixa no mês", <Stat label="Sobrou no caixa no mês" value={summary.cashResultCents} format={formatBRL} hint="Recebido − despesas pagas" />),
     {
       id: "f-receivables",
       title: "Lista de contas a receber",

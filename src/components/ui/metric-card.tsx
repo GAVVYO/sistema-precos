@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { CountUp } from "./count-up";
 
 /** Indicador compacto: a cor identifica o card, não substitui seu rótulo. */
 export function MetricCard({ label, value, note, footer, appearance, icon, onSelect, selected }: {
@@ -17,7 +18,7 @@ export function MetricCard({ label, value, note, footer, appearance, icon, onSel
         {icon && <span className="metric-card-icon" aria-hidden="true">{icon}</span>}
       </span>
       <span className="metric-card-reading">
-        <span className="metric-card-value">{value}</span>
+        <span className="metric-card-value">{typeof value === "number" ? <CountUp value={value} /> : value}</span>
         {note && <span className="metric-card-note">{note}</span>}
       </span>
       <span className="metric-card-footer block">{footer}</span>

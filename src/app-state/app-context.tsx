@@ -2,6 +2,7 @@
 
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { withTransition } from "@/lib/view-transition";
+import { ORDER_CLOSED_EVENT } from "@/lib/born";
 import { toast } from "@/components/ui/toast";
 import { Connection, demoStore, DemoState } from "@/demo/store";
 import type {
@@ -85,9 +86,10 @@ export function AppProvider({ state, children }: { state: DemoState; children: R
       if (!src || document.querySelector("dialog[open]")) return setOpenOrderId(id);
       withTransition("open", () => { src.classList.remove("vt-hero"); setOpenOrderId(id); }, { before: () => src.classList.add("vt-hero") });
     } else {
+      const closed = () => window.dispatchEvent(new Event(ORDER_CLOSED_EVENT));
       const dest = card(openRef.current);
-      if (!dest) return setOpenOrderId(null);
-      withTransition("close", () => { setOpenOrderId(null); dest.classList.add("vt-hero"); }, { done: () => dest.classList.remove("vt-hero") });
+      if (!dest) { setOpenOrderId(null); window.setTimeout(closed, 0); return; }
+      withTransition("close", () => { setOpenOrderId(null); dest.classList.add("vt-hero"); }, { done: () => { dest.classList.remove("vt-hero"); closed(); } });
     }
   }, []);
   const [newOrder, setNewOrder] = useState<NewOrderPrefill | null>(null);

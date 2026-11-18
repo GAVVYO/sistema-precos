@@ -4,6 +4,7 @@ import { CalendarDays, CalendarPlus, CheckCircle2, CircleDollarSign, DoorOpen, P
 import Link from "next/link";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
+import { CountUp } from "@/components/ui/count-up";
 import { GuidedTour, IllusTap } from "@/components/ui/guided-tour";
 import { Badge, Button, EmptyState } from "@/components/ui/primitives";
 import type { Appointment, FinancialTransaction } from "@/domain/types";
@@ -106,7 +107,7 @@ function Payments() {
         <span className="today-icon is-money"><CircleDollarSign aria-hidden /></span>
         <div className="min-w-0 flex-1">
           <h2 id="today-payments" className="today-title">Quem falta pagar</h2>
-          <p className="today-sub">{list.length === 0 ? "Nenhum valor em aberto" : `${list.length} ${list.length === 1 ? "valor em aberto" : "valores em aberto"} · ${formatBRL(total)}`}</p>
+          <p className="today-sub">{list.length === 0 ? "Nenhum valor em aberto" : <>{list.length} {list.length === 1 ? "valor em aberto" : "valores em aberto"} · <CountUp value={total} format={formatBRL} /></>}</p>
         </div>
         {can("finance.view") && <Link href="/financeiro" className="today-link">Ver financeiro</Link>}
       </header>

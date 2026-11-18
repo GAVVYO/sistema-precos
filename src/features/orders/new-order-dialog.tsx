@@ -8,6 +8,7 @@ import { Button, Field, Input, Select, Textarea } from "@/components/ui/primitiv
 import { toast } from "@/components/ui/toast";
 import { formatBRL, formatOrderNumber, formatPhone, formatPlate, normalizePhone, normalizePlate, parseBRL } from "@/lib/format";
 import { createOrder } from "@/services/orders";
+import { markBorn } from "@/lib/born";
 import { DraftItem, draftsToItems, draftsTotal, PartsEditor, vehicleLabel } from "./shared";
 
 const SERVICE_SUGGESTIONS = [
@@ -133,6 +134,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
     );
     setBusy(false);
     if (result.ok) {
+      markBorn(result.value.id);
       toast("success", `${formatOrderNumber(result.value.number)} aberto com sucesso.`);
       onClose();
       openOrder(result.value.id);

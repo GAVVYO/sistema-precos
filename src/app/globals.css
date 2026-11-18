@@ -1298,3 +1298,16 @@ html[data-nav-switch="top"]::view-transition-new(top-nav):only-child { animation
 .pay-phone { animation-duration: 380ms; }
 .pay-receipt { animation-duration: 440ms; }
 .tour-pop { animation-duration: 200ms; }
+
+/* ---------- Números que contam (CountUp) ---------- */
+.count-up { display: inline-block; font-variant-numeric: tabular-nums; border-radius: 6px; transition: background-color 500ms ease, box-shadow 500ms ease; }
+.count-up[data-dir="up"] { background-color: color-mix(in srgb, #22c55e 20%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, #22c55e 20%, transparent); }
+.count-up[data-dir="down"] { background-color: color-mix(in srgb, var(--primary) 16%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent); }
+.metric-card .count-up[data-dir] { background-color: rgb(255 255 255 / 22%); box-shadow: 0 0 0 4px rgb(255 255 255 / 22%); }
+/* Serviço novo nasce no quadro: surge com um "pop", anel na cor da oficina e selo "Novo". */
+.order-card.just-born { position: relative; animation: card-born 620ms cubic-bezier(.34,1.56,.64,1) both, card-glow 1.4s 300ms ease-out; }
+.order-card.just-born::after { content: "Novo"; position: absolute; top: -10px; right: 12px; padding: 2px 10px; border-radius: 999px; background: var(--primary); color: var(--primary-fg); font-size: .75rem; font-weight: 800; letter-spacing: .02em; box-shadow: 0 4px 12px rgb(23 32 51 / 20%); animation: born-tag 1.4s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes card-born { 0% { opacity: 0; transform: scale(.6) translateY(-12px); } 60% { opacity: 1; transform: scale(1.05); } 100% { transform: none; } }
+@keyframes born-tag { 0% { opacity: 0; transform: scale(.3); } 25%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .order-card.just-born, .order-card.just-born::after { animation: none; } }
+html[data-motion="reduce"] .order-card.just-born, html[data-motion="reduce"] .order-card.just-born::after { animation: none; }

@@ -1,6 +1,8 @@
 "use client";
 
 import { vtName } from "@/lib/view-transition";
+import { isBorn, ORDER_CLOSED_EVENT, takeBorn } from "@/lib/born";
+import { CountUp } from "@/components/ui/count-up";
 import { GuidedTour, IllusDrag, IllusSequence, IllusTap, IllusTyping } from "@/components/ui/guided-tour";
 import {
   CollisionDetection, DndContext, DragEndEvent, pointerWithin, rectIntersection, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors,
@@ -53,6 +55,22 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
   const moveOrder = useMoveOrder();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: order.id, data: { type: "order" }, disabled: !draggable || overlay });
   const { peekId, setPeek, picked, togglePick } = useContext(PeekContext);
+
+  // Serviço recém-aberto "nasce" no quadro quando aparece de fato (sem janela por cima).
+  useEffect(() => {
+    if (overlay || !isBorn(order.id)) return;
+    const play = () => {
+      if (document.querySelector("dialog[open]") || !takeBorn(order.id)) return;
+      const el = document.querySelector<HTMLElement>(`.kanban-board [data-order-id="${order.id}"]`);
+      if (!el) return;
+      el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      el.classList.add("just-born");
+      window.setTimeout(() => el.classList.remove("just-born"), 1400);
+    };
+    const t = window.setTimeout(play, 120);
+    window.addEventListener(ORDER_CLOSED_EVENT, play);
+    return () => { window.clearTimeout(t); window.removeEventListener(ORDER_CLOSED_EVENT, play); };
+  }, [order.id, overlay]);
   const tray = useTray();
   const selected = peekId === order.id;
   const isPicked = picked.has(order.id);
@@ -167,7 +185,7 @@ function Column({ status, orders, canDrag, filtered }: { status: OrderStatus; or
     >
       <header className="kanban-head flex items-center justify-between px-3 py-2">
         <h2 className="text-sm font-semibold">{ORDER_STATUS_LABELS[status]}</h2>
-        <span className="rounded bg-surface px-2 py-0.5 text-xs font-semibold text-muted tabular-nums">{orders.length}</span>
+        <span className="rounded bg-surface px-2 py-0.5 text-xs font-semibold text-muted tabular-nums"><CountUp value={orders.length} /></span>
       </header>
       {/* Sem rolagem própria: a coluna cresce e a página rola (uma rolagem só, sem cortar a caixinha de seleção). */}
       <div className="kanban-cards flex min-h-40 flex-1 flex-col gap-3">

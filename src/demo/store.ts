@@ -78,8 +78,30 @@ function set(next: DemoState) {
   listeners.forEach((l) => l());
 }
 
+/**
+ * Outra aba (ex.: a TV da parede) recebe as mudanças feitas nesta. Só o banco é
+ * sincronizado: cada aba mantém o próprio usuário e o próprio estado de conexão.
+ */
+let syncing = false;
+function listenOtherTabs() {
+  if (syncing || typeof window === "undefined") return;
+  syncing = true;
+  window.addEventListener("storage", (e) => {
+    if (e.key !== STORAGE_KEY || !e.newValue || !state) return;
+    try {
+      const saved = JSON.parse(e.newValue) as Partial<DemoState>;
+      if (saved.db?.version !== 1) return;
+      state = { ...state, db: saved.db, lastSyncAt: saved.lastSyncAt ?? state.lastSyncAt };
+      listeners.forEach((l) => l());
+    } catch {
+      /* valor inválido de outra aba: ignora */
+    }
+  });
+}
+
 export const demoStore = {
   subscribe(listener: () => void) {
+    listenOtherTabs();
     listeners.add(listener);
     return () => listeners.delete(listener);
   },

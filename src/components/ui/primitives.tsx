@@ -1,5 +1,7 @@
 "use client";
 
+import { CountUp } from "./count-up";
+
 import { twMerge } from "tailwind-merge";
 import { Loader2 } from "lucide-react";
 import {
@@ -200,9 +202,12 @@ export function Stat({
   tone = "neutral",
   icon,
   emphasis = false,
+  format,
 }: {
   label: string;
+  /** Número rola até o valor novo quando muda (CountUp); `format` para reais etc. */
   value: ReactNode;
+  format?: (n: number) => string;
   hint?: string;
   tone?: Tone;
   icon?: ReactNode;
@@ -216,7 +221,7 @@ export function Stat({
         <span>{label}</span>
         {icon}
       </div>
-      <div className={cx("mt-1 text-2xl font-semibold tabular-nums", color)}>{value}</div>
+      <div className={cx("mt-1 text-2xl font-semibold tabular-nums", color)}>{typeof value === "number" ? <CountUp value={value} format={format} /> : value}</div>
       {hint && <div className="mt-0.5 text-xs text-muted">{hint}</div>}
     </div>
   );

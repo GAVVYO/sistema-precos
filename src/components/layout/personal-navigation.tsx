@@ -12,7 +12,7 @@ import { MoreMenu } from "@/components/ui/more-menu";
 import type { ModuleInfo } from "@/domain/permissions";
 
 /** Rótulos curtos para caber na ilha; o nome completo fica no título e no "Mais". */
-const SHORT: Partial<Record<string, string>> = { customers: "Clientes" };
+const SHORT: Partial<Record<string, string>> = { customers: "Pessoas" };
 /** Quantas abas cabem com o nome escrito: celular 4, tablet 6, notebook/desktop todas. O resto vai para "Mais". */
 const WIDTHS = ["(max-width: 767px)", "(max-width: 1099px)"];
 const visibleFor = () => (typeof window === "undefined" ? 6 : window.matchMedia(WIDTHS[0]).matches ? 4 : window.matchMedia(WIDTHS[1]).matches ? 6 : 8);

@@ -123,9 +123,17 @@ Todos os formulários seguem a linguagem do Novo serviço: **pergunta em tom de 
 - **Agenda**: dia, semana, mês e próximos. Clicar no agendamento: confirmar, cancelar, **Chegou: abrir serviço**. Mudar dia/horário: botão de calendário do cartão (ou arrastar).
 - **Estoque**: peças, **Entrada / Saída** por peça ("Chegou peça / Saiu peça / Contei o estoque", mostra "Vai ficar com"), aba **Histórico de peças** (coluna "Ficou com").
 - **Financeiro**: indicadores (inclui **Sobrou no caixa**), gráfico (com tabela acessível), recebimentos, despesas, **Entrada sem serviço**, contas a receber com **Receber**.
-- **Clientes e veículos**: busca, cadastro, serviços de cada cliente/veículo, **Novo serviço para este cliente/veículo**.
+- **Pessoas** (decisão 62): busca + abas Clientes / Funcionários / Carros em cartões. Novo cliente ou funcionário: crachá que se preenche + carimbo "Cadastro concluído". Ficha do funcionário: foto, telefone, função, acesso e permissões.
 - **Relatórios**: Serviços, Dinheiro que entrou e saiu, Contas a receber, Peças em estoque, Histórico de peças, Histórico de serviços; PDF e Excel.
-- **Configurações**: dados, logo e cores da oficina, módulos, funcionários e permissões.
+- **Configurações**: dados, logo e cores da oficina e módulos. Funcionários e permissões ficam em Pessoas.
+
+### Pessoas e crachá
+
+![Pessoas — clientes](imagens/interface/pessoas-clientes.png)
+![Pessoas — funcionários](imagens/interface/pessoas-funcionarios.png)
+![Crachá se preenchendo](imagens/interface/cracha-funcionario.png)
+![Carimbo](imagens/interface/cracha-carimbo.png)
+![Crachá de cliente](imagens/interface/cracha-cliente.png)
 
 ## 8. Recursos de "sistema operacional"
 

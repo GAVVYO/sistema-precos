@@ -2002,3 +2002,106 @@ html[data-motion="reduce"] .stage-tab.just-got, html[data-motion="reduce"] .svc-
   .osd-step[data-state="current"] { flex: 2 1 auto; }
   .osd-step:not(:last-child)::after { margin: 0 4px; min-width: 8px; }
 }
+
+/* ===== Pessoas (decisão 62) ===== */
+.person-avatar { display: inline-grid; place-items: center; flex-shrink: 0; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--tone) 14%, var(--surface)); color: var(--tone); font-weight: 800; letter-spacing: .02em; box-shadow: 0 0 0 3px var(--surface), 0 0 0 4px color-mix(in srgb, var(--tone) 22%, transparent); }
+.person-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.people-rows { margin: 0; padding: 0; list-style: none; }
+.person-row { border: 1px solid rgb(23 32 51 / 7%); border-radius: 20px; background: var(--surface); box-shadow: 0 4px 18px rgb(23 32 51 / 6%); transition: box-shadow 180ms, transform 180ms; }
+.person-row:hover, .person-row:focus-within { transform: translateY(-1px); box-shadow: 0 10px 28px rgb(23 32 51 / 10%); }
+.person-row[data-inactive] { opacity: .7; }
+.person-open { display: flex; align-items: center; gap: 18px; width: 100%; padding: 14px 20px 14px 16px; border-radius: 20px; text-align: left; }
+.person-open:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 2px; }
+.person-open > .mini-plate { margin: 4px; }
+.person-main { display: grid; flex: 1; gap: 3px; min-width: 0; }
+.person-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.0625rem; font-weight: 750; }
+.person-open:hover .person-name { color: var(--primary); }
+.person-you { font-weight: 500; color: var(--muted); }
+.person-sub { font-size: .9375rem; color: var(--muted); }
+.person-cars { display: flex; flex-shrink: 0; align-items: center; gap: 8px; }
+.person-cars .mini-plate { width: 92px; }
+.person-cars .mini-plate-text { font-size: .8125rem; }
+.person-muted { font-size: .875rem; color: var(--muted); }
+.person-go { flex-shrink: 0; padding: 0 16px; height: 40px; display: inline-grid; place-items: center; border-radius: 999px; background: var(--bg); font-size: .9375rem; font-weight: 650; color: var(--text); }
+.person-open:hover .person-go { background: var(--color-primary-soft); color: var(--primary); }
+.svc-chip.is-role { background: color-mix(in srgb, #0f766e 10%, var(--surface)); color: #0f766e; }
+.svc-chip[data-off] { color: var(--muted); }
+@media (max-width: 640px) {
+  .person-open { flex-wrap: wrap; gap: 12px; padding: 12px; }
+  .person-cars, .person-go { width: 100%; }
+  .person-go { justify-content: center; }
+  .person-name { white-space: normal; }
+}
+
+/* ===== Crachá que se preenche + carimbo ===== */
+.badge-dialog.app-dialog { max-width: 940px; border-radius: 24px; }
+.badge-dialog > div:not(header):not(footer) { background: var(--bg); }
+.badge-dialog > footer .ui-button { height: 46px; padding-inline: 22px; border-radius: 999px; font-size: 1rem; }
+.badge-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; align-items: start; }
+.badge-form { display: grid; gap: 18px; padding: 22px; border: 1px solid rgb(23 32 51 / 6%); border-radius: 20px; background: var(--surface); box-shadow: 0 4px 18px rgb(23 32 51 / 5%); }
+
+.badge-scene { position: sticky; top: 0; display: grid; justify-items: center; padding-top: 6px; }
+.badge-strap { width: 46px; height: 34px; margin-bottom: -14px; border-radius: 6px 6px 0 0; background: linear-gradient(90deg, color-mix(in srgb, var(--secondary) 85%, #000), var(--secondary) 40%, color-mix(in srgb, var(--secondary) 85%, #000)); }
+.badge-card { position: relative; display: grid; justify-items: center; width: 270px; padding: 0 0 18px; overflow: hidden; border-radius: 22px; background: var(--surface); text-align: center; box-shadow: 0 1px 0 rgb(255 255 255 / 80%) inset, 0 18px 40px -12px rgb(23 32 51 / 28%), 0 2px 6px rgb(23 32 51 / 8%); transform-origin: 50% 0; animation: badge-swing 900ms cubic-bezier(.3, 1.4, .5, 1) both; }
+@keyframes badge-swing { 0% { transform: rotate(-4deg) translateY(-8px); opacity: 0; } 60% { transform: rotate(1.2deg); opacity: 1; } 100% { transform: none; } }
+.badge-slot { position: absolute; top: 10px; left: 50%; width: 52px; height: 9px; margin-left: -26px; border-radius: 9px; background: rgb(0 0 0 / 22%); box-shadow: inset 0 1px 2px rgb(0 0 0 / 35%); z-index: 2; }
+.badge-band { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 30px 16px 46px; background: var(--secondary); color: var(--secondary-fg); }
+.badge-card[data-kind="customer"] .badge-band { background: var(--primary); color: var(--primary-fg); }
+.badge-logo { width: 26px; height: 26px; border-radius: 8px; object-fit: cover; background: rgb(255 255 255 / 15%); }
+.badge-logo.is-mark { display: grid; place-items: center; font-size: .6875rem; font-weight: 800; }
+.badge-shop { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .875rem; font-weight: 700; letter-spacing: .01em; }
+.badge-photo { display: grid; place-items: center; width: 112px; height: 112px; margin-top: -40px; overflow: hidden; border-radius: 999px; background: var(--bg); color: var(--muted); box-shadow: 0 0 0 5px var(--surface), 0 8px 20px -6px rgb(23 32 51 / 30%); }
+.badge-photo img { width: 100%; height: 100%; object-fit: cover; animation: badge-pop 420ms cubic-bezier(.3, 1.5, .5, 1) both; }
+.badge-photo[data-empty] { border: 2px dashed color-mix(in srgb, var(--muted) 40%, transparent); }
+.badge-initials { font-size: 2.25rem; font-weight: 800; color: var(--primary); animation: badge-pop 300ms ease-out both; }
+@keyframes badge-pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.badge-name { max-width: 236px; margin: 14px 12px 2px; font-size: 1.25rem; font-weight: 800; line-height: 1.2; color: var(--text); overflow-wrap: anywhere; transition: color 200ms; }
+.badge-name[data-empty] { color: color-mix(in srgb, var(--muted) 55%, transparent); font-weight: 650; }
+.badge-role { margin: 4px 0 8px; padding: 3px 12px; border-radius: 999px; background: var(--bg); font-size: .8125rem; font-weight: 700; color: var(--text); }
+.badge-line { margin: 0; font-size: .9375rem; font-variant-numeric: tabular-nums; color: var(--text); }
+.badge-line[data-empty] { color: color-mix(in srgb, var(--muted) 45%, transparent); }
+.badge-plate { margin-top: 12px; }
+.badge-noplate { font-size: .8125rem; color: var(--muted); }
+.badge-foot { margin: 14px 0 0; padding-top: 12px; width: 82%; border-top: 1px dashed var(--border); font-size: .75rem; color: var(--muted); }
+
+/* o carimbo: desce grande e girado, bate, a tinta assenta e o crachá treme */
+.badge-stamp { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 3; }
+.badge-stamp-inner { display: flex; align-items: center; gap: 8px; padding: 10px 16px 10px 12px; border: 4px double #15803d; border-radius: 12px; color: #15803d; background: rgb(255 255 255 / 55%); font: 900 1.125rem/1.05 var(--font-sans); letter-spacing: .06em; text-transform: uppercase; text-align: left; transform: rotate(-14deg); mix-blend-mode: multiply;
+  -webkit-mask-image: radial-gradient(circle at 20% 30%, #000 60%, rgb(0 0 0 / 70%) 61%, #000 75%), radial-gradient(circle at 80% 70%, #000 55%, rgb(0 0 0 / 80%) 70%);
+  mask-image: radial-gradient(circle at 20% 30%, #000 60%, rgb(0 0 0 / 70%) 61%, #000 75%), radial-gradient(circle at 80% 70%, #000 55%, rgb(0 0 0 / 80%) 70%);
+  animation: stamp-hit 520ms cubic-bezier(.2, .9, .3, 1.2) both; }
+.badge-stamp-inner svg { flex-shrink: 0; padding: 3px; border-radius: 999px; background: #15803d; color: #fff; }
+@keyframes stamp-hit { 0% { transform: rotate(-30deg) scale(2.6); opacity: 0; } 55% { transform: rotate(-12deg) scale(.92); opacity: 1; } 75% { transform: rotate(-15deg) scale(1.04); } 100% { transform: rotate(-14deg) scale(1); opacity: 1; } }
+.badge-card[data-stamped] { animation: badge-thud 360ms 260ms ease-out both; }
+@keyframes badge-thud { 0% { transform: none; } 30% { transform: translateY(3px) scale(.985); } 60% { transform: translateY(-1px) rotate(.4deg); } 100% { transform: none; } }
+.badge-card[data-stamped]::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 55%, rgb(21 128 61 / 16%), transparent 60%); animation: stamp-ink 900ms 280ms ease-out both; pointer-events: none; }
+@keyframes stamp-ink { from { opacity: 0; transform: scale(.6); } 40% { opacity: 1; } to { opacity: 0; transform: scale(1.3); } }
+
+.photo-picker { display: grid; gap: 10px; }
+.photo-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 18px; border: 1.5px dashed var(--border); border-radius: 999px; font-size: .9375rem; font-weight: 650; color: var(--primary); transition: border-color 140ms, background-color 140ms; }
+.photo-btn:hover { border-style: solid; border-color: var(--primary); background: var(--color-primary-soft); }
+.photo-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 2px; }
+.photo-btn.is-quiet { border-color: transparent; color: var(--muted); }
+
+@media (max-width: 760px) {
+  .badge-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .badge-scene { position: static; }
+  .badge-card { width: 240px; }
+  .badge-form { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .badge-card, .badge-card[data-stamped], .badge-card[data-stamped]::after, .badge-stamp-inner, .badge-photo img, .badge-initials, .person-row { animation: none !important; transition: none; } }
+html[data-motion="reduce"] :is(.badge-card, .badge-card[data-stamped], .badge-card[data-stamped]::after, .badge-stamp-inner, .badge-photo img, .badge-initials) { animation: none !important; }
+.person-avatar { color: color-mix(in srgb, var(--tone) 72%, #000); background: color-mix(in srgb, var(--tone) 12%, #fff); }
+.badge-logo.is-mark { background: rgb(255 255 255 / 94%); color: var(--secondary); }
+.badge-card[data-kind="customer"] .badge-logo.is-mark { color: var(--primary); }
+.badge-stamp { place-items: end center; padding-bottom: 54px; }
+.badge-card[data-kind="customer"] .badge-stamp { padding-bottom: 70px; }
+@media (max-width: 760px) {
+  .badge-card { width: 220px; }
+  .badge-band { padding: 24px 12px 38px; }
+  .badge-photo { width: 84px; height: 84px; margin-top: -32px; }
+  .badge-name { font-size: 1.0625rem; margin-top: 10px; }
+  .badge-foot { display: none; }
+  .badge-stamp { padding-bottom: 24px; }
+  .badge-stamp-inner { font-size: .9375rem; }
+}

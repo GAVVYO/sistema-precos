@@ -78,7 +78,7 @@ export const MODULES: ModuleInfo[] = [
   { key: "stock", label: "Estoque", href: "/estoque", anyOf: ["stock.view"] },
   { key: "finance", label: "Financeiro", href: "/financeiro", anyOf: ["finance.view"] },
   { key: "schedule", label: "Agenda", href: "/agenda", anyOf: ["schedule.manage"] },
-  { key: "customers", label: "Clientes e veículos", href: "/clientes", anyOf: ["customers.view"] },
+  { key: "customers", label: "Pessoas", href: "/clientes", anyOf: ["customers.view", "staff.manage"] },
   { key: "reports", label: "Relatórios", href: "/relatorios", anyOf: ["reports.view"] },
   {
     key: "settings",

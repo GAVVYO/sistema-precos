@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { buildSeed, DEMO_OWNER_ID, DEMO_WORKSHOP_ID, SECOND_WORKSHOP_ID } from "@/demo/seed";
 import type { Database } from "@/domain/types";
 import { todayISO } from "@/lib/format";
-import { addMember, updateMember, updateSettings } from "@/services/admin";
+import { addMember, updateMember, updateMemberProfile, updateSettings } from "@/services/admin";
 import { createAppointment } from "@/services/appointments";
 import { Ctx, DomainError, scopeTo } from "@/services/core";
 import { createExpense, financeSummary, listReceivables } from "@/services/finance";
@@ -232,6 +232,25 @@ describe("permissões", () => {
     updateMember(db, ctx(), wesley.id, { role: "mechanic", active: false, permissions: wesley.permissions });
     const order = newOrder();
     expectError(() => changeOrderStatus(db, ctx("u-wesley"), order.id, "in_progress"), "forbidden");
+  });
+});
+
+describe("crachá do funcionário", () => {
+  const PHOTO = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==";
+  it("cadastra com telefone e foto e depois edita nome, telefone e foto", () => {
+    const m = addMember(db, ctx(), { name: "João Batista", email: "joao@demo.test", role: "mechanic", phone: "(85) 99999-1111", photo: PHOTO });
+    const u = db.users.find((x) => x.id === m.userId)!;
+    expect(u.phone).toBe("85999991111");
+    expect(u.photo).toBe(PHOTO);
+    updateMemberProfile(db, ctx(), m.id, { name: "João B. Lima", phone: "", photo: null });
+    expect(u.name).toBe("João B. Lima");
+    expect(u.phone).toBe("");
+    expect(u.photo).toBeNull();
+  });
+  it("recusa foto que não é imagem e quem não gerencia funcionários", () => {
+    const m = addMember(db, ctx(), { name: "Pedro", email: "pedro@demo.test", role: "mechanic" });
+    expectError(() => updateMemberProfile(db, ctx(), m.id, { name: "Pedro", photo: "javascript:alert(1)" }), "validation");
+    expectError(() => updateMemberProfile(db, ctx("u-raimundo"), m.id, { name: "Pedro" }), "forbidden");
   });
 });
 

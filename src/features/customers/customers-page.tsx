@@ -102,7 +102,7 @@ function VehicleForm({ customerId, vehicle, onDone }: { customerId: ID; vehicle:
   );
 }
 
-function CustomerDialog({ customer, onClose }: { customer: Customer | null; onClose: () => void }) {
+export function CustomerDialog({ customer, onClose }: { customer: Customer | null; onClose: () => void }) {
   const { view, act, can, online, openOrder, openNewOrder } = useApp();
   const [name, setName] = useState(customer?.name ?? "");
   const [phone, setPhone] = useState(customer ? formatPhone(customer.phone) : "");
@@ -192,7 +192,7 @@ function CustomerDialog({ customer, onClose }: { customer: Customer | null; onCl
   );
 }
 
-function VehicleDialog({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => void }) {
+export function VehicleDialog({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => void }) {
   const { view, can, online, customerOf, openOrder, openNewOrder } = useApp();
   const [editing, setEditing] = useState(false);
   const orders = view.orders.filter((o) => o.vehicleId === vehicle.id).sort((a, b) => b.openedAt.localeCompare(a.openedAt));

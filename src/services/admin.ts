@@ -86,11 +86,43 @@ export function updateMember(db: Database, ctx: Ctx, membershipId: ID, input: Me
   target.permissions = ALL_PERMISSIONS.filter((p) => data.permissions.includes(p));
 }
 
+/** Foto do crachá: imagem pequena embutida (data URL), até ~300 KB. */
+const photoSchema = z
+  .string()
+  .regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/, "Foto inválida.")
+  .max(400_000, "Foto grande demais. Escolha outra.")
+  .nullable()
+  .optional();
+const memberPhoneSchema = z
+  .string()
+  .optional()
+  .refine((v) => !v || v.trim() === "" || normalizePhone(v) !== null, "Telefone inválido. Use DDD + número.");
+
 const newMemberSchema = z.object({
   name: z.string().trim().min(2, "Informe o nome do funcionário."),
-  email: z.string().trim().toLowerCase().email("E-mail inválido."),
+  email: z.string().trim().toLowerCase().email("E-mail inválido. Ex.: joao@oficina.com"),
   role: z.enum(["owner", "receptionist", "mechanic", "financial"]),
+  phone: memberPhoneSchema,
+  photo: photoSchema,
 });
+
+const profileSchema = z.object({
+  name: z.string().trim().min(2, "Informe o nome do funcionário."),
+  phone: memberPhoneSchema,
+  photo: photoSchema,
+});
+
+/** Nome, telefone e foto do funcionário (o crachá). Acesso continua em updateMember. */
+export function updateMemberProfile(db: Database, ctx: Ctx, membershipId: ID, input: z.input<typeof profileSchema>): void {
+  assertCan(db, ctx, "staff.manage");
+  const data = parse(profileSchema, input);
+  const target = findScoped(db.memberships, ctx, membershipId, "Funcionário não encontrado.");
+  const user = db.users.find((u) => u.id === target.userId);
+  if (!user) throw new DomainError("not_found", "Funcionário não encontrado.");
+  user.name = data.name;
+  user.phone = data.phone ? normalizePhone(data.phone) ?? "" : "";
+  if (data.photo !== undefined) user.photo = data.photo;
+}
 
 export function addMember(db: Database, ctx: Ctx, input: z.input<typeof newMemberSchema>): WorkshopMembership {
   assertCan(db, ctx, "staff.manage");
@@ -108,6 +140,8 @@ export function addMember(db: Database, ctx: Ctx, input: z.input<typeof newMembe
     user = { id: newId(), name: data.name, email: data.email };
     db.users.push(user);
   }
+  if (data.phone) user.phone = normalizePhone(data.phone) ?? "";
+  if (data.photo) user.photo = data.photo;
   const membership: WorkshopMembership = {
     id: newId(),
     workshopId: ctx.workshopId,

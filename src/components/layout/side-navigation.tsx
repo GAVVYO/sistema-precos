@@ -22,7 +22,7 @@ import { NAV_ICONS } from "./personal-navigation";
 
 export type NavMode = "top" | "side";
 /** Nomes curtos para a barra recolhida (o nome completo fica no título e no leitor de tela). */
-const COMPACT: Partial<Record<string, string>> = { customers: "Clientes", settings: "Ajustes", finance: "Financeiro", reports: "Relatórios" };
+const COMPACT: Partial<Record<string, string>> = { customers: "Pessoas", settings: "Ajustes", finance: "Financeiro", reports: "Relatórios" };
 const EVENT = "gavyo-navigation";
 const WIDE = "(min-width: 1100px)";
 

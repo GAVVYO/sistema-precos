@@ -1,27 +1,19 @@
 "use client";
 
-import { ImageUp, Trash2, UserPlus } from "lucide-react";
+import { ImageUp, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
+import { IdentificationBadge } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useApp } from "@/app-state/app-context";
-import { ChoiceGroup } from "@/components/ui/choice";
-import { Dialog } from "@/components/ui/dialog";
-import { Badge, Button, Card, CardHeader, Field, Input, PageHeader, Tabs } from "@/components/ui/primitives";
+import { Button, Card, CardHeader, Field, Input, PageHeader } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { contrastOn } from "@/lib/theme";
-import { ALL_PERMISSIONS, MODULES, PERMISSIONS, ROLE_LABELS, ROLE_TEMPLATES } from "@/domain/permissions";
-import type { ModuleKey, PermissionKey, Role, WorkshopMembership } from "@/domain/types";
+import { MODULES } from "@/domain/permissions";
+import type { ModuleKey } from "@/domain/types";
 import { formatPhone } from "@/lib/format";
-import { addMember, updateMember, updateSettings } from "@/services/admin";
+import { updateSettings } from "@/services/admin";
 
-const ROLES = Object.keys(ROLE_LABELS) as Role[];
-const ROLE_HINTS: Record<Role, string> = {
-  owner: "Vê e faz tudo",
-  receptionist: "Balcão, agenda e receber",
-  mechanic: "Os carros do quadro",
-  financial: "Dinheiro e contas",
-};
-const roleOptions = (canOwner: boolean) => ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r], hint: ROLE_HINTS[r], disabled: r === "owner" && !canOwner }));
 const DEFAULT_COLORS = { primary: "#2563EB", secondary: "#172033" };
 const PRIMARY_PRESETS = ["#2563EB", "#0F766E", "#B45309", "#BE123C", "#6D28D9", "#15803D"];
 
@@ -139,155 +131,20 @@ function WorkshopSettingsForm() {
   );
 }
 
-function MemberDialog({ member, onClose }: { member: WorkshopMembership; onClose: () => void }) {
-  const { act, online, userOf, user, membership: mine } = useApp();
-  const [role, setRole] = useState<Role>(member.role);
-  const [active, setActive] = useState(member.active);
-  const [permissions, setPermissions] = useState<PermissionKey[]>(member.permissions);
-  const isSelf = member.userId === user.id;
-  const target = userOf(member.userId);
-  const groups = [...new Set(PERMISSIONS.map((p) => p.group))];
-  const toggle = (key: PermissionKey, on: boolean) => setPermissions(on ? [...permissions, key] : permissions.filter((p) => p !== key));
-  // Só é possível conceder o que o próprio operador possui (regra repetida no serviço).
-  const grantable = (key: PermissionKey) => member.permissions.includes(key) || mine.permissions.includes(key);
-
-  return (
-    <Dialog
-      title={`Acesso de ${target?.name ?? "funcionário"}`}
-      subtitle={target?.email}
-      onClose={onClose}
-      footer={
-        <>
-          <Button onClick={onClose}>Cancelar</Button>
-          <Button
-            variant="primary"
-            disabled={!online || isSelf}
-            onClick={() => {
-              const r = act((db, ctx) => updateMember(db, ctx, member.id, { role, active, permissions }), "Permissões atualizadas.");
-              if (r.ok) onClose();
-            }}
-          >
-            Salvar permissões
-          </Button>
-        </>
-      }
-    >
-      {isSelf && <p className="mb-3 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">Você não pode alterar o seu próprio acesso. Peça a outro proprietário.</p>}
-      <fieldset disabled={isSelf} className="space-y-4">
-        <ChoiceGroup label="Qual a função?" value={role} onChange={setRole} options={roleOptions(mine.role === "owner")} columns={2} hint="A função traz as permissões prontas; dá para ajustar abaixo." />
-        <ChoiceGroup label="Pode entrar no sistema?" value={active ? "1" : "0"} onChange={(v) => setActive(v === "1")} columns={2} options={[{ value: "1", label: "Sim, ativo" }, { value: "0", label: "Não, sem acesso" }]} />
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => setPermissions(ROLE_TEMPLATES[role].filter(grantable))}>Aplicar modelo de {ROLE_LABELS[role]}</Button>
-          <Button size="sm" variant="ghost" onClick={() => setPermissions([])}>Remover todas</Button>
-        </div>
-        <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-          {groups.map((g) => (
-            <div key={g}>
-              <p className="mb-1 text-xs font-semibold text-muted uppercase">{g}</p>
-              {PERMISSIONS.filter((p) => p.group === g).map((p) => (
-                <label key={p.key} className="flex items-center gap-2 py-0.5 text-sm">
-                  <input type="checkbox" className="size-4 accent-(--primary)" checked={permissions.includes(p.key)} disabled={!grantable(p.key)} onChange={(e) => toggle(p.key, e.target.checked)} />
-                  {p.label}
-                </label>
-              ))}
-            </div>
-          ))}
-        </div>
-      </fieldset>
-    </Dialog>
-  );
-}
-
-function NewMemberDialog({ onClose }: { onClose: () => void }) {
-  const { act, online, membership } = useApp();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<Role>("mechanic");
-  return (
-    <Dialog
-      title="Novo funcionário"
-      subtitle="Na demonstração o acesso é fictício. No ambiente real, a GAVYO entrega os acessos iniciais."
-      size="sm"
-      onClose={onClose}
-      footer={
-        <>
-          <Button onClick={onClose}>Cancelar</Button>
-          <Button
-            variant="primary"
-            disabled={!online}
-            onClick={() => {
-              const r = act((db, ctx) => addMember(db, ctx, { name, email, role }), "Funcionário adicionado com as permissões do cargo.");
-              if (r.ok) onClose();
-            }}
-          >
-            Adicionar funcionário
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-4">
-        <Field label="Nome">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoFocus />}</Field>
-        <Field label="E-mail">{(p) => <Input {...p} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />}</Field>
-        <ChoiceGroup label="Qual a função?" value={role} onChange={setRole} options={roleOptions(membership.role === "owner")} columns={2} />
-      </div>
-    </Dialog>
-  );
-}
-
-function StaffPanel() {
-  const { view, userOf, user, online } = useApp();
-  const [editing, setEditing] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
-  const member = view.memberships.find((m) => m.id === editing);
-  return (
-    <Card>
-      <CardHeader
-        title="Usuários e permissões"
-        subtitle="Cada funcionário parte do modelo do cargo e pode ter permissões ajustadas individualmente."
-        actions={<Button variant="primary" icon={<UserPlus className="size-4" aria-hidden />} disabled={!online} onClick={() => setAdding(true)}>Novo funcionário</Button>}
-      />
-      <table className="data-table">
-        <thead><tr><th>Nome</th><th>E-mail</th><th>Cargo</th><th>Situação</th><th>Permissões</th><th className="text-right">Ações</th></tr></thead>
-        <tbody>
-          {view.memberships.map((m) => {
-            const u = userOf(m.userId);
-            const template = ROLE_TEMPLATES[m.role];
-            const custom = m.permissions.length !== template.length || m.permissions.some((p) => !template.includes(p));
-            return (
-              <tr key={m.id}>
-                <td className="font-medium">{u?.name}{m.userId === user.id && <span className="ml-1.5 text-xs font-normal text-muted">(você)</span>}</td>
-                <td>{u?.email}</td>
-                <td>{ROLE_LABELS[m.role]}</td>
-                <td>{m.active ? <Badge tone="success">Ativo</Badge> : <Badge tone="neutral">Inativo</Badge>}</td>
-                <td>
-                  {m.permissions.length} de {ALL_PERMISSIONS.length}
-                  {custom && <span className="ml-1.5"><Badge tone="info">Personalizado</Badge></span>}
-                </td>
-                <td className="text-right"><Button size="sm" onClick={() => setEditing(m.id)}>Gerenciar acesso</Button></td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      {member && <MemberDialog key={member.id} member={member} onClose={() => setEditing(null)} />}
-      {adding && <NewMemberDialog onClose={() => setAdding(false)} />}
-    </Card>
-  );
-}
-
 export function SettingsPage() {
   const { can, settings } = useApp();
-  const tabs = [
-    ...(can("settings.manage") ? [{ value: "workshop" as const, label: "Oficina e identidade visual" }] : []),
-    ...(can("staff.manage") ? [{ value: "staff" as const, label: "Usuários e permissões" }] : []),
-  ];
-  const [tab, setTab] = useState<"workshop" | "staff">(tabs[0]?.value ?? "workshop");
+  // Funcionários e permissões foram para Pessoas (decisão 62).
   return (
     <div className="module-page module-settings">
       <PageHeader title="Configurações" description={`Personalização e acessos de ${settings.displayName}.`} />
-      <div className="mb-4"><Tabs label="Seções de configuração" value={tab} onChange={setTab} tabs={tabs} /></div>
-      {tab === "workshop" && can("settings.manage") && <WorkshopSettingsForm key={settings.workshopId} />}
-      {tab === "staff" && can("staff.manage") && <StaffPanel />}
+      {can("staff.manage") && (
+        <Link href="/clientes" className="rail-line mb-4">
+          <IdentificationBadge size={22} weight="duotone" aria-hidden />
+          <span><strong>Funcionários e permissões</strong> agora ficam em Pessoas › Funcionários.</span>
+          <span className="rail-line-go">Abrir →</span>
+        </Link>
+      )}
+      {can("settings.manage") && <WorkshopSettingsForm key={settings.workshopId} />}
     </div>
   );
 }

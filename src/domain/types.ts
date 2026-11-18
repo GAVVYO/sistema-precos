@@ -69,6 +69,10 @@ export interface User {
   id: ID;
   name: string;
   email: string;
+  /** Telefone (só dígitos), opcional. */
+  phone?: string;
+  /** Foto do crachá (data URL JPEG pequeno, ~256 px), opcional. */
+  photo?: string | null;
 }
 
 export interface WorkshopMembership {

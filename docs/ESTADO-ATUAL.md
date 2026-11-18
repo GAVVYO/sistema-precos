@@ -30,6 +30,7 @@
 | (18/11) | **Serviços: uma tela por etapa** (estilo da navegação, abas estilo iPhone, ícones Phosphor duotone) — abas Aguardando / Em andamento / Pronto no lugar do quadro de colunas (decisão 59) |
 | (18/11) | **Ficha do serviço** em duas colunas com caminho do serviço clicável; clicar no carro abre a ficha, sem painel lateral (decisão 60) |
 | (18/11) | Correção: cabeçalho tremendo em página curta (decisão 61) |
+| (18/11) | **Pessoas** (clientes, funcionários e carros) com crachá que se preenche e carimbo "Cadastro concluído"; foto do funcionário (decisão 62) |
 
 ### Validação vigente
 
@@ -37,7 +38,7 @@
 
 ### Pendente / próximos
 
-- **Auditoria leiga, itens 4–6:** Estoque e Clientes em cartões; Financeiro em frase; Agenda no Dia, busca única, editar no lugar, Configurações.
+- **Auditoria leiga, itens 4–6:** Estoque em cartões (Clientes já virou Pessoas); Financeiro em frase; Agenda no Dia, busca única, editar no lugar, Configurações.
 
 - **Teste com uma pessoa real** (roteiro em [validacao/SEM-TREINO-20261117.md](validacao/SEM-TREINO-20261117.md)).
 - **Escolhidos pelo usuário, ainda não feitos:** texto 12 → 14 px.

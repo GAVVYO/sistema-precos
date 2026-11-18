@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { colors } from "@/theme";
 
-/** Pilha nativa na raiz. As abas (Hoje · Serviços · Pessoas · Conta) entram na E1/E4. */
+/** Pilha nativa: abas na base; ficha empilhada; tarefas com passos como janela que sobe (regras §4). */
 export default function RootLayout() {
   return (
     <>
@@ -13,10 +13,14 @@ export default function RootLayout() {
           headerTitleStyle: { color: colors.text, fontWeight: "700" },
           headerStyle: { backgroundColor: colors.background },
           headerShadowVisible: false,
+          headerBackTitle: "Voltar",
           contentStyle: { backgroundColor: colors.background },
         }}
       >
-        <Stack.Screen name="index" options={{ title: "GAVYO Auto" }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="servico/[id]" options={{ title: "Serviço" }} />
+        <Stack.Screen name="novo-servico" options={{ title: "Novo serviço", presentation: "modal" }} />
+        <Stack.Screen name="receber/[id]" options={{ title: "Receber", presentation: "modal" }} />
       </Stack>
     </>
   );

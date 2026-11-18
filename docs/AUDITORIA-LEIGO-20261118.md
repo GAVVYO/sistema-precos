@@ -41,6 +41,6 @@ Receitas recebidas → **Entrou** · Despesas pagas → **Saiu** · Contas a rec
 3. ✅ **Hoje enxuto** (G1) — virou o pátio em 18/11 (decisão 58).
 4. **Estoque e Clientes em cartões** (G2–G4).
 5. **Financeiro em frase** + palavras (G5, seção 3).
-6. **Agenda no Dia** (G6), busca única em Serviços (G7), editar no lugar (F7), Configurações (G9).
+6. **Agenda no Dia** (G6), ✅ busca única em Serviços (G7, decisão 59), editar no lugar (F7), Configurações (G9).
 
 Cada passo validado com a simulação sem treino (`docs/validacao/simular-sem-treino.js`) e axe.

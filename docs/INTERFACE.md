@@ -55,19 +55,20 @@ Decisão 58. A tela responde **"que carros estão aqui e o que cada um precisa a
 ![Hoje — mecânico](imagens/interface/hoje-mecanico.png)
 ![Hoje — celular](imagens/interface/hoje-patio-celular.png)
 
-## 4. Serviços (quadro)
+## 4. Serviços (uma tela por etapa)
 
-- Três colunas: **Aguardando → Em andamento → Pronto**. Só a página rola (as colunas crescem), com folga no fim.
-- Cada cartão: número, total, cliente, carro e placa, o que foi pedido, situação do pagamento, responsável e o **botão da próxima etapa** (**Começar**, **Marcar como pronto**, **Receber**). Ao clicar, o **cartão voa até a nova coluna** e brilha (animação 1).
-- **Clicar no cartão** abre o resumo ao lado (painel). No painel: lançar peça com **+** / **−**, **mão de obra: clique no valor e digite**, responsável, **Ver serviço completo** e o botão da próxima etapa.
-- **Ver serviço completo**: a janela **cresce a partir do cartão** (animação 3). Nela: peças, histórico, **Mudar etapa**, **Editar**, **Receber**, **Gerar PDF**, **WhatsApp** (orçamento/atualização) e **Cancelar serviço**.
-- Busca da página, filtro por data e faixa de responsáveis (clicar filtra; soltar um cartão atribui).
-- Extras (atalhos): arrastar o cartão pela alça ⋮⋮; **caixinha** no canto do cartão para marcar vários (barra com **Mover para / Passar para / Guardar na bandeja / Desmarcar todos**); menu **⋯** do cartão; tecla X; Ctrl/⌘+clique.
-- **Cancelados (n)** lista os serviços cancelados, só para consulta.
-- Serviço recém-aberto **nasce no quadro** (pop, anel e selo "Novo") quando o cartão aparece de verdade; contadores das colunas rolam até o número novo.
+Decisão 59. No lugar das três colunas, **três abas grandes**: **Aguardando · Em andamento · Pronto**, cada uma com o número de carros e uma frase ("1 sem ninguém", "2 faltam receber"). ← → trocam de aba pelo teclado.
 
-![Quadro de serviços](imagens/interface/servicos-quadro.png)
-![Celular](imagens/interface/celular-servicos.png)
+- Cada carro é uma **linha larga de vidro**: placa desenhada, carro · cliente, serviço, nº, responsável e há quanto tempo; à direita o valor, **um botão** (Começar / Marcar como pronto / Receber) e "⋯". Clique abre o painel ao lado; duplo clique, o serviço completo.
+- **Pronto** separa **Falta receber** e **Pagos e entregues**.
+- Ao clicar no botão, a linha **voa até a aba** da próxima etapa e a aba pula com o número novo.
+- **Busca** e **Filtrar** (aberto quando, quem está fazendo, ver cancelados). Se a busca achar o carro em outra etapa: "Achamos 1 em Pronto →".
+- Atalhos que continuam: arrastar (pela alça que aparece ao passar o mouse) e soltar numa aba ou num responsável; selecionar vários (caixinha, X, Ctrl/⌘+clique); bandeja.
+- Fundo em degradê muda de cor com a etapa (âmbar, azul, verde).
+
+![Serviços — Aguardando](imagens/interface/servicos-aguardando.png)
+![Serviços — Pronto](imagens/interface/servicos-pronto.png)
+![Serviços — celular](imagens/interface/servicos-celular.png)
 
 ## 5. Receber
 

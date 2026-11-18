@@ -26,7 +26,8 @@
 | (18/11) | Serviço novo nasce no quadro, números que contam, **modo TV da parede** (`/tv`) |
 | `294afa4` | Auditoria leiga ([AUDITORIA-LEIGO-20261118.md](AUDITORIA-LEIGO-20261118.md)) item 1 — **Novo serviço passo a passo** |
 | `64badb4` | Item 2 — **formulários com escolhas em botões**, dia/hora por atalhos, opcionais em "Mais detalhes" (decisão 57) |
-| (18/11) | Item 3 — **Hoje vira o pátio**: carros por etapa com placa desenhada e um botão; mecânico só vê os carros dele (decisão 58) |
+| `52c95ef` | Item 3 — **Hoje vira o pátio**: carros por etapa com placa desenhada e um botão; mecânico só vê os carros dele (decisão 58) |
+| (18/11) | **Serviços: uma tela por etapa, em vidro** — abas Aguardando / Em andamento / Pronto no lugar do quadro de colunas (decisão 59) |
 
 ### Validação vigente
 
@@ -37,7 +38,7 @@
 - **Auditoria leiga, itens 4–6:** Estoque e Clientes em cartões; Financeiro em frase; Agenda no Dia, busca única, editar no lugar, Configurações.
 
 - **Teste com uma pessoa real** (roteiro em [validacao/SEM-TREINO-20261117.md](validacao/SEM-TREINO-20261117.md)).
-- **Escolhidos pelo usuário, ainda não feitos:** quadro no celular por abas (Aguardando / Em andamento / Pronto); texto 12 → 14 px.
+- **Escolhidos pelo usuário, ainda não feitos:** texto 12 → 14 px.
 - **Sugeridos, não escolhidos:** texto de 12 px → 14 px (item 14 da auditoria); peça voa para o serviço; agendamento voa de dia; catálogo de serviços para o cliente (página pública + link no WhatsApp).
 - ✅ Selo "1 Issue" do Next no modo de desenvolvimento: era a extensão da BRy (assinatura digital) colocando atributos `data-bry-content-script-*` no `<html>`; resolvido com `suppressHydrationWarning` em `<html>` e `<body>` (vale só para os atributos desses dois elementos).
 

@@ -79,7 +79,7 @@ export function AppProvider({ state, children }: { state: DemoState; children: R
   useEffect(() => { openRef.current = openOrderId; }, [openOrderId]);
   // O cartão (ou o botão clicado) cresce e vira a janela do serviço; ao fechar, ela encolhe de volta.
   const openOrder = useCallback((id: ID | null) => {
-    const card = (oid: ID | null) => (oid ? document.querySelector<HTMLElement>(`.kanban-board [data-order-id="${oid}"]`) : null);
+    const card = (oid: ID | null) => (oid ? document.querySelector<HTMLElement>(`.svc-list [data-order-id="${oid}"]`) : null);
     if (id) {
       const active = document.activeElement;
       const src = card(id) ?? (active instanceof HTMLElement && active !== document.body && !active.closest("dialog") ? active : null);

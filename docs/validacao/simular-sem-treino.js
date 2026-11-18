@@ -65,8 +65,9 @@ const ROLE = process.argv[3] || 'Proprietário';
   const card = p.locator('.order-card', { hasText: 'João Batista Lima' });
   await click(card.getByRole('button', { name: 'Começar' }), 'Começar');
   await p.screenshot({ path: OUT + TAG + '-2-comecou.png' });
-  const moved = await p.locator('[aria-label^="Em andamento"] .order-card', { hasText: 'João Batista Lima' }).count();
-  done(moved > 0, '(cartão foi para Em andamento)');
+  await click(p.getByRole('tab', { name: /Em andamento/ }), 'aba Em andamento');
+  const moved = await p.locator('.svc-list .order-card', { hasText: 'João Batista Lima' }).count();
+  done(moved > 0, '(carro foi para a aba Em andamento)');
   await axe('Serviços');
 
   // 3) Receber: um carro pronto, cliente veio buscar.

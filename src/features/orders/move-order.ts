@@ -6,29 +6,23 @@ import { ORDER_STATUS_LABELS } from "@/domain/labels";
 import type { OrderStatus, ServiceOrder } from "@/domain/types";
 import { formatOrderNumber } from "@/lib/format";
 import { canChangeStatus, changeOrderStatus } from "@/services/orders";
-import { vtName, withTransition } from "@/lib/view-transition";
+import { withTransition } from "@/lib/view-transition";
 
-/** Cartão voa da coluna atual para a nova, assenta e brilha ao chegar. */
-function animateCardMove(orderId: string, nextLabel: string, run: () => void) {
-  const name = vtName("card", orderId);
-  const style = document.createElement("style");
-  style.textContent = `::view-transition-group(${name}){z-index:20;animation-duration:380ms;animation-timing-function:cubic-bezier(.34,1.25,.64,1)}::view-transition-old(${name}){animation:none;opacity:0}::view-transition-new(${name}){animation:card-land 380ms cubic-bezier(.34,1.25,.64,1) both}`;
-  // Só as duas colunas envolvidas entram na animação (menos "fotos" = troca mais leve).
-  const cols: Element[] = [];
-  const mark = (el: Element | null | undefined) => { if (el) { el.setAttribute("data-vt-col", ""); cols.push(el); } };
-  withTransition("move", run, {
-    before: () => {
-      document.head.appendChild(style);
-      mark(document.querySelector(`.kanban-board [data-order-id="${orderId}"]`)?.closest(".kanban-column"));
-    },
-    after: () => mark(document.querySelector(`.kanban-board .kanban-column[aria-label^="${nextLabel}:"]`)),
+/**
+ * O carro sai da lista da etapa e voa até a aba da próxima etapa (como um e-mail
+ * que vai para a pasta no Mail); a aba pula e mostra o número novo.
+ */
+function animateToTab(orderId: string, next: string, run: () => void) {
+  const row = document.querySelector<HTMLElement>(`.svc-list [data-order-id="${orderId}"]`);
+  const tab = document.querySelector<HTMLElement>(`.stage-tab[data-stage="${next}"]`);
+  if (!row || !tab) return run();
+  withTransition("totab", run, {
+    before: () => { row.style.setProperty("view-transition-name", "svc-fly"); },
+    after: () => { tab.style.setProperty("view-transition-name", "svc-fly"); },
     done: () => {
-      style.remove();
-      cols.forEach((c) => c.removeAttribute("data-vt-col"));
-      const card = document.querySelector<HTMLElement>(`.kanban-board [data-order-id="${orderId}"]`);
-      if (!card) return;
-      card.classList.add("just-moved");
-      window.setTimeout(() => card.classList.remove("just-moved"), 1100);
+      tab.style.removeProperty("view-transition-name");
+      tab.classList.add("just-got");
+      window.setTimeout(() => tab.classList.remove("just-got"), 700);
     },
   });
 }
@@ -58,8 +52,8 @@ export function useMoveOrder() {
     const run = () => { res = act((d, c) => changeOrderStatus(d, c, order.id, next)); };
     // O cartão "anda" até a próxima coluna (no arraste ele já está na mão: sem animação).
     if (opts.animate !== false && document.querySelector(`.yard [data-order-id="${order.id}"]`)) animateYardMove(order.id, run);
-    else if (opts.animate === false || !document.querySelector(`.kanban-board [data-order-id="${order.id}"]`)) run();
-    else animateCardMove(order.id, ORDER_STATUS_LABELS[next], run);
+    else if (opts.animate !== false && document.querySelector(`.svc-list [data-order-id="${order.id}"]`)) animateToTab(order.id, next, run);
+    else run();
     if (!res.ok) return;
     const undoable = canChangeStatus(db, { workshopId: order.workshopId, userId: user.id }, next, from);
     toast(

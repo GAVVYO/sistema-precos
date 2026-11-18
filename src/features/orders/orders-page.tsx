@@ -7,29 +7,26 @@ import { GuidedTour, IllusDrag, IllusSequence, IllusTap, IllusTyping } from "@/c
 import {
   CollisionDetection, DndContext, DragEndEvent, pointerWithin, rectIntersection, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors,
 } from "@dnd-kit/core";
-import { ArrowRight, Check, CheckSquare, ClipboardList, ExternalLink, GripVertical, Inbox, Search, SearchX, User, UserCheck } from "lucide-react";
+import { ArrowRight, Check, CheckCircle2, CheckSquare, ClipboardList, Clock3, ExternalLink, GripVertical, Inbox, Search, SearchX, SlidersHorizontal, User, UserCheck, Wrench } from "lucide-react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
-import { Button, cx, EmptyState, Input, PageHeader, Select } from "@/components/ui/primitives";
+import { Button, cx, EmptyState, PageHeader } from "@/components/ui/primitives";
+import { ChoiceGroup } from "@/components/ui/choice";
 import { MoreMenu, type MoreMenuItem } from "@/components/ui/more-menu";
 import { TrayDock, useTray } from "@/components/layout/tray";
 import { ORDER_STATUS_LABELS, ORDER_STATUSES } from "@/domain/labels";
 import type { ID, OrderStatus, ServiceOrder } from "@/domain/types";
-import { addDays, dateOf, formatDate, formatOrderNumber, formatPlate, todayISO } from "@/lib/format";
-import { canChangeStatus, orderTotals } from "@/services/orders";
+import { addDays, dateOf, formatDate, formatOrderNumber, todayISO } from "@/lib/format";
+import { canChangeStatus, orderTotals, paymentSituation } from "@/services/orders";
 import { useMoveOrder } from "./move-order";
 import { useOrderActions } from "./order-actions";
 import { MechanicStrip, OrderPeek, PartDragPreview } from "./order-peek";
 import { usePref } from "@/lib/prefs";
 import { QuickOrderAction } from "./quick-order-action";
-import { orderTotalText, PaymentBadge, vehicleLabel } from "./shared";
+import { orderTotalText, vehicleLabel } from "./shared";
+import { MiniPlate, sinceShop } from "@/features/dashboard/yard";
 
-const COLUMN_ACCENT: Record<OrderStatus, string> = {
-  waiting: "kanban-waiting",
-  in_progress: "kanban-active",
-  done: "kanban-done",
-};
 
 /**
  * Alvos pequenos (chips de mecânico) precisam do ponteiro, não do retângulo do
@@ -61,7 +58,7 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
     if (overlay || !isBorn(order.id)) return;
     const play = () => {
       if (document.querySelector("dialog[open]") || !takeBorn(order.id)) return;
-      const el = document.querySelector<HTMLElement>(`.kanban-board [data-order-id="${order.id}"]`);
+      const el = document.querySelector<HTMLElement>(`.svc-list [data-order-id="${order.id}"]`);
       if (!el) return;
       el.scrollIntoView({ block: "nearest", behavior: "smooth" });
       el.classList.add("just-born");
@@ -97,21 +94,22 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
     })),
   ];
 
-  // Cartão enxuto (referência: Linear/GitHub Projects): identificação, cliente, veículo e
-  // serviço; uma ação principal visível; mover e detalhes no menu "⋯". Clicar no cartão abre a OS.
+  // Linha larga (referências: Apple Mail/Lembretes, Linear): placa desenhada, carro e cliente,
+  // o serviço e uma ação principal. Arrastar, selecionar e "⋯" aparecem ao passar o mouse.
   return (
     <article
       ref={overlay ? undefined : setNodeRef}
       data-order-id={overlay ? undefined : order.id}
       data-tour={overlay ? undefined : "card"}
+      data-status={order.status}
       style={overlay ? undefined : ({ ["--vt" as string]: vtName("card", order.id) })}
       className={cx(
-        "order-card order-card-compact rounded-md border border-line bg-surface text-sm",
+        "order-card svc-row",
         selected && !overlay && "is-selected",
         isPicked && !overlay && "is-picked",
         !overlay && "order-enter",
         isDragging && !overlay && "opacity-40",
-        overlay && "rotate-1 shadow-xl",
+        overlay && "is-overlay",
       )}
     >
       {!overlay && (
@@ -119,89 +117,98 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
           {isPicked && <Check className="size-3.5" aria-hidden />}
         </button>
       )}
-      <div className="flex items-start gap-1">
-        {draggable && (
-          <button
-            type="button"
-            className="-ml-1.5 flex size-6 shrink-0 cursor-grab touch-none items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-ink active:cursor-grabbing"
-            aria-label={`Arrastar ${number}`}
-            data-tour="drag"
-            {...listeners}
-            {...attributes}
-          >
-            <GripVertical className="size-4" aria-hidden />
-          </button>
-        )}
-        <button type="button" className="min-w-0 flex-1 rounded text-left" aria-label={`Ver ${number}, ${customer}, no painel ao lado`} aria-expanded={selected} onClick={(e) => {
-            if (e.ctrlKey || e.metaKey || e.shiftKey) togglePick(order.id);
-            else setPeek(selected ? null : order.id);
-          }}
-          onKeyDown={(e) => {
-            if (e.key.toLowerCase() === "x" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); togglePick(order.id); }
-          }}
-          onDoubleClick={() => openOrder(order.id)}>
-          <span className="flex items-baseline justify-between gap-2">
-            <span className="shrink-0 font-semibold whitespace-nowrap text-primary">{number}</span>
-            <span className="text-right font-semibold tabular-nums">{orderTotalText(totals)}</span>
-          </span>
-          <span className="mt-0.5 block truncate font-medium">{customer}</span>
-          <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted">
-            <span className="truncate">{vehicleLabel(vehicle)}</span>
-            <span className="vehicle-plate shrink-0">{vehicle ? formatPlate(vehicle.plate) : ""}</span>
-          </span>
-          <span className="mt-1.5 block truncate" title={order.description}>{order.description}</span>
+      {draggable && (
+        <button type="button" className="svc-grip" aria-label={`Arrastar ${number}`} title="Arraste para outra etapa (nas abas) ou para um responsável" data-tour="drag" {...listeners} {...attributes}>
+          <GripVertical className="size-4" aria-hidden />
         </button>
-      </div>
-      <div className="mt-2 flex items-center gap-2">
-        <PaymentBadge order={order} />
-        <span className="flex min-w-0 flex-1 items-center gap-1 text-xs text-muted">
-          <User className="size-3.5 shrink-0" aria-hidden />
-          <span className="truncate">{mechanic}</span>
-          <span className="shrink-0">· {formatDate(order.openedAt).slice(0, 5)}</span>
+      )}
+      <button type="button" className="svc-open" aria-label={`Ver ${number}, ${customer}, no painel ao lado`} aria-expanded={selected} onClick={(e) => {
+          if (e.ctrlKey || e.metaKey || e.shiftKey) togglePick(order.id);
+          else setPeek(selected ? null : order.id);
+        }}
+        onKeyDown={(e) => {
+          if (e.key.toLowerCase() === "x" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); togglePick(order.id); }
+        }}
+        onDoubleClick={() => openOrder(order.id)}>
+        <MiniPlate plate={vehicle?.plate} />
+        <span className="svc-main">
+          <span className="svc-car">{vehicleLabel(vehicle)} <span className="svc-owner">· <strong>{customer}</strong></span></span>
+          <span className="svc-what" title={order.description}>{order.description}</span>
+          <span className="svc-meta">
+            <span className="svc-number">{number}</span>
+            <span><User className="size-3.5" aria-hidden />{mechanic}</span>
+            <span>{order.status === "done" && order.completedAt ? `Pronto ${sinceDay(order.completedAt)}` : sinceShop(order.openedAt)}</span>
+          </span>
         </span>
-      </div>
+      </button>
+      <span className="svc-money">
+        <span className="svc-value">{orderTotalText(totals)}</span>
+      </span>
       {!overlay && (
-        <div className="order-card-actions">
+        <span className="svc-actions">
+          <QuickOrderAction order={order} size="md" />
           <MoreMenu label={`Mais ações de ${number}`} items={menuItems} />
-          <QuickOrderAction order={order} />
-        </div>
+        </span>
       )}
     </article>
   );
 }
 
-function Column({ status, orders, canDrag, filtered }: { status: OrderStatus; orders: ServiceOrder[]; canDrag: boolean; filtered: boolean }) {
-  const { setNodeRef, isOver, active } = useDroppable({ id: status, data: { type: "status" } });
-  const draggingOrder = active?.data.current?.type === "order";
+function sinceDay(at: string): string {
+  const d = dateOf(at);
+  const today = todayISO();
+  return d === today ? "hoje" : d === addDays(today, -1) ? "ontem" : `em ${formatDate(d).slice(0, 5)}`;
+}
+
+const STAGE_META: Record<OrderStatus, { label: string; empty: string; emptyText: string; icon: typeof Clock3 }> = {
+  waiting: { label: "Aguardando", empty: "Nenhum carro esperando", emptyText: "Quando um carro chegar, ele entra aqui até alguém começar.", icon: Clock3 },
+  in_progress: { label: "Em andamento", empty: "Nenhum carro sendo feito", emptyText: "Clique em Começar num carro de Aguardando.", icon: Wrench },
+  done: { label: "Pronto", empty: "Nenhum carro pronto", emptyText: "Quando terminar um serviço, clique em Marcar como pronto.", icon: CheckCircle2 },
+};
+
+/** Aba grande de etapa (controle segmentado, à la Apple). Também recebe cartões arrastados. */
+function StageTab({ status, count, sub, active, onSelect, onKey }: { status: OrderStatus; count: number; sub: string; active: boolean; onSelect: () => void; onKey: (e: React.KeyboardEvent) => void }) {
+  const { setNodeRef, isOver, active: dragging } = useDroppable({ id: status, data: { type: "status" } });
+  const Icon = STAGE_META[status].icon;
   return (
-    <section
+    <button
       ref={setNodeRef}
-      aria-label={`${ORDER_STATUS_LABELS[status]}: ${orders.length} ${orders.length === 1 ? "serviço" : "serviços"}`}
-      className={cx(
-        "kanban-column flex min-h-64 flex-col rounded-xl border border-line bg-slate-100/70",
-        COLUMN_ACCENT[status],
-        isOver && draggingOrder && "ring-2 ring-primary/50",
-      )}
+      type="button"
+      role="tab"
+      id={`stage-tab-${status}`}
+      aria-selected={active}
+      aria-controls="stage-panel"
+      tabIndex={active ? 0 : -1}
+      data-stage={status}
+      data-over={(isOver && dragging?.data.current?.type === "order") || undefined}
+      className="stage-tab"
+      onClick={onSelect}
+      onKeyDown={onKey}
     >
-      <header className="kanban-head flex items-center justify-between px-3 py-2">
-        <h2 className="text-sm font-semibold">{ORDER_STATUS_LABELS[status]}</h2>
-        <span className="rounded bg-surface px-2 py-0.5 text-xs font-semibold text-muted tabular-nums"><CountUp value={orders.length} /></span>
-      </header>
-      {/* Sem rolagem própria: a coluna cresce e a página rola (uma rolagem só, sem cortar a caixinha de seleção). */}
-      <div className="kanban-cards flex min-h-40 flex-1 flex-col gap-3">
-        {orders.length === 0 ? (
-          <p className="px-2 py-6 text-center text-xs text-muted">{filtered ? "Nenhum serviço encontrado com os filtros atuais." : "Nenhum serviço nesta etapa."}</p>
-        ) : (
-          orders.map((o) => <OrderCard key={o.id} order={o} draggable={canDrag} />)
-        )}
-      </div>
-    </section>
+      <span className="stage-tab-icon" aria-hidden><Icon /></span>
+      <span className="stage-tab-text">
+        <span className="stage-tab-label">{STAGE_META[status].label}</span>
+        <span className="stage-tab-sub">{sub}</span>
+      </span>
+      <span className="stage-tab-count"><CountUp value={count} /></span>
+    </button>
+  );
+}
+
+function StageEmpty({ status, filtered }: { status: OrderStatus; filtered: boolean }) {
+  const Icon = STAGE_META[status].icon;
+  return (
+    <div className="stage-empty" data-stage={status}>
+      <span className="stage-empty-art" aria-hidden><Icon /></span>
+      <p className="stage-empty-title">{filtered ? "Nada encontrado nesta etapa" : STAGE_META[status].empty}</p>
+      <p className="stage-empty-text">{filtered ? "Confira a busca ou os filtros." : STAGE_META[status].emptyText}</p>
+    </div>
   );
 }
 
 const PERIODS = [
-  { value: "all", label: "Qualquer data de abertura" },
-  { value: "0", label: "Abertas hoje" },
+  { value: "all", label: "Qualquer dia" },
+  { value: "0", label: "Hoje" },
   { value: "7", label: "Últimos 7 dias" },
   { value: "30", label: "Últimos 30 dias" },
 ];
@@ -221,6 +228,12 @@ export function OrdersPage() {
   const [peekWidth, setPeekWidth] = usePref<number>(`os-peek-width:${membership.workshopId}:${user.id}`, 400);
   const { assign, addPart } = useOrderActions();
   const [showCancelled, setShowCancelled] = useState(false);
+  const [stagePref, setStagePref] = usePref<OrderStatus>(`os-stage:${membership.workshopId}:${user.id}`, "waiting");
+  // Serviço recém-aberto: abre na etapa dele para o "nascimento" aparecer.
+  const [stageOverride, setStageOverride] = useState<OrderStatus | null>(() => view.orders.find((o) => isBorn(o.id))?.status ?? null);
+  const stage = stageOverride ?? stagePref;
+  const setStage = (st: OrderStatus) => { setStageOverride(null); setStagePref(st); setPeek(null); };
+  const [showOlder, setShowOlder] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), useSensor(KeyboardSensor));
 
   const active = view.orders.filter((o) => !o.cancelledAt);
@@ -245,8 +258,27 @@ export function OrdersPage() {
           (v ? `${v.brand} ${v.model}`.toLowerCase().includes(q) : false)
         );
       })
-      .sort((a, b) => b.openedAt.localeCompare(a.openedAt));
+      .sort((a, b) => (a.status === "done" ? (b.completedAt ?? b.openedAt).localeCompare(a.completedAt ?? a.openedAt) : a.openedAt.localeCompare(b.openedAt)));
   }, [active, search, mechanic, period, customerOf, vehicleOf]);
+  const inStage = (st: OrderStatus) => visible.filter((o) => o.status === st);
+  const stageOrders = inStage(stage);
+  const owing = stage === "done" ? stageOrders.filter((o) => paymentSituation(o, orderTotals(view, o)) === "pending") : [];
+  const settled = stage === "done" ? stageOrders.filter((o) => !owing.includes(o)) : [];
+  const elsewhere = filtered && stageOrders.length === 0 ? ORDER_STATUSES.find((st) => st !== stage && inStage(st).length > 0) : undefined;
+  const subOf = (st: OrderStatus) => {
+    const list = inStage(st);
+    if (st === "done") { const n = list.filter((o) => paymentSituation(o, orderTotals(view, o)) === "pending").length; return n ? `${n} falta${n === 1 ? "" : "m"} receber` : "todos pagos"; }
+    if (st === "waiting") { const n = list.filter((o) => !o.mechanicId).length; return n ? `${n} sem ninguém` : "todos com alguém"; }
+    const n = new Set(list.map((o) => o.mechanicId).filter(Boolean)).size;
+    return n === 0 ? "ninguém fazendo" : n === 1 ? "1 mecânico" : `${n} mecânicos`;
+  };
+  const tabKey = (e: React.KeyboardEvent) => {
+    const i = ORDER_STATUSES.indexOf(stage);
+    const to = e.key === "ArrowRight" ? ORDER_STATUSES[(i + 1) % 3] : e.key === "ArrowLeft" ? ORDER_STATUSES[(i + 2) % 3] : e.key === "Home" ? ORDER_STATUSES[0] : e.key === "End" ? ORDER_STATUSES[2] : null;
+    if (!to) return;
+    e.preventDefault(); setStage(to);
+    window.setTimeout(() => document.getElementById(`stage-tab-${to}`)?.focus(), 0);
+  };
 
   const canDrag = online && (can("os.status") || can("os.complete"));
 
@@ -309,7 +341,7 @@ export function OrdersPage() {
   const pickedOrders = active.filter((o) => picked.has(o.id));
 
   // Ordem de leitura do quadro (coluna por coluna) para ↑ ↓ no painel.
-  const reading = ORDER_STATUSES.flatMap((st) => visible.filter((o) => o.status === st));
+  const reading = stageOrders;
   const peekOrder = peekId ? view.orders.find((o) => o.id === peekId) ?? null : null;
   const step = (dir: 1 | -1) => {
     if (!reading.length) return;
@@ -323,29 +355,32 @@ export function OrdersPage() {
     <>
       <PageHeader
         title="Serviços"
-        description="Clique no cartão para ver os detalhes. Use o botão do cartão para passar para a próxima etapa."
-        actions={
-          <>
-            {cancelled.length > 0 && (
-              <Button onClick={() => setShowCancelled(true)}>Cancelados ({cancelled.length})</Button>
-            )}
-          </>
-        }
+        description="Uma etapa por vez. Clique no carro para ver os detalhes; o botão azul passa para a próxima etapa."
       />
 
-      <div className="order-filters mb-4 flex flex-wrap items-center gap-2 rounded-md border border-line bg-surface p-3">
-        <div className="relative w-80">
-          <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-slate-400" aria-hidden />
-          <Input className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar placa, nome do cliente ou nº do serviço" aria-label="Buscar serviços" />
-        </div>
-        <Select className="w-64" value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="Filtrar por período de abertura">
-          {PERIODS.map((p) => (
-            <option key={p.value} value={p.value}>{p.label}</option>
-          ))}
-        </Select>
+      <div className="svc-toolbar">
+        <label className="svc-search" data-tour="search-page">
+          <Search className="size-4" aria-hidden />
+          <span className="sr-only">Buscar serviços</span>
+          <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Placa, nome do cliente ou nº do serviço" />
+        </label>
+        <details className="svc-filter">
+          <summary>
+            <SlidersHorizontal className="size-4" aria-hidden />Filtrar
+            {(mechanic || period !== "all") && <span className="svc-filter-on">{[mechanic === "none" ? "Sem responsável" : mechanics.find((m) => m.id === mechanic)?.name.split(" ")[0], PERIODS.find((p) => p.value === period && p.value !== "all")?.label].filter(Boolean).join(" · ")}</span>}
+          </summary>
+          <div className="svc-filter-body">
+            <ChoiceGroup label="Aberto quando?" value={period} onChange={setPeriod} options={PERIODS} />
+            <div>
+              <p className="choice-legend">Quem está fazendo?</p>
+              <MechanicStrip value={mechanic} onChange={setMechanic} />
+            </div>
+            {cancelled.length > 0 && <button type="button" className="svc-cancelled" onClick={() => setShowCancelled(true)}>Ver serviços cancelados ({cancelled.length}) →</button>}
+          </div>
+        </details>
         {filtered && (
           <Button variant="ghost" onClick={() => { setSearch(""); setMechanic(""); setPeriod("all"); }}>
-            Limpar filtros
+            Limpar
           </Button>
         )}
       </div>
@@ -355,27 +390,33 @@ export function OrdersPage() {
           id="quadro"
           steps={[
             {
-              target: "[data-tour=search]",
+              target: "[data-tour=search-page]",
               title: "Ache o carro pela placa ou pelo nome",
               body: <p>Digite aqui a placa (ou o nome do cliente) para encontrar o serviço na hora.</p>,
               illustration: <IllusTyping text="QRT4J58" />,
             },
             {
-              target: ".kanban-board [data-tour=next-step]",
+              target: ".stage-tabs",
+              title: "Uma tela para cada etapa",
+              body: <p>Toque em <strong>Aguardando</strong>, <strong>Em andamento</strong> ou <strong>Pronto</strong> para ver só os carros daquela etapa. O número mostra quantos tem.</p>,
+              illustration: <IllusSequence items={["Aguardando", "Em andamento", "Pronto"]} />,
+            },
+            {
+              target: ".svc-list [data-tour=next-step]",
               title: "Este botão faz o próximo passo",
               body: <p>Cada carro passa por Aguardando, Em andamento e Pronto. O botão do cartão muda sozinho: <strong>Começar</strong>, depois <strong>Marcar como pronto</strong> e, no fim, <strong>Receber</strong>.</p>,
               illustration: <IllusSequence items={["Começar", "Marcar como pronto", "Receber"]} />,
             },
             {
-              target: ".kanban-board [data-tour=card]",
-              title: "Clique no cartão para ver tudo",
+              target: ".svc-list [data-tour=card]",
+              title: "Clique no carro para ver tudo",
               body: <p>Abre o resumo ao lado: cliente, telefone, peças e valor. Lá você lança as peças usadas.</p>,
               illustration: <IllusTap label="Serviço nº 11" />,
             },
             {
-              target: ".kanban-board [data-tour=drag]",
+              target: ".svc-list [data-tour=drag]",
               title: "Se preferir, arraste",
-              body: <><p>Segure nos pontinhos e solte o cartão em outra coluna ou no nome de um responsável.</p><p className="tour-note">É só um atalho: os botões fazem a mesma coisa.</p></>,
+              body: <><p>Segure nos pontinhos e solte o carro numa das abas de etapa lá em cima.</p><p className="tour-note">É só um atalho: os botões fazem a mesma coisa.</p></>,
               illustration: <IllusDrag />,
             },
             {
@@ -390,7 +431,6 @@ export function OrdersPage() {
 
       <PeekContext.Provider value={{ peekId, setPeek, picked, togglePick }}>
       <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
-      <MechanicStrip value={mechanic} onChange={setMechanic} />
       {pickedOrders.length > 0 && (
         <div className="pick-bar" role="region" aria-label="Serviços selecionados">
           <strong>{pickedOrders.length} {pickedOrders.length === 1 ? "serviço selecionado" : "serviços selecionados"}</strong>
@@ -426,10 +466,38 @@ export function OrdersPage() {
           />
         </div>
       ) : (
-        <div className="kanban-board grid grid-cols-3 gap-4">
-          {ORDER_STATUSES.map((s) => (
-            <Column key={s} status={s} orders={visible.filter((o) => o.status === s)} canDrag={canDrag} filtered={filtered} />
-          ))}
+        <div className="svc-stage" data-stage={stage}>
+          <div className="stage-tabs" role="tablist" aria-label="Etapas do serviço">
+            {ORDER_STATUSES.map((st) => (
+              <StageTab key={st} status={st} count={inStage(st).length} sub={subOf(st)} active={stage === st} onSelect={() => setStage(st)} onKey={tabKey} />
+            ))}
+          </div>
+          <div id="stage-panel" role="tabpanel" aria-labelledby={`stage-tab-${stage}`} className="svc-list" data-stage={stage}>
+            {stageOrders.length === 0 ? (
+              <>
+                <StageEmpty status={stage} filtered={filtered} />
+                {elsewhere && <p className="svc-elsewhere">Achamos {inStage(elsewhere).length} em <button type="button" onClick={() => setStage(elsewhere)}>{STAGE_META[elsewhere].label} →</button></p>}
+              </>
+            ) : stage === "done" ? (
+              <>
+                {owing.length > 0 && (
+                  <section aria-label="Prontos que faltam receber">
+                    <h2 className="svc-group">Falta receber <span>{owing.length}</span></h2>
+                    <div className="svc-rows">{owing.map((o) => <OrderCard key={o.id} order={o} draggable={canDrag} />)}</div>
+                  </section>
+                )}
+                {settled.length > 0 && (
+                  <section aria-label="Prontos e pagos">
+                    <h2 className="svc-group">Pagos e entregues <span>{settled.length}</span></h2>
+                    <div className="svc-rows">{(showOlder ? settled : settled.slice(0, 6)).map((o) => <OrderCard key={o.id} order={o} draggable={canDrag} />)}</div>
+                    {settled.length > 6 && !showOlder && <Button variant="ghost" className="mt-2" onClick={() => setShowOlder(true)}>Mostrar mais {settled.length - 6}</Button>}
+                  </section>
+                )}
+              </>
+            ) : (
+              <div className="svc-rows">{stageOrders.map((o) => <OrderCard key={o.id} order={o} draggable={canDrag} />)}</div>
+            )}
+          </div>
         </div>
       )}
 

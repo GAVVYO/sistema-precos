@@ -249,7 +249,15 @@ function Header() {
   // Encolhe as cápsulas ao rolar (como as barras do iOS 26).
   const [compact, setCompact] = useState(false);
   useEffect(() => {
-    const onScroll = () => setCompact(window.scrollY > 24);
+    // Encolher muda a altura da página; numa página curta isso devolvia a rolagem
+    // para cima e o cabeçalho ficava abrindo e fechando sem parar (tremendo).
+    // Por isso: só encolhe se a página tiver rolagem de sobra, e com folga
+    // (encolhe depois de 64 px, só volta abaixo de 8 px).
+    const onScroll = () => {
+      const room = document.documentElement.scrollHeight - window.innerHeight;
+      const y = window.scrollY;
+      setCompact((was) => (was ? y > 8 : room >= 200 && y > 64));
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);

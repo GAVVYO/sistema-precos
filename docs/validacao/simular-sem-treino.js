@@ -95,7 +95,7 @@ const ROLE = process.argv[3] || 'Proprietário';
   const found = await p.locator('.order-search-results').getByText('Renata Cavalcante Dias').count();
   step(`resultados mostram a Renata: ${found}`);
   await click(p.locator('.order-search-results .search-result-main').first(), 'resultado da Renata');
-  const status = await p.locator('dialog[open]').innerText().then((t) => t.split('\n').slice(0, 4).join(' / ')).catch(() => '');
+  const status = await p.locator('dialog[open]').innerText().then((t) => t.split('\n').slice(0, 8).join(' / ')).catch(() => '');
   step(`vê: ${status}`);
   await p.screenshot({ path: OUT + TAG + '-4-achou.png' });
   done(found > 0 && status.includes('Serviço nº'));

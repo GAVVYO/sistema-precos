@@ -20,7 +20,7 @@ export function Dialog({
   className,
 }: {
   className?: string;
-  title: string;
+  title: ReactNode;
   subtitle?: ReactNode;
   onClose: () => void;
   size?: keyof typeof SIZES;
@@ -102,7 +102,7 @@ export function ConfirmDialog({
   onClose,
   children,
 }: {
-  title: string;
+  title: ReactNode;
   message: ReactNode;
   confirmLabel: string;
   danger?: boolean;

@@ -28,6 +28,7 @@
 | `64badb4` | Item 2 — **formulários com escolhas em botões**, dia/hora por atalhos, opcionais em "Mais detalhes" (decisão 57) |
 | `52c95ef` | Item 3 — **Hoje vira o pátio**: carros por etapa com placa desenhada e um botão; mecânico só vê os carros dele (decisão 58) |
 | (18/11) | **Serviços: uma tela por etapa** (estilo da navegação, abas estilo iPhone, ícones Phosphor duotone) — abas Aguardando / Em andamento / Pronto no lugar do quadro de colunas (decisão 59) |
+| (18/11) | **Ficha do serviço** em duas colunas com caminho do serviço clicável; clicar no carro abre a ficha, sem painel lateral (decisão 60) |
 
 ### Validação vigente
 

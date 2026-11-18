@@ -59,7 +59,8 @@ Decisão 58. A tela responde **"que carros estão aqui e o que cada um precisa a
 
 Decisão 59. No lugar das três colunas, **três abas grandes**: **Aguardando · Em andamento · Pronto**, cada uma com o número de carros e uma frase ("1 sem ninguém", "2 faltam receber"). ← → trocam de aba pelo teclado.
 
-- Cada carro é um **cartão branco** no estilo da navegação: placa desenhada, carro · cliente, serviço, nº, responsável e há quanto tempo; à direita o valor, **um botão** (Começar / Marcar como pronto / Receber) e "⋯". Clique abre o painel ao lado; duplo clique, o serviço completo.
+- Clicar no carro abre a **ficha do serviço** (seção 4.1). Não há mais painel lateral.
+- Cada carro é um **cartão branco** no estilo da navegação: placa desenhada, carro · cliente, serviço, nº, responsável e há quanto tempo; à direita o valor, **um botão** (Começar / Marcar como pronto / Receber) e "⋯". 
 - **Pronto** separa **Falta receber** e **Pagos e entregues**.
 - Ao clicar no botão, a linha **voa até a aba** da próxima etapa e a aba pula com o número novo.
 - **Busca** e **Filtrar** (aberto quando, quem está fazendo, ver cancelados). Se a busca achar o carro em outra etapa: "Achamos 1 em Pronto →".
@@ -69,6 +70,17 @@ Decisão 59. No lugar das três colunas, **três abas grandes**: **Aguardando ·
 ![Serviços — Aguardando](imagens/interface/servicos-aguardando.png)
 ![Serviços — Pronto](imagens/interface/servicos-pronto.png)
 ![Serviços — celular](imagens/interface/servicos-celular.png)
+
+### 4.1 Ficha do serviço (decisão 60)
+
+- **Cabeçalho**: placa desenhada, carro, cliente, nº e quando abriu, e o **caminho do serviço** (Aguardando → Em andamento → Pronto → Pago). Clicar num passo muda a etapa (mesmas permissões); "Pago" abre o Receber.
+- **Esquerda**: O que fazer (com "Trocar quem faz" na própria ficha), Peças em linhas ("Adicionar ou tirar" abre a busca de peças ali mesmo), O que aconteceu (recolhido).
+- **Direita**: Quanto custa (total grande, mão de obra, peças, "Definir mão de obra", situação do pagamento) e ações escritas: Ligar, Avisar no WhatsApp, Mandar orçamento, Gerar PDF, Cancelar serviço.
+- **Rodapé**: Editar serviço e um botão principal (Começar / Marcar como pronto / Receber R$ X).
+
+![Ficha do serviço](imagens/interface/ficha-servico.png)
+![Ficha — pronto para receber](imagens/interface/ficha-servico-pronto.png)
+![Ficha — celular](imagens/interface/ficha-servico-celular.png)
 
 ## 5. Receber
 

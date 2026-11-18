@@ -22,7 +22,7 @@ import { addDays, dateOf, formatDate, formatOrderNumber, todayISO } from "@/lib/
 import { canChangeStatus, orderTotals, paymentSituation } from "@/services/orders";
 import { useMoveOrder } from "./move-order";
 import { useOrderActions } from "./order-actions";
-import { MechanicStrip, OrderPeek, PartDragPreview } from "./order-peek";
+import { MechanicStrip, PartDragPreview } from "./order-peek";
 import { usePref } from "@/lib/prefs";
 import { QuickOrderAction } from "./quick-order-action";
 import { orderTotalText, vehicleLabel } from "./shared";
@@ -52,7 +52,7 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
   const { db, view, user, online, customerOf, vehicleOf, userOf, openOrder } = useApp();
   const moveOrder = useMoveOrder();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: order.id, data: { type: "order" }, disabled: !draggable || overlay });
-  const { peekId, setPeek, picked, togglePick } = useContext(PeekContext);
+  const { peekId, picked, togglePick } = useContext(PeekContext);
 
   // Serviço recém-aberto "nasce" no quadro quando aparece de fato (sem janela por cima).
   useEffect(() => {
@@ -123,14 +123,14 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
           <GripVertical className="size-4" aria-hidden />
         </button>
       )}
-      <button type="button" className="svc-open" aria-label={`Ver ${number}, ${customer}, no painel ao lado`} aria-expanded={selected} onClick={(e) => {
+      <button type="button" className="svc-open" aria-label={`Abrir ${number}, ${customer}`} onClick={(e) => {
           if (e.ctrlKey || e.metaKey || e.shiftKey) togglePick(order.id);
-          else setPeek(selected ? null : order.id);
+          else openOrder(order.id);
         }}
         onKeyDown={(e) => {
           if (e.key.toLowerCase() === "x" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); togglePick(order.id); }
         }}
-        onDoubleClick={() => openOrder(order.id)}>
+>
         <MiniPlate plate={vehicle?.plate} />
         <span className="svc-main">
           <span className="svc-car">{vehicleLabel(vehicle)} <span className="svc-owner">· <strong>{customer}</strong></span></span>
@@ -226,7 +226,6 @@ export function OrdersPage() {
   const togglePick = (id: ID) => setPicked((cur) => { const n = new Set(cur); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const tray = useTray();
   const { moveMany, assignMany } = useOrderActions();
-  const [peekWidth, setPeekWidth] = usePref<number>(`os-peek-width:${membership.workshopId}:${user.id}`, 400);
   const { assign, addPart } = useOrderActions();
   const [showCancelled, setShowCancelled] = useState(false);
   const [stagePref, setStagePref] = usePref<OrderStatus>(`os-stage:${membership.workshopId}:${user.id}`, "waiting");
@@ -341,22 +340,11 @@ export function OrdersPage() {
   }, [picked]);
   const pickedOrders = active.filter((o) => picked.has(o.id));
 
-  // Ordem de leitura do quadro (coluna por coluna) para ↑ ↓ no painel.
-  const reading = stageOrders;
-  const peekOrder = peekId ? view.orders.find((o) => o.id === peekId) ?? null : null;
-  const step = (dir: 1 | -1) => {
-    if (!reading.length) return;
-    const i = reading.findIndex((o) => o.id === peekId);
-    const next = reading[(i + dir + reading.length) % reading.length];
-    setPeek(next.id);
-    document.querySelector(`[data-order-id="${next.id}"]`)?.scrollIntoView({ block: "nearest" });
-  };
-
   return (
     <>
       <PageHeader
         title="Serviços"
-        description="Uma etapa por vez. Clique no carro para ver os detalhes; o botão azul passa para a próxima etapa."
+        description="Uma etapa por vez. Clique no carro para abrir a ficha; o botão azul passa para a próxima etapa."
       />
 
       <div className="svc-toolbar">
@@ -411,7 +399,7 @@ export function OrdersPage() {
             {
               target: ".svc-list [data-tour=card]",
               title: "Clique no carro para ver tudo",
-              body: <p>Abre o resumo ao lado: cliente, telefone, peças e valor. Lá você lança as peças usadas.</p>,
+              body: <p>Abre a ficha do serviço: cliente, telefone, peças e valor. Lá você lança as peças usadas.</p>,
               illustration: <IllusTap label="Serviço nº 11" />,
             },
             {
@@ -503,7 +491,6 @@ export function OrdersPage() {
       )}
 
       </div>
-      {peekOrder && <OrderPeek key={peekOrder.id} order={peekOrder} width={peekWidth} onWidth={setPeekWidth} onClose={() => setPeek(null)} onStep={step} />}
       </div>
       <TrayDock dnd />
       <DragOverlay dropAnimation={null}>

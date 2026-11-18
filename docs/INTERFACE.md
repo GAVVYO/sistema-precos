@@ -55,6 +55,7 @@ Termos usados na tela (decisão 37): **Serviço** (nunca "OS"), "Serviço nº 11
 - Busca da página, filtro por data e faixa de responsáveis (clicar filtra; soltar um cartão atribui).
 - Extras (atalhos): arrastar o cartão pela alça ⋮⋮; **caixinha** no canto do cartão para marcar vários (barra com **Mover para / Passar para / Guardar na bandeja / Desmarcar todos**); menu **⋯** do cartão; tecla X; Ctrl/⌘+clique.
 - **Cancelados (n)** lista os serviços cancelados, só para consulta.
+- Serviço recém-aberto **nasce no quadro** (pop, anel e selo "Novo") quando o cartão aparece de verdade; contadores das colunas rolam até o número novo.
 
 ![Quadro de serviços](imagens/interface/servicos-quadro.png)
 ![Celular](imagens/interface/celular-servicos.png)
@@ -98,6 +99,17 @@ Balões em sequência ("1 de 5") que escurecem a tela, recortam o elemento e apo
 
 ![Tour](imagens/interface/tour.png)
 
-## 10. Demonstração
+## 10. Modo TV da parede
+
+**Minha conta › Modo TV da parede** (abre `/tv` em outra aba; ideal num computador ligado à TV da oficina ou da sala de espera). Tela escura de alto contraste que se lê de longe: relógio, 4 números grandes (**Aguardando, Em andamento, Prontos para retirar, Chegam hoje**), quadro com **placa em destaque**, carro, primeiro nome + inicial do sobrenome, mecânico e há quanto tempo está na etapa, e rodapé com os **próximos horários**. Sem valores em reais (tela pública).
+
+- Atualiza sozinho, inclusive quando a recepção mexe em outra aba/janela do mesmo navegador; carro que chega ou muda de etapa brilha por alguns segundos e os números rolam.
+- Cabe na tela que estiver: mede quantos cartões cabem; se tiver mais, troca de página a cada 10 s (pontinhos embaixo).
+- Controles somem com o mouse parado: **Tela cheia (F)** e **Sair da TV (Esc)**.
+- Só mostra "Prontos para retirar" que ainda não foram pagos.
+
+![Modo TV](imagens/interface/tv.png)
+
+## 11. Demonstração
 
 Barra amarela: trocar **Oficina** (a cor nova varre a tela a partir da logo — animação 4b) e **Entrar como** (cargo). **Opções da demonstração**: simular queda de conexão e restaurar os dados iniciais.

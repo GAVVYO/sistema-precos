@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, LayoutDashboard, Lightbulb, Lock, PanelLeft, PanelTop, Settings2, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
+  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, LayoutDashboard, Lightbulb, Lock, MonitorPlay, PanelLeft, PanelTop, Settings2, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
 } from "lucide-react";
 import Link from "next/link";
 import { setNavMode, SideNavigation, useNavMode } from "./side-navigation";
@@ -322,6 +322,12 @@ function Header() {
                     {nav.side ? "Menu no topo" : "Menu na lateral"}
                   </button>
                 )}
+                {can("os.view") && settings.activeModules.includes("orders") && (
+                  <a role="menuitem" href="/tv" target="_blank" rel="noopener" onClick={close} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50">
+                    <MonitorPlay className="size-4" aria-hidden />
+                    Modo TV da parede
+                  </a>
+                )}
                 {membership.role !== "mechanic" && (
                   <Link role="menuitem" href="/inicio?organizar=1" onClick={close} className="widget-customize flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50">
                     <LayoutDashboard className="size-4" aria-hidden />
@@ -416,6 +422,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       window.removeEventListener("offline", off);
     };
   }, []);
+
+  // TV da parede: tela cheia, sem cabeçalho, barra da demonstração nem bandeja.
+  if (pathname === "/tv" || pathname.startsWith("/tv/")) {
+    return <main id="conteudo" className="tv-frame">{children}</main>;
+  }
 
   return (
     <TrayProvider>

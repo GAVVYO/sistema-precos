@@ -22,6 +22,8 @@
 | `2a38429` | Animações: cartão anda de coluna, receber com comemoração, cartão vira janela, pílula da aba, cor da oficina varrendo |
 | `da6f408` | Quadro de Serviços com respiro (uma rolagem só) |
 | `e86cb17` | Janela Receber ilustrada (cartão, cédulas, PIX, comprovante) e troco |
+| `5411562` | Publicação estática na Hostinger (`npm run build:hostinger`) — publicada em demo.gavyo.me |
+| (18/11) | Serviço novo nasce no quadro, números que contam, **modo TV da parede** (`/tv`) |
 
 ### Validação vigente
 
@@ -30,7 +32,7 @@
 ### Pendente / próximos
 
 - **Teste com uma pessoa real** (roteiro em [validacao/SEM-TREINO-20261117.md](validacao/SEM-TREINO-20261117.md)).
-- **Escolhidos pelo usuário, ainda não feitos:** serviço novo "nasce" no quadro; números que contam; quadro no celular por abas (Aguardando / Em andamento / Pronto); **modo TV da parede**.
+- **Escolhidos pelo usuário, ainda não feitos:** quadro no celular por abas (Aguardando / Em andamento / Pronto); texto 12 → 14 px.
 - **Sugeridos, não escolhidos:** texto de 12 px → 14 px (item 14 da auditoria); peça voa para o serviço; agendamento voa de dia; catálogo de serviços para o cliente (página pública + link no WhatsApp).
 - Selo "1 Issue" do Next no modo de desenvolvimento visto pelo usuário: não reproduzido no build de produção; aguarda o texto do erro.
 

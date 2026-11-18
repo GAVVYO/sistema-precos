@@ -17,6 +17,10 @@ Referências: View Transitions do Safari 18/Arc/Linear, Liquid Glass (macOS Taho
 | 6 | **Tour de primeira vez** | 1ª visita a Hoje, Serviços e painel | Recorte com pulso, seta que pula, balão que surge, ilustrações (placa digitando, sequência de botões, cartão arrastado, toque). Espera a rolagem e nenhuma janela aberta. | `src/components/ui/guided-tour.tsx` |
 | 7 | **Desenho da forma de pagamento** | Escolher a forma em Receber | CSS: cartão gira (`pay-card-in`) com brilho; cédulas em leque; celular sobe com check; comprovante "imprime". | `src/features/orders/payment-stage.tsx` |
 
+| 8 | **Serviço novo nasce no quadro** | Depois de abrir um serviço, quando o cartão aparece (ao fechar a janela ou abrir Serviços) | `markBorn` ao criar; o cartão escuta `gavyo:order-closed` e, sem janela aberta, ganha `.just-born` (pop 620 ms + anel + selo "Novo"). Uma vez, até 2 min. | `src/lib/born.ts`, `orders-page.tsx`, `app-context.tsx` |
+| 9 | **Números que contam** | Valor muda (Hoje, Financeiro, Estoque, colunas, Quem falta pagar, TV) | `CountUp`: rAF com saída cúbica (650 ms), brilho verde ao subir e na cor da oficina ao descer; só em mudanças; leitor de tela recebe o valor final. `Stat` e `MetricCard` animam qualquer valor numérico (`format` para reais). | `src/components/ui/count-up.tsx` |
+| 10 | **TV: chegada e mudança de etapa** | Carro novo ou que mudou de etapa | Cartões entram em cascata a cada página; o que mudou pulsa 3× na cor da etapa; ponto "ao vivo" pulsando. | `src/features/tv/tv-page.tsx` |
+
 Todas as regras CSS estão em `src/app/globals.css`, nos blocos "Menu na lateral", "Animações que mostram o que aconteceu", "Tour guiado" e "Janela Receber".
 
 ## Receita para uma nova transição

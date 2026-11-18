@@ -39,7 +39,7 @@
 - **Teste com uma pessoa real** (roteiro em [validacao/SEM-TREINO-20261117.md](validacao/SEM-TREINO-20261117.md)).
 - **Escolhidos pelo usuário, ainda não feitos:** quadro no celular por abas (Aguardando / Em andamento / Pronto); texto 12 → 14 px.
 - **Sugeridos, não escolhidos:** texto de 12 px → 14 px (item 14 da auditoria); peça voa para o serviço; agendamento voa de dia; catálogo de serviços para o cliente (página pública + link no WhatsApp).
-- Selo "1 Issue" do Next no modo de desenvolvimento visto pelo usuário: não reproduzido no build de produção; aguarda o texto do erro.
+- ✅ Selo "1 Issue" do Next no modo de desenvolvimento: era a extensão da BRy (assinatura digital) colocando atributos `data-bry-content-script-*` no `<html>`; resolvido com `suppressHydrationWarning` em `<html>` e `<body>` (vale só para os atributos desses dois elementos).
 
 ### Onde continuar no código
 

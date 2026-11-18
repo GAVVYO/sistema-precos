@@ -1,6 +1,6 @@
 # App mobile GAVYO Auto — briefing para o agente
 
-Documento para entregar a outro agente (ou sessão) que vai construir o app. Tem: as decisões já tomadas, a arquitetura, a direção visual, o **prompt principal** e os **prompts por etapa**, cada um com critério de pronto. Copie o prompt principal primeiro e depois uma etapa por vez.
+Documento com as decisões e os prompts do app. Por decisão de 18/11, o app é construído nesta mesma sessão; os prompts continuam valendo se outro agente assumir. Tem: as decisões já tomadas, a arquitetura, a direção visual, o **prompt principal** e os **prompts por etapa**, cada um com critério de pronto. Copie o prompt principal primeiro e depois uma etapa por vez.
 
 ---
 
@@ -27,6 +27,23 @@ Site     ──HTTPS + sessão──┘
 - Hospedagem: o site de demonstração atual é estático (`npm run build:hostinger`). Para a API é preciso **plano com Node.js** (Business/Cloud) ou **VPS**. O MySQL fica no mesmo servidor.
 
 ---
+
+### Decisões da entrevista de 18/11 (grill-me)
+
+| Tema | Decisão |
+|---|---|
+| Quem desenvolve | **Esta sessão** (não outro agente), etapa por etapa, com capturas. Teste no celular pelo **Expo Go**; aqui na nuvem o teste é pela versão web do Expo. |
+| Visual | **Mistura**: navegação nativa (abas de baixo, voltar, pilha) com os nossos componentes (placa desenhada, cartões, crachá, carimbo, pílulas, Phosphor duotone). |
+| Abas (recepção) | **Hoje · Serviços · Pessoas · Conta**; "Novo serviço" como botão grande no topo de Hoje e Serviços. |
+| Mecânico | **Pode lançar peças** (busca e adiciona; estoque baixa sozinho). |
+| Câmera na placa | **Depois**, em etapa própria. V1 digita a placa. |
+| Ordem | **Primeiro o link de acompanhamento do cliente** no site; depois o app (E0). |
+
+### Link de acompanhamento do dono do carro
+
+- Abre **no navegador**, sem instalar e sem login, a partir do "Avisar no WhatsApp".
+- Mostra a etapa (Aguardando → Em andamento → Pronto), o que está sendo feito, **peças com preço, mão de obra e total**, e um botão **Falar no WhatsApp** com a oficina. Sem aprovar orçamento e sem fotos por enquanto.
+- **Sem servidor (Fase 1)**: o link leva um **retrato do momento** (dados do serviço no próprio link). Funciona no site estático da Hostinger; a cada etapa a oficina reenvia. Na Fase 2 vira link ao vivo.
 
 ## 2. Arquitetura sugerida no repositório
 

@@ -59,12 +59,12 @@ Decisão 58. A tela responde **"que carros estão aqui e o que cada um precisa a
 
 Decisão 59. No lugar das três colunas, **três abas grandes**: **Aguardando · Em andamento · Pronto**, cada uma com o número de carros e uma frase ("1 sem ninguém", "2 faltam receber"). ← → trocam de aba pelo teclado.
 
-- Cada carro é uma **linha larga de vidro**: placa desenhada, carro · cliente, serviço, nº, responsável e há quanto tempo; à direita o valor, **um botão** (Começar / Marcar como pronto / Receber) e "⋯". Clique abre o painel ao lado; duplo clique, o serviço completo.
+- Cada carro é um **cartão branco** no estilo da navegação: placa desenhada, carro · cliente, serviço, nº, responsável e há quanto tempo; à direita o valor, **um botão** (Começar / Marcar como pronto / Receber) e "⋯". Clique abre o painel ao lado; duplo clique, o serviço completo.
 - **Pronto** separa **Falta receber** e **Pagos e entregues**.
 - Ao clicar no botão, a linha **voa até a aba** da próxima etapa e a aba pula com o número novo.
 - **Busca** e **Filtrar** (aberto quando, quem está fazendo, ver cancelados). Se a busca achar o carro em outra etapa: "Achamos 1 em Pronto →".
 - Atalhos que continuam: arrastar (pela alça que aparece ao passar o mouse) e soltar numa aba ou num responsável; selecionar vários (caixinha, X, Ctrl/⌘+clique); bandeja.
-- Fundo em degradê muda de cor com a etapa (âmbar, azul, verde).
+- Aba ativa em pílula escura, como o item ativo do menu. Ícones próprios da oficina: carro com relógio, carro no elevador, carro com bandeirinha.
 
 ![Serviços — Aguardando](imagens/interface/servicos-aguardando.png)
 ![Serviços — Pronto](imagens/interface/servicos-pronto.png)

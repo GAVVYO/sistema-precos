@@ -7,7 +7,8 @@ import { GuidedTour, IllusDrag, IllusSequence, IllusTap, IllusTyping } from "@/c
 import {
   CollisionDetection, DndContext, DragEndEvent, pointerWithin, rectIntersection, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors,
 } from "@dnd-kit/core";
-import { ArrowRight, Check, CheckCircle2, CheckSquare, ClipboardList, Clock3, ExternalLink, GripVertical, Inbox, Search, SearchX, SlidersHorizontal, User, UserCheck, Wrench } from "lucide-react";
+import { ArrowRight, Check, CheckSquare, ClipboardList, ExternalLink, GripVertical, Inbox, SearchX, UserCheck } from "lucide-react";
+import { IconCarLift, IconCarReady, IconCarWaiting, IconSearch, IconTune } from "@/components/ui/shop-icons";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
@@ -135,9 +136,9 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
           <span className="svc-car">{vehicleLabel(vehicle)} <span className="svc-owner">· <strong>{customer}</strong></span></span>
           <span className="svc-what" title={order.description}>{order.description}</span>
           <span className="svc-meta">
-            <span className="svc-number">{number}</span>
-            <span><User className="size-3.5" aria-hidden />{mechanic}</span>
-            <span>{order.status === "done" && order.completedAt ? `Pronto ${sinceDay(order.completedAt)}` : sinceShop(order.openedAt)}</span>
+            <span className="svc-chip is-number">{number}</span>
+            <span className="svc-chip"><span className="svc-avatar" aria-hidden>{order.mechanicId ? mechanic.split(" ").map((w) => w[0]).slice(0, 2).join("") : "?"}</span>{mechanic}</span>
+            <span className="svc-chip">{order.status === "done" && order.completedAt ? `Pronto ${sinceDay(order.completedAt)}` : sinceShop(order.openedAt)}</span>
           </span>
         </span>
       </button>
@@ -160,10 +161,10 @@ function sinceDay(at: string): string {
   return d === today ? "hoje" : d === addDays(today, -1) ? "ontem" : `em ${formatDate(d).slice(0, 5)}`;
 }
 
-const STAGE_META: Record<OrderStatus, { label: string; empty: string; emptyText: string; icon: typeof Clock3 }> = {
-  waiting: { label: "Aguardando", empty: "Nenhum carro esperando", emptyText: "Quando um carro chegar, ele entra aqui até alguém começar.", icon: Clock3 },
-  in_progress: { label: "Em andamento", empty: "Nenhum carro sendo feito", emptyText: "Clique em Começar num carro de Aguardando.", icon: Wrench },
-  done: { label: "Pronto", empty: "Nenhum carro pronto", emptyText: "Quando terminar um serviço, clique em Marcar como pronto.", icon: CheckCircle2 },
+const STAGE_META: Record<OrderStatus, { label: string; empty: string; emptyText: string; icon: typeof IconCarWaiting }> = {
+  waiting: { label: "Aguardando", empty: "Nenhum carro esperando", emptyText: "Quando um carro chegar, ele entra aqui até alguém começar.", icon: IconCarWaiting },
+  in_progress: { label: "Em andamento", empty: "Nenhum carro sendo feito", emptyText: "Clique em Começar num carro de Aguardando.", icon: IconCarLift },
+  done: { label: "Pronto", empty: "Nenhum carro pronto", emptyText: "Quando terminar um serviço, clique em Marcar como pronto.", icon: IconCarReady },
 };
 
 /** Aba grande de etapa (controle segmentado, à la Apple). Também recebe cartões arrastados. */
@@ -360,13 +361,13 @@ export function OrdersPage() {
 
       <div className="svc-toolbar">
         <label className="svc-search" data-tour="search-page">
-          <Search className="size-4" aria-hidden />
+          <IconSearch className="size-5" aria-hidden />
           <span className="sr-only">Buscar serviços</span>
           <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Placa, nome do cliente ou nº do serviço" />
         </label>
         <details className="svc-filter">
           <summary>
-            <SlidersHorizontal className="size-4" aria-hidden />Filtrar
+            <IconTune className="size-5" aria-hidden />Filtrar
             {(mechanic || period !== "all") && <span className="svc-filter-on">{[mechanic === "none" ? "Sem responsável" : mechanics.find((m) => m.id === mechanic)?.name.split(" ")[0], PERIODS.find((p) => p.value === period && p.value !== "all")?.label].filter(Boolean).join(" · ")}</span>}
           </summary>
           <div className="svc-filter-body">

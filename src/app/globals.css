@@ -1810,45 +1810,60 @@ html[data-motion="reduce"] .stage-tab.just-got, html[data-motion="reduce"] .svc-
 .svc-cancelled { justify-self: start; font-size: .9375rem; font-weight: 650; color: var(--primary); }
 .svc-cancelled:hover { text-decoration: underline; }
 
-/* ===== Serviços em vidro (pedido do usuário: "estilo glass", decisão 59) =====
-   Vidro sem desfoque: translucidez + reflexo no topo + borda de luz + sombra colorida
-   sobre um fundo em degradê que muda de cor com a etapa. Sem backdrop-filter
-   (decisão 52: pesava no Mac); sobre degradê liso o desfoque não mudaria nada.
-   A cor da etapa transiciona suave via @property. */
-@property --tint { syntax: "<color>"; inherits: true; initial-value: #c2410c; }
-.svc-stage { --tint: #c2410c; position: relative; isolation: isolate; display: grid; gap: 18px; padding: 14px; border-radius: 30px; border: 1px solid rgb(255 255 255 / 70%); background:
-    radial-gradient(60% 55% at 8% 0%, color-mix(in srgb, var(--tint) 30%, transparent), transparent 70%),
-    radial-gradient(45% 50% at 100% 12%, color-mix(in srgb, var(--tint) 18%, rgb(165 180 252 / 35%)), transparent 70%),
-    radial-gradient(70% 60% at 60% 100%, color-mix(in srgb, var(--tint) 14%, rgb(224 242 254 / 60%)), transparent 75%),
-    linear-gradient(180deg, #f6f8fc, #eef2f8);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 90%), 0 20px 50px -24px rgb(23 32 51 / 25%); transition: --tint 500ms ease; }
-.svc-stage[data-stage="in_progress"] { --tint: #2563eb; }
-.svc-stage[data-stage="done"] { --tint: #16a34a; }
+/* ===== Serviços no estilo da navegação (decisão 59, revisão do usuário: "muito exagerado,
+   quero algo parecido com a nav") =====
+   Mesma linguagem da ilha de navegação: superfície branca, borda fina, sombra leve,
+   item ativo em pílula escura. Cartões inspirados na lista de viagens do Airbnb e nos
+   pedidos da Apple Store: "foto" à esquerda (a placa), título forte, uma linha de apoio,
+   etiquetas cinza e UM botão em pílula. Cor da etapa só como pontinho. */
+.svc-stage { display: grid; gap: 16px; }
+.svc-stage .stage-tabs { gap: 4px; padding: 5px; margin: 0; border: 1px solid rgb(23 32 51 / 6%); border-radius: 22px; background: var(--surface); box-shadow: 0 4px 18px rgb(23 32 51 / 7%); }
+.svc-stage .stage-tab { min-height: 60px; padding: 8px 18px 8px 10px; border: 0; border-radius: 17px; color: var(--muted); box-shadow: none; transition: background-color 200ms, color 200ms; }
+.svc-stage .stage-tab:hover { background: var(--bg); color: var(--text); }
+.svc-stage .stage-tab[aria-selected="true"] { background: var(--secondary); color: var(--secondary-fg); border: 0; box-shadow: 0 2px 8px rgb(23 32 51 / 18%); }
+.svc-stage .stage-tab[aria-selected="true"]::after { display: none; }
+.svc-stage .stage-tab-icon { width: 44px; height: 44px; border-radius: 13px; background: color-mix(in srgb, var(--st) 11%, var(--surface)); color: var(--st); }
+.svc-stage .stage-tab-icon svg { width: 30px; height: 30px; }
+.svc-stage .stage-tab[aria-selected="true"] .stage-tab-icon { background: rgb(255 255 255 / 12%); color: color-mix(in srgb, var(--st) 45%, #fff); }
+.svc-stage .stage-tab-label { font-size: 1rem; font-weight: 700; }
+.svc-stage .stage-tab[aria-selected="true"] .stage-tab-label { color: var(--secondary-fg); }
+.svc-stage .stage-tab[aria-selected="true"] .stage-tab-sub { color: rgb(255 255 255 / 72%); }
+.svc-stage .stage-tab-count { font-size: 1.625rem; font-weight: 800; color: var(--text); }
+.svc-stage .stage-tab[aria-selected="true"] .stage-tab-count { color: var(--secondary-fg); }
+.svc-stage .stage-tab[data-over] { background: color-mix(in srgb, var(--st) 12%, var(--surface)); box-shadow: inset 0 0 0 2px var(--st); }
 
-.svc-stage .stage-tabs { margin: 0; padding: 7px; border-radius: 22px; background: linear-gradient(180deg, rgb(255 255 255 / 55%), rgb(255 255 255 / 28%)); border: 1px solid rgb(255 255 255 / 75%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 95%), inset 0 -1px 0 rgb(255 255 255 / 30%), 0 6px 18px -10px rgb(23 32 51 / 25%); }
-.svc-stage .stage-tab { border-radius: 16px; color: #42526a; }
-.svc-stage .stage-tab:hover { background: rgb(255 255 255 / 40%); }
-.svc-stage .stage-tab[aria-selected="true"] { overflow: hidden; border-color: rgb(255 255 255 / 90%); background: linear-gradient(180deg, rgb(255 255 255 / 92%), rgb(255 255 255 / 70%)); box-shadow: inset 0 1px 0 #fff, inset 0 -2px 6px -2px color-mix(in srgb, var(--st) 18%, transparent), 0 10px 24px -10px color-mix(in srgb, var(--st) 55%, transparent), 0 2px 6px rgb(23 32 51 / 8%); }
-.svc-stage .stage-tab[aria-selected="true"]::before { content: ""; position: absolute; inset: 0 0 55% 0; border-radius: 16px 16px 40% 40% / 16px 16px 14px 14px; background: linear-gradient(180deg, rgb(255 255 255 / 85%), rgb(255 255 255 / 0%)); pointer-events: none; }
-.svc-stage .stage-tab[aria-selected="true"]::after { left: 30%; right: 30%; bottom: 6px; height: 4px; border-radius: 4px; box-shadow: 0 0 12px var(--st); }
-.svc-stage .stage-tab-icon { position: relative; border-radius: 14px; background: linear-gradient(150deg, rgb(255 255 255 / 85%), color-mix(in srgb, var(--st) 16%, rgb(255 255 255 / 60%))); border: 1px solid rgb(255 255 255 / 80%); box-shadow: inset 0 1px 0 #fff, 0 3px 8px -3px color-mix(in srgb, var(--st) 45%, transparent); }
-.svc-stage .stage-tab[aria-selected="true"] .stage-tab-icon { background: linear-gradient(160deg, color-mix(in srgb, var(--st) 55%, #fff), var(--st) 70%); border-color: color-mix(in srgb, var(--st) 40%, #fff); box-shadow: inset 0 1px 0 rgb(255 255 255 / 70%), inset 0 -2px 4px rgb(0 0 0 / 12%), 0 6px 14px -4px color-mix(in srgb, var(--st) 70%, transparent); }
-.svc-stage .stage-tab-count, .svc-stage .stage-tab-text { position: relative; }
-.svc-stage .stage-tab[aria-selected="true"] .stage-tab-count { text-shadow: 0 2px 10px color-mix(in srgb, var(--st) 35%, transparent); }
-
-.svc-stage .order-card.svc-row { border: 1px solid rgb(255 255 255 / 80%); border-radius: 20px; padding-left: 24px; background: linear-gradient(180deg, rgb(255 255 255 / 86%), rgb(255 255 255 / 62%)); box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgb(255 255 255 / 35%), 0 10px 28px -14px color-mix(in srgb, var(--st) 45%, rgb(23 32 51 / 40%)), 0 1px 2px rgb(23 32 51 / 5%); transition: transform 160ms ease, box-shadow 160ms ease; }
-.svc-stage .order-card.svc-row::before { content: ""; position: absolute; left: 9px; top: 16px; bottom: 16px; width: 4px; border-radius: 4px; background: linear-gradient(180deg, color-mix(in srgb, var(--st) 55%, #fff), var(--st)); box-shadow: 0 0 10px color-mix(in srgb, var(--st) 55%, transparent); }
-.svc-stage .order-card.svc-row:hover, .svc-stage .order-card.svc-row:focus-within { transform: translateY(-1px); border-color: #fff; background: linear-gradient(180deg, rgb(255 255 255 / 95%), rgb(255 255 255 / 76%)); box-shadow: inset 0 1px 0 #fff, 0 16px 34px -14px color-mix(in srgb, var(--st) 55%, rgb(23 32 51 / 45%)), 0 2px 4px rgb(23 32 51 / 6%); }
-.svc-stage .order-card.svc-row.is-selected { box-shadow: inset 0 1px 0 #fff, 0 0 0 2px color-mix(in srgb, var(--primary) 55%, transparent), 0 16px 34px -14px color-mix(in srgb, var(--primary) 50%, transparent); }
-.svc-stage .mini-plate { box-shadow: 0 4px 10px -4px rgb(15 23 42 / 35%), inset 0 -2px 0 rgb(15 23 42 / 6%); }
-.svc-stage .svc-actions .ui-button.bg-primary { border-color: color-mix(in srgb, var(--primary) 70%, #fff); border-radius: 14px; background-image: linear-gradient(180deg, color-mix(in srgb, var(--primary) 70%, #fff) 0%, var(--primary) 55%, color-mix(in srgb, var(--primary) 88%, #000) 100%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 55%), inset 0 -1px 2px rgb(0 0 0 / 15%), 0 8px 18px -8px color-mix(in srgb, var(--primary) 80%, transparent); }
-.svc-stage .svc-actions .ui-button.bg-primary:hover { filter: brightness(1.06); }
-.svc-stage .svc-group { padding-left: 6px; }
-.svc-stage .svc-group span { background: rgb(255 255 255 / 75%); border: 1px solid #fff; }
-.svc-stage .stage-empty { border: 1.5px dashed rgb(255 255 255 / 95%); background: rgb(255 255 255 / 35%); }
-
-.svc-search, .svc-filter > summary { border-color: rgb(255 255 255 / 85%); background: linear-gradient(180deg, rgb(255 255 255 / 95%), rgb(255 255 255 / 75%)); box-shadow: inset 0 1px 0 #fff, 0 6px 16px -10px rgb(23 32 51 / 30%); border-radius: 16px; }
-.svc-filter-body { border-color: #fff; background: linear-gradient(180deg, rgb(255 255 255 / 98%), rgb(250 251 254 / 96%)); border-radius: 20px; box-shadow: inset 0 1px 0 #fff, 0 24px 60px -18px rgb(23 32 51 / 35%); }
-@media (max-width: 640px) { .svc-stage { padding: 8px; border-radius: 22px; } .svc-stage .order-card.svc-row { border-radius: 16px; padding-left: 20px; } .svc-stage .order-card.svc-row::before { left: 7px; } }
-@media (prefers-reduced-motion: reduce) { .svc-stage, .svc-stage .order-card.svc-row { transition: none; } }
-html[data-motion="reduce"] .svc-stage, html[data-motion="reduce"] .svc-stage .order-card.svc-row { transition: none; }
+/* cartão */
+.svc-stage .order-card.svc-row { gap: 8px 20px; padding: 14px 16px 14px 14px; border: 1px solid rgb(23 32 51 / 7%); border-radius: 20px; background: var(--surface); box-shadow: 0 4px 18px rgb(23 32 51 / 6%); transition: box-shadow 180ms, transform 180ms; }
+.svc-stage .order-card.svc-row:hover, .svc-stage .order-card.svc-row:focus-within { border-color: rgb(23 32 51 / 10%); transform: translateY(-1px); box-shadow: 0 10px 28px rgb(23 32 51 / 10%); }
+.svc-stage .order-card.svc-row.is-selected { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent), 0 10px 28px rgb(23 32 51 / 10%); }
+.svc-stage .order-card.svc-row.is-picked { background: color-mix(in srgb, var(--primary) 4%, var(--surface)); }
+/* a "foto": placa sobre um fundo cinza claro, como a miniatura do Airbnb */
+.svc-stage .svc-open { gap: 18px; }
+.svc-stage .svc-open .mini-plate { flex-shrink: 0; box-shadow: 0 0 0 10px var(--bg), 0 0 0 11px rgb(23 32 51 / 5%); margin: 11px; }
+.svc-stage .svc-car { font-size: 1.0625rem; font-weight: 750; }
+.svc-stage .svc-what { color: var(--muted); }
+.svc-stage .svc-meta { gap: 6px; margin-top: 4px; }
+.svc-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px 0 8px; border-radius: 999px; background: var(--bg); color: var(--text); font-size: .8125rem; font-weight: 600; white-space: nowrap; }
+.svc-chip.is-number { padding-left: 10px; color: var(--primary); }
+.svc-chip.is-number::before { content: ""; width: 7px; height: 7px; border-radius: 999px; background: var(--st); }
+.svc-avatar { display: grid; place-items: center; width: 18px; height: 18px; margin-left: -3px; border-radius: 999px; background: var(--secondary); color: var(--secondary-fg); font-size: .5625rem; font-weight: 800; letter-spacing: .02em; }
+.svc-stage .svc-value { font-size: 1.0625rem; font-weight: 800; }
+/* botão em pílula, igual ao "Novo serviço" */
+.svc-stage .svc-actions .ui-button { height: 44px; padding-inline: 20px; border-radius: 999px; }
+.svc-stage .svc-actions .more-menu-trigger { border-radius: 999px; }
+.svc-stage .svc-group { margin-top: 4px; font-size: .9375rem; color: var(--muted); }
+.svc-stage .svc-group span { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgb(23 32 51 / 8%); }
+.svc-stage .stage-empty { border: 0; background: var(--surface); box-shadow: 0 4px 18px rgb(23 32 51 / 6%); border-radius: 22px; }
+.svc-stage .stage-empty-art svg { width: 44px; height: 44px; }
+/* busca e filtro como a busca do topo */
+.svc-search, .svc-filter > summary { height: 48px; border: 1px solid rgb(23 32 51 / 6%); border-radius: 999px; background: var(--surface); box-shadow: 0 4px 18px rgb(23 32 51 / 6%); }
+.svc-search { padding: 0 18px; }
+.svc-filter > summary { padding: 0 18px 0 14px; }
+.svc-filter-body { border: 1px solid rgb(23 32 51 / 6%); border-radius: 22px; box-shadow: 0 18px 48px rgb(23 32 51 / 16%); }
+@media (max-width: 640px) {
+  .svc-stage .stage-tab { min-height: 72px; padding: 8px 4px; }
+  .svc-stage .stage-tab-icon { display: none; }
+  .svc-stage .order-card.svc-row { padding: 12px; border-radius: 18px; }
+  .svc-stage .svc-open .mini-plate { margin: 8px; box-shadow: 0 0 0 8px var(--bg); }
+  .svc-chip { height: 24px; }
+}

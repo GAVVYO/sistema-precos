@@ -8,7 +8,7 @@ import {
   CollisionDetection, DndContext, DragEndEvent, pointerWithin, rectIntersection, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors,
 } from "@dnd-kit/core";
 import { ArrowRight, Check, CheckSquare, ClipboardList, ExternalLink, GripVertical, Inbox, SearchX, UserCheck } from "lucide-react";
-import { IconCarLift, IconCarReady, IconCarWaiting, IconSearch, IconTune } from "@/components/ui/shop-icons";
+import { HourglassMedium, MagnifyingGlass, SealCheck, SlidersHorizontal, Wrench } from "@phosphor-icons/react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
@@ -161,10 +161,10 @@ function sinceDay(at: string): string {
   return d === today ? "hoje" : d === addDays(today, -1) ? "ontem" : `em ${formatDate(d).slice(0, 5)}`;
 }
 
-const STAGE_META: Record<OrderStatus, { label: string; empty: string; emptyText: string; icon: typeof IconCarWaiting }> = {
-  waiting: { label: "Aguardando", empty: "Nenhum carro esperando", emptyText: "Quando um carro chegar, ele entra aqui até alguém começar.", icon: IconCarWaiting },
-  in_progress: { label: "Em andamento", empty: "Nenhum carro sendo feito", emptyText: "Clique em Começar num carro de Aguardando.", icon: IconCarLift },
-  done: { label: "Pronto", empty: "Nenhum carro pronto", emptyText: "Quando terminar um serviço, clique em Marcar como pronto.", icon: IconCarReady },
+const STAGE_META: Record<OrderStatus, { label: string; empty: string; emptyText: string; icon: typeof Wrench }> = {
+  waiting: { label: "Aguardando", empty: "Nenhum carro esperando", emptyText: "Quando um carro chegar, ele entra aqui até alguém começar.", icon: HourglassMedium },
+  in_progress: { label: "Em andamento", empty: "Nenhum carro sendo feito", emptyText: "Clique em Começar num carro de Aguardando.", icon: Wrench },
+  done: { label: "Pronto", empty: "Nenhum carro pronto", emptyText: "Quando terminar um serviço, clique em Marcar como pronto.", icon: SealCheck },
 };
 
 /** Aba grande de etapa (controle segmentado, à la Apple). Também recebe cartões arrastados. */
@@ -186,7 +186,7 @@ function StageTab({ status, count, sub, active, onSelect, onKey }: { status: Ord
       onClick={onSelect}
       onKeyDown={onKey}
     >
-      <span className="stage-tab-icon" aria-hidden><Icon /></span>
+      <span className="stage-tab-icon" aria-hidden><Icon weight="duotone" /></span>
       <span className="stage-tab-text">
         <span className="stage-tab-label">{STAGE_META[status].label}</span>
         <span className="stage-tab-sub">{sub}</span>
@@ -200,7 +200,7 @@ function StageEmpty({ status, filtered }: { status: OrderStatus; filtered: boole
   const Icon = STAGE_META[status].icon;
   return (
     <div className="stage-empty" data-stage={status}>
-      <span className="stage-empty-art" aria-hidden><Icon /></span>
+      <span className="stage-empty-art" aria-hidden><Icon weight="duotone" /></span>
       <p className="stage-empty-title">{filtered ? "Nada encontrado nesta etapa" : STAGE_META[status].empty}</p>
       <p className="stage-empty-text">{filtered ? "Confira a busca ou os filtros." : STAGE_META[status].emptyText}</p>
     </div>
@@ -361,13 +361,13 @@ export function OrdersPage() {
 
       <div className="svc-toolbar">
         <label className="svc-search" data-tour="search-page">
-          <IconSearch className="size-5" aria-hidden />
+          <MagnifyingGlass size={20} weight="duotone" aria-hidden />
           <span className="sr-only">Buscar serviços</span>
           <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Placa, nome do cliente ou nº do serviço" />
         </label>
         <details className="svc-filter">
           <summary>
-            <IconTune className="size-5" aria-hidden />Filtrar
+            <SlidersHorizontal size={20} weight="duotone" aria-hidden />Filtrar
             {(mechanic || period !== "all") && <span className="svc-filter-on">{[mechanic === "none" ? "Sem responsável" : mechanics.find((m) => m.id === mechanic)?.name.split(" ")[0], PERIODS.find((p) => p.value === period && p.value !== "all")?.label].filter(Boolean).join(" · ")}</span>}
           </summary>
           <div className="svc-filter-body">

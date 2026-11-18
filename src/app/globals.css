@@ -1867,3 +1867,20 @@ html[data-motion="reduce"] .stage-tab.just-got, html[data-motion="reduce"] .svc-
   .svc-stage .svc-open .mini-plate { margin: 8px; box-shadow: 0 0 0 8px var(--bg); }
   .svc-chip { height: 24px; }
 }
+
+/* Abas de etapa = controle segmentado do iPhone (escolha do usuário): trilho cinza,
+   aba escolhida branca e elevada, número e ícone na cor da etapa. Ícones Phosphor duotone. */
+.svc-stage .stage-tabs { padding: 5px; border: 0; border-radius: 20px; background: color-mix(in srgb, var(--muted) 11%, var(--bg)); box-shadow: inset 0 1px 2px rgb(23 32 51 / 6%); }
+.svc-stage .stage-tab { min-height: 64px; color: var(--muted); }
+.svc-stage .stage-tab:hover { background: rgb(255 255 255 / 45%); color: var(--text); }
+.svc-stage .stage-tab[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgb(23 32 51 / 8%), 0 4px 14px rgb(23 32 51 / 9%); }
+.svc-stage .stage-tab-icon { width: 42px; height: 42px; border-radius: 12px; background: transparent; color: var(--muted); transition: background-color 200ms, color 200ms; }
+.svc-stage .stage-tab-icon svg { width: 28px; height: 28px; }
+.svc-stage .stage-tab[aria-selected="true"] .stage-tab-icon { background: color-mix(in srgb, var(--st) 12%, var(--surface)); color: var(--st); }
+.svc-stage .stage-tab[aria-selected="true"] .stage-tab-label { color: var(--text); }
+.svc-stage .stage-tab[aria-selected="true"] .stage-tab-sub { color: var(--muted); }
+.svc-stage .stage-tab-count { color: var(--muted); }
+.svc-stage .stage-tab[aria-selected="true"] .stage-tab-count { color: var(--st); }
+.svc-stage .stage-tab:hover .stage-tab-count { color: var(--text); }
+.svc-stage .stage-tab[aria-selected="true"]:hover .stage-tab-count { color: var(--st); }
+.svc-stage .stage-empty-art svg { width: 40px; height: 40px; }

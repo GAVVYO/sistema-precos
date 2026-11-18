@@ -64,7 +64,7 @@ Decisão 59. No lugar das três colunas, **três abas grandes**: **Aguardando ·
 - Ao clicar no botão, a linha **voa até a aba** da próxima etapa e a aba pula com o número novo.
 - **Busca** e **Filtrar** (aberto quando, quem está fazendo, ver cancelados). Se a busca achar o carro em outra etapa: "Achamos 1 em Pronto →".
 - Atalhos que continuam: arrastar (pela alça que aparece ao passar o mouse) e soltar numa aba ou num responsável; selecionar vários (caixinha, X, Ctrl/⌘+clique); bandeja.
-- Aba ativa em pílula escura, como o item ativo do menu. Ícones próprios da oficina: carro com relógio, carro no elevador, carro com bandeirinha.
+- Abas como o controle segmentado do iPhone: trilho cinza, aba escolhida branca e elevada, número na cor da etapa. Ícones Phosphor duotone: ampulheta, chave inglesa, selo de concluído.
 
 ![Serviços — Aguardando](imagens/interface/servicos-aguardando.png)
 ![Serviços — Pronto](imagens/interface/servicos-pronto.png)

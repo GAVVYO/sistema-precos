@@ -45,6 +45,7 @@ export function BadgeCard({ kind, name, phone, roleLabel, photo, plate, since, s
         <p className="badge-foot">{kind === "customer" ? "Cliente" : "Equipe"} desde {formatDate(since ?? todayISO())}</p>
         {stamped && (
           <span className="badge-stamp">
+            <Stamper />
             <span className="badge-stamp-inner">
               <Check size={22} weight="bold" />
               <span>Cadastro<br />concluído</span>
@@ -53,6 +54,31 @@ export function BadgeCard({ kind, name, phone, roleLabel, photo, plate, since, s
         )}
       </div>
     </div>
+  );
+}
+
+/** O carimbador (cabo + base de borracha), visto de lado, que desce e aperta. */
+function Stamper() {
+  return (
+    <svg className="badge-stamper" viewBox="0 0 200 200" width="200" height="200">
+      <defs>
+        <linearGradient id="stp-knob" x1="0" x2="1"><stop offset="0" stopColor="#1f2430" /><stop offset=".45" stopColor="#4b5262" /><stop offset="1" stopColor="#1a1e27" /></linearGradient>
+        <linearGradient id="stp-wood" x1="0" x2="1"><stop offset="0" stopColor="#7a4a22" /><stop offset=".4" stopColor="#b07a45" /><stop offset="1" stopColor="#6b3f1c" /></linearGradient>
+        <linearGradient id="stp-metal" x1="0" x2="1"><stop offset="0" stopColor="#9aa3b2" /><stop offset=".5" stopColor="#e6eaf0" /><stop offset="1" stopColor="#8a93a3" /></linearGradient>
+      </defs>
+      {/* pegador */}
+      <ellipse cx="100" cy="32" rx="36" ry="28" fill="url(#stp-knob)" />
+      <ellipse cx="89" cy="21" rx="13" ry="6" fill="#fff" opacity=".22" />
+      {/* pescoço */}
+      <path d="M87 56h26l7 46H80z" fill="url(#stp-knob)" />
+      {/* corpo de madeira, da largura da marca */}
+      <path d="M24 102h152a10 10 0 0 1 10 10v50H14v-50a10 10 0 0 1 10-10z" fill="url(#stp-wood)" />
+      <path d="M26 109h148" stroke="#fff" strokeOpacity=".18" strokeWidth="3" strokeLinecap="round" />
+      {/* chapa e borracha com tinta (embaixo de tudo, encosta na marca) */}
+      <rect x="8" y="162" width="184" height="14" rx="3" fill="url(#stp-metal)" />
+      <rect x="12" y="176" width="176" height="20" rx="3" fill="#14532d" />
+      <rect x="12" y="192" width="176" height="6" rx="2" fill="#16a34a" />
+    </svg>
   );
 }
 

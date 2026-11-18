@@ -2105,3 +2105,42 @@ html[data-motion="reduce"] :is(.badge-card, .badge-card[data-stamped], .badge-ca
   .badge-stamp { padding-bottom: 24px; }
   .badge-stamp-inner { font-size: .9375rem; }
 }
+
+/* Carimbador de verdade: desce, aperta, a marca aparece no toque e ele sobe (pedido do usuário). */
+.badge-card { overflow: visible; }
+.badge-band { border-radius: 22px 22px 0 0; }
+.badge-stamp { overflow: visible; }
+.badge-stamp > .badge-stamp-inner { position: relative; transform: rotate(-10deg); animation: stamp-ink-on 1100ms linear both; }
+@keyframes stamp-ink-on { 0%, 43% { opacity: 0; transform: rotate(-10deg) scale(1.04); } 47% { opacity: 1; transform: rotate(-10deg) scale(1); } 100% { opacity: 1; transform: rotate(-10deg) scale(1); } }
+.badge-stamper { position: absolute; left: 50%; bottom: 54px; z-index: 5; width: 180px; height: 200px; margin-left: -90px; margin-bottom: -2px; transform-origin: 50% 100%; filter: drop-shadow(0 16px 18px rgb(23 32 51 / 30%)); animation: stamper-press 1100ms cubic-bezier(.45, 0, .2, 1) both; pointer-events: none; }
+.badge-card[data-kind="customer"] .badge-stamper { bottom: 70px; }
+@keyframes stamper-press {
+  0%   { transform: translate(70px, -230px) rotate(18deg); opacity: 0; }
+  12%  { opacity: 1; }
+  34%  { transform: translate(0, -46px) rotate(-10deg); }
+  44%  { transform: translate(0, 0) rotate(-10deg) scaleY(1); }
+  50%  { transform: translate(0, 2px) rotate(-10deg) scaleY(.94); }
+  60%  { transform: translate(0, -8px) rotate(-10deg) scaleY(1); }
+  100% { transform: translate(60px, -260px) rotate(14deg); opacity: 0; }
+}
+.badge-card[data-stamped] { animation: badge-thud 320ms 480ms ease-out both; }
+.badge-card[data-stamped]::after { animation-delay: 500ms; }
+@media (max-width: 760px) { .badge-stamper { bottom: 24px; width: 140px; height: 156px; margin-left: -70px; } }
+@media (prefers-reduced-motion: reduce) { .badge-stamper { display: none; } .badge-stamp > .badge-stamp-inner { animation: none; } }
+html[data-motion="reduce"] .badge-stamper { display: none; }
+html[data-motion="reduce"] .badge-stamp > .badge-stamp-inner { animation: none; }
+/* base do carimbador = largura da marca; a borracha (fundo do desenho) encosta no meio da marca */
+.badge-stamper { width: 200px; height: 200px; margin-left: -100px; margin-bottom: -22px; animation-name: stamper-press2; }
+@keyframes stamper-press2 {
+  0%   { transform: translate(70px, -230px) rotate(16deg); opacity: 0; }
+  10%  { opacity: 1; }
+  34%  { transform: translate(0, -46px) rotate(-10deg); opacity: 1; }
+  44%  { transform: translate(0, 0) rotate(-10deg) scaleY(1); }
+  50%  { transform: translate(0, 3px) rotate(-10deg) scaleY(.93); }
+  62%  { transform: translate(0, -10px) rotate(-10deg) scaleY(1); opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translate(60px, -260px) rotate(14deg); opacity: 0; }
+}
+@media (max-width: 760px) { .badge-stamper { width: 160px; height: 160px; margin-left: -80px; margin-bottom: -18px; } }
+.badge-stamper { margin-bottom: 0; }
+@media (max-width: 760px) { .badge-stamper { margin-bottom: 0; } }

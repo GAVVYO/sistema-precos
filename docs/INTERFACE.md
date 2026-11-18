@@ -135,6 +135,12 @@ Todos os formulários seguem a linguagem do Novo serviço: **pergunta em tom de 
 ![Carimbo](imagens/interface/cracha-carimbo.png)
 ![Crachá de cliente](imagens/interface/cracha-cliente.png)
 
+### Máscaras e paginação (decisão 64)
+
+Telefone, placa, dinheiro, e-mail e quilometragem se formatam enquanto a pessoa digita. Listas longas mostram 12–25 itens por página com "Mostrando 1 a 12 de 49" e Anterior/Próxima.
+
+![Paginação](imagens/interface/paginacao.png)
+
 ## 8. Recursos de "sistema operacional"
 
 | Recurso | Onde | Alternativa sem gesto |

@@ -31,6 +31,7 @@
 | (18/11) | **Ficha do serviço** em duas colunas com caminho do serviço clicável; clicar no carro abre a ficha, sem painel lateral (decisão 60) |
 | (18/11) | Correção: cabeçalho tremendo em página curta (decisão 61) |
 | (18/11) | **Pessoas** (clientes, funcionários e carros) com crachá que se preenche e carimbo "Cadastro concluído"; foto do funcionário (decisão 62) |
+| (18/11) | Carimbador animado (63); **máscaras** em telefone, placa, dinheiro, e-mail e km, e **paginação** nas listas longas (64) |
 
 ### Validação vigente
 

@@ -5,6 +5,7 @@ import { useId } from "react";
 import { PAYMENT_METHOD_LABELS, PAYMENT_METHODS } from "@/domain/labels";
 import type { PaymentMethod } from "@/domain/types";
 import { formatBRL, parseBRL } from "@/lib/format";
+import { maskMoney } from "@/lib/masks";
 
 /**
  * Janela "Receber": um desenho da forma de pagamento escolhida (cartão, cédulas,
@@ -145,7 +146,7 @@ export function CashChange({ totalCents, given, onGiven }: { totalCents: number;
       <div className="pay-change-row">
         <div className="pay-change-input">
           <span aria-hidden>R$</span>
-          <input id={id} inputMode="decimal" placeholder="0,00" value={given} onChange={(e) => onGiven(e.target.value)} aria-describedby={`${id}-r`} />
+          <input id={id} inputMode="decimal" placeholder="0,00" value={given} onChange={(e) => onGiven(maskMoney(e.target.value))} aria-describedby={`${id}-r`} />
         </div>
         <div className="pay-change-chips" role="group" aria-label="Valores rápidos">
           {suggestions(totalCents).map((v) => (

@@ -10,6 +10,7 @@ import { formatBRL, formatOrderNumber, formatPhone, formatPlate, normalizePhone,
 import { markBorn } from "@/lib/born";
 import { createOrder } from "@/services/orders";
 import { DraftItem, draftsToItems, draftsTotal, PartsEditor, vehicleLabel } from "./shared";
+import { maskDigits, maskMoney, maskPhone, maskPlate } from "@/lib/masks";
 
 /**
  * Novo serviço em passos, uma pergunta por vez (referências: GOV.UK "one thing
@@ -223,7 +224,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
           <>
             <div className="wiz-plate-frame" data-ok={normalized ? true : undefined}>
               <span className="wiz-plate-band" aria-hidden><i />BRASIL</span>
-              <input ref={focusRef} id={`${uid}-plate`} className="wiz-plate" {...fieldProps()} value={plate} onChange={(e) => onPlate(e.target.value)} maxLength={8} autoComplete="off" spellCheck={false} placeholder="ABC1D23" />
+              <input ref={focusRef} id={`${uid}-plate`} className="wiz-plate" {...fieldProps()} value={plate} onChange={(e) => onPlate(maskPlate(e.target.value))} maxLength={8} autoComplete="off" spellCheck={false} placeholder="ABC1D23" />
             </div>
             <p className="wiz-hint">Pode digitar com ou sem traço. Exemplo: ABC1D23.</p>
             {vehicle && customer ? (
@@ -250,8 +251,8 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
             <details className="wiz-more">
               <summary>Mais detalhes (opcional): ano e quilometragem</summary>
               <div className="wiz-two">
-                <label className="wiz-label-sm">Ano<input className="wiz-input-sm" inputMode="numeric" maxLength={4} value={year} onChange={(e) => setYear(e.target.value)} /></label>
-                <label className="wiz-label-sm">Quilometragem<input className="wiz-input-sm" inputMode="numeric" value={mileage} onChange={(e) => setMileage(e.target.value)} /></label>
+                <label className="wiz-label-sm">Ano<input className="wiz-input-sm" inputMode="numeric" maxLength={4} value={year} onChange={(e) => setYear(maskDigits(e.target.value, 4))} /></label>
+                <label className="wiz-label-sm">Quilometragem<input className="wiz-input-sm" inputMode="numeric" value={mileage} onChange={(e) => setMileage(maskDigits(e.target.value, 7))} /></label>
               </div>
             </details>
           </>
@@ -275,7 +276,7 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
               </div>
             )}
             <label className="wiz-label" htmlFor={`${uid}-phone`}>Telefone (WhatsApp)</label>
-            <input id={`${uid}-phone`} className="wiz-input" {...fieldProps()} inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" />
+            <input id={`${uid}-phone`} className="wiz-input" {...fieldProps()} inputMode="tel" value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} autoComplete="off" />
             <p className="wiz-hint">Com DDD. Exemplo: (85) 98888-7777.</p>
           </>
         );
@@ -354,14 +355,14 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
                   <button type="button" className="wiz-chip" aria-pressed={laborMode === "free"} onClick={() => setLaborMode("free")}>Não vai cobrar</button>
                 </div>
                 {laborMode === "value" && (
-                  <label className="wiz-label-sm">Quanto? (R$)<input className="wiz-input-sm" inputMode="decimal" value={labor} onChange={(e) => setLabor(e.target.value)} autoFocus /></label>
+                  <label className="wiz-label-sm">Quanto? (R$)<input className="wiz-input-sm" inputMode="decimal" value={labor} onChange={(e) => setLabor(maskMoney(e.target.value))} autoFocus /></label>
                 )}
               </fieldset>
               <div className="wiz-parts">
                 <p className="wiz-label-sm">Peças já usadas (saem do estoque ao abrir)</p>
                 <PartsEditor drafts={drafts} onChange={setDrafts} />
               </div>
-              {vehicle && <label className="wiz-label-sm">Quilometragem de hoje<input className="wiz-input-sm" inputMode="numeric" value={mileage} onChange={(e) => setMileage(e.target.value)} /></label>}
+              {vehicle && <label className="wiz-label-sm">Quilometragem de hoje<input className="wiz-input-sm" inputMode="numeric" value={mileage} onChange={(e) => setMileage(maskDigits(e.target.value, 7))} /></label>}
               <label className="wiz-label-sm">Observações<textarea className="wiz-input-sm" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
             </details>
             {(laborCents !== null || partsTotal > 0) && (

@@ -15,6 +15,7 @@ import { centsToInput, formatBRL, formatOrderNumber, formatPhone, formatPlate, n
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { cancelOrder, orderTotals, registerPayment, updateOrder } from "@/services/orders";
 import { vehicleLabel } from "./shared";
+import { maskDigits, maskMoney, maskPhone } from "@/lib/masks";
 
 /** Escolha da forma de pagamento (botões grandes com ícone). */
 export function PaymentMethodPicker({ value, onChange, legend = "Forma de pagamento" }: { value: PaymentMethod; onChange: (m: PaymentMethod) => void; legend?: string }) {
@@ -117,7 +118,7 @@ export function WhatsAppDialog({
     >
       <div className="space-y-3">
         <Field label="Telefone do cliente" error={valid ? undefined : "Telefone inválido. Use DDD + número, ex.: (85) 98888-7777."}>
-          {(p) => <Input {...p} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" className="max-w-56" />}
+          {(p) => <Input {...p} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="tel" className="max-w-56" />}
         </Field>
         <Field label="Mensagem" hint="O sistema apenas abre a conversa com o texto preenchido; o envio é feito por você e não há confirmação de entrega.">
           {(p) => <Textarea {...p} rows={11} value={text} onChange={(e) => setText(e.target.value)} />}
@@ -189,14 +190,14 @@ export function EditOrderDialog({ order, onClose }: { order: ServiceOrder; onClo
             />
             {laborMode === "value" && (
               <Field label="Valor da mão de obra (R$)" error={labor.trim() !== "" && laborCents === null ? "Valor inválido. Ex.: 150,00" : undefined}>
-                {(p) => <Input {...p} value={labor} onChange={(e) => setLabor(e.target.value)} inputMode="decimal" autoFocus />}
+                {(p) => <Input {...p} value={labor} onChange={(e) => setLabor(maskMoney(e.target.value))} inputMode="decimal" autoFocus />}
               </Field>
             )}
           </>
         )}
         <MoreDetails summary="Mais detalhes (opcional): quilometragem e observações" defaultOpen={!!order.notes || order.mileage !== null}>
           <Field label="Quilometragem" optional>
-            {(p) => <Input {...p} value={mileage} onChange={(e) => setMileage(e.target.value)} inputMode="numeric" />}
+            {(p) => <Input {...p} value={mileage} onChange={(e) => setMileage(maskDigits(e.target.value, 7))} inputMode="numeric" />}
           </Field>
           <Field label="Observações" optional>
             {(p) => <Textarea {...p} rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />}

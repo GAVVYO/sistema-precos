@@ -5,6 +5,7 @@ import { ArrowLeftRight, Boxes, ClipboardCheck, History, Inbox, PackageMinus, Pa
 import { useState } from "react";
 import { initialQuery } from "@/lib/query";
 import { useApp } from "@/app-state/app-context";
+import { Pager, usePager } from "@/components/ui/pager";
 import { Dialog } from "@/components/ui/dialog";
 import { MoreMenu } from "@/components/ui/more-menu";
 import { useTray } from "@/components/layout/tray";
@@ -15,6 +16,7 @@ import { MOVEMENT_TYPE_LABELS, PART_CATEGORIES } from "@/domain/labels";
 import type { Part } from "@/domain/types";
 import { centsToInput, formatBRL, formatDateTime, formatOrderNumber, parseBRL } from "@/lib/format";
 import { createPart, moveStock, partSituation, updatePart } from "@/services/stock";
+import { maskMoney } from "@/lib/masks";
 
 function SituationBadge({ part }: { part: Part }) {
   const s = partSituation(part);
@@ -67,8 +69,8 @@ function PartDialog({ part, onClose }: { part: Part | null; onClose: () => void 
         <Field label="Nome da peça">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoFocus />}</Field>
         <ChoiceGroup label="Que tipo de peça?" value={category} onChange={setCategory} options={categories.map((c) => ({ value: c, label: c }))} />
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Quanto você paga por uma? (R$)">{(p) => <Input {...p} inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} />}</Field>
-          <Field label="Quanto cobra do cliente? (R$)">{(p) => <Input {...p} inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />}</Field>
+          <Field label="Quanto você paga por uma? (R$)">{(p) => <Input {...p} inputMode="decimal" value={cost} onChange={(e) => setCost(maskMoney(e.target.value))} />}</Field>
+          <Field label="Quanto cobra do cliente? (R$)">{(p) => <Input {...p} inputMode="decimal" value={price} onChange={(e) => setPrice(maskMoney(e.target.value))} />}</Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {part ? (
@@ -166,7 +168,9 @@ export function StockPage() {
   const parts = view.parts
     .filter((p) => (!q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)) && (!category || p.category === category) && (!situation || partSituation(p) === situation))
     .sort((a, b) => (sort.desc ? -1 : 1) * (sort.key === "name" ? a.name.localeCompare(b.name, "pt-BR") : a[sort.key] - b[sort.key]));
+  const partsPager = usePager(parts, 20);
   const moves = view.stockMovements.filter((m) => !movePart || m.partId === movePart).sort((a, b) => b.at.localeCompare(a.at));
+  const movesPager = usePager(moves, 25);
   const categories = [...new Set(view.parts.map((p) => p.category))].sort();
   const filtered = !!q || !!category || !!situation;
 
@@ -217,7 +221,7 @@ export function StockPage() {
                     <tr><SortHeader field="name" sort={sort} onSort={setSort}>Peça / código</SortHeader><th>Categoria</th><SortHeader field="quantity" sort={sort} onSort={setSort} numeric>Disponível</SortHeader><th className="num">Custo unit.</th><SortHeader field="priceCents" sort={sort} onSort={setSort} numeric>Venda</SortHeader><th>Situação</th><th className="text-right"><span className="sr-only">Ações</span></th></tr>
                   </thead>
                   <tbody>
-                    {parts.map((p) => (
+                    {partsPager.items.map((p) => (
                       <tr key={p.id}>
                         <td><span className="block font-semibold">{p.name}</span><span className="text-xs text-muted">{p.code}</span></td>
                         <td>{p.category}</td>
@@ -249,6 +253,7 @@ export function StockPage() {
                     ))}
                   </tbody>
                 </table>
+              <Pager pager={partsPager} label="peças" noun="peças" />
               </div>
             )}
           </>
@@ -270,7 +275,7 @@ export function StockPage() {
                     <tr><th>Data</th><th>Peça</th><th>Tipo</th><th className="num">Quantidade</th><th className="num">Ficou com</th><th>Motivo</th><th>Responsável</th></tr>
                   </thead>
                   <tbody>
-                    {moves.map((m) => {
+                    {movesPager.items.map((m) => {
                       const order = m.orderId ? view.orders.find((o) => o.id === m.orderId) : null;
                       return (
                         <tr key={m.id}>
@@ -293,6 +298,7 @@ export function StockPage() {
                     })}
                   </tbody>
                 </table>
+              <Pager pager={movesPager} label="histórico de peças" noun="movimentos" />
               </div>
             )}
           </>

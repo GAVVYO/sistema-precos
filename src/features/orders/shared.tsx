@@ -8,6 +8,7 @@ import { ORDER_STATUS_LABELS } from "@/domain/labels";
 import type { ID, OrderStatus, ServiceOrder, Vehicle } from "@/domain/types";
 import { centsToInput, formatBRL, parseBRL } from "@/lib/format";
 import { OrderItemInput, orderTotals, PAYMENT_SITUATION_LABELS, PaymentSituation, paymentSituation } from "@/services/orders";
+import { maskMoney } from "@/lib/masks";
 
 export function vehicleLabel(v: Vehicle | undefined): string {
   if (!v) return "Veículo removido";
@@ -144,7 +145,7 @@ export function PartsEditor({
                         inputMode="decimal"
                         value={d.price}
                         aria-label={`Preço unitário de ${part?.name}`}
-                        onChange={(e) => update(d.partId, { price: e.target.value })}
+                        onChange={(e) => update(d.partId, { price: maskMoney(e.target.value) })}
                         className="h-8"
                       />
                     </td>

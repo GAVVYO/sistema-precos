@@ -14,6 +14,7 @@ import { orderTotalText, StatusBadge, vehicleLabel } from "@/features/orders/sha
 import { formatDate, formatOrderNumber, formatPhone, formatPlate } from "@/lib/format";
 import { createCustomer, saveVehicle, updateCustomer } from "@/services/customers";
 import { orderTotals } from "@/services/orders";
+import { maskDigits, maskPhone, maskPlate } from "@/lib/masks";
 
 /** Histórico derivado das OS existentes — nada é digitado em duplicidade. */
 function OrderHistory({ orders, showVehicle, onOpen }: { orders: ServiceOrder[]; showVehicle?: boolean; onOpen: (id: ID) => void }) {
@@ -74,14 +75,14 @@ function VehicleForm({ customerId, vehicle, onDone }: { customerId: ID; vehicle:
 
   return (
     <div className="grid grid-cols-6 gap-3 rounded-md border border-primary/40 bg-primary-soft/40 p-3">
-      <Field label="Placa" className="col-span-6 sm:col-span-2">{(p) => <Input {...p} value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} maxLength={8} autoFocus />}</Field>
+      <Field label="Placa" className="col-span-6 sm:col-span-2">{(p) => <Input {...p} value={plate} onChange={(e) => setPlate(maskPlate(e.target.value))} maxLength={8} autoFocus />}</Field>
       <Field label="Marca" className="col-span-3 sm:col-span-2">{(p) => <Input {...p} value={brand} onChange={(e) => setBrand(e.target.value)} />}</Field>
       <Field label="Modelo" className="col-span-3 sm:col-span-2">{(p) => <Input {...p} value={model} onChange={(e) => setModel(e.target.value)} />}</Field>
       <div className="col-span-6">
         <MoreDetails summary={vehicle ? "Mais detalhes (opcional): ano, quilometragem e troca de dono" : "Mais detalhes (opcional): ano e quilometragem"}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Ano" optional>{(p) => <Input {...p} value={year} onChange={(e) => setYear(e.target.value)} inputMode="numeric" maxLength={4} />}</Field>
-            <Field label="Quilometragem" optional>{(p) => <Input {...p} value={mileage} onChange={(e) => setMileage(e.target.value)} inputMode="numeric" />}</Field>
+            <Field label="Ano" optional>{(p) => <Input {...p} value={year} onChange={(e) => setYear(maskDigits(e.target.value, 4))} inputMode="numeric" maxLength={4} />}</Field>
+            <Field label="Quilometragem" optional>{(p) => <Input {...p} value={mileage} onChange={(e) => setMileage(maskDigits(e.target.value, 7))} inputMode="numeric" />}</Field>
           </div>
           {vehicle && (
             <Field label="O carro mudou de dono? Escolha o novo dono" hint="Lista com todos os clientes, em ordem alfabética.">
@@ -144,7 +145,7 @@ export function CustomerDialog({ customer, onClose }: { customer: Customer | nul
         {editing ? (
           <div className="grid grid-cols-5 items-end gap-3">
             <Field label="Nome" className="col-span-3">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoFocus />}</Field>
-            <Field label="Telefone" className="col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="(85) 98888-7777" />}</Field>
+            <Field label="Telefone" className="col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="tel" placeholder="(85) 98888-7777" />}</Field>
             {customer && (
               <div className="col-span-5 flex justify-end gap-2">
                 <Button size="sm" onClick={() => { setEditing(false); setName(customer.name); setPhone(formatPhone(customer.phone)); }}>Descartar</Button>

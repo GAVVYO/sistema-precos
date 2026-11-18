@@ -14,6 +14,7 @@ import { useApp } from "@/app-state/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Button, cx, EmptyState, PageHeader } from "@/components/ui/primitives";
 import { ChoiceGroup } from "@/components/ui/choice";
+import { Pager, usePager } from "@/components/ui/pager";
 import { MoreMenu, type MoreMenuItem } from "@/components/ui/more-menu";
 import { TrayDock, useTray } from "@/components/layout/tray";
 import { ORDER_STATUS_LABELS, ORDER_STATUSES } from "@/domain/labels";
@@ -233,7 +234,6 @@ export function OrdersPage() {
   const [stageOverride, setStageOverride] = useState<OrderStatus | null>(() => view.orders.find((o) => isBorn(o.id))?.status ?? null);
   const stage = stageOverride ?? stagePref;
   const setStage = (st: OrderStatus) => { setStageOverride(null); setStagePref(st); setPeek(null); };
-  const [showOlder, setShowOlder] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), useSensor(KeyboardSensor));
 
   const active = view.orders.filter((o) => !o.cancelledAt);
@@ -264,6 +264,9 @@ export function OrdersPage() {
   const stageOrders = inStage(stage);
   const owing = stage === "done" ? stageOrders.filter((o) => paymentSituation(o, orderTotals(view, o)) === "pending") : [];
   const settled = stage === "done" ? stageOrders.filter((o) => !owing.includes(o)) : [];
+  const pageKey = `${stage}|${search}|${mechanic}|${period}`;
+  const stagePager = usePager(stageOrders, 12, pageKey);
+  const settledPager = usePager(settled, 10, pageKey);
   const elsewhere = filtered && stageOrders.length === 0 ? ORDER_STATUSES.find((st) => st !== stage && inStage(st).length > 0) : undefined;
   const subOf = (st: OrderStatus) => {
     const list = inStage(st);
@@ -478,13 +481,16 @@ export function OrdersPage() {
                 {settled.length > 0 && (
                   <section aria-label="Prontos e pagos">
                     <h2 className="svc-group">Pagos e entregues <span>{settled.length}</span></h2>
-                    <div className="svc-rows">{(showOlder ? settled : settled.slice(0, 6)).map((o) => <OrderCard key={o.id} order={o} draggable={canDrag} />)}</div>
-                    {settled.length > 6 && !showOlder && <Button variant="ghost" className="mt-2" onClick={() => setShowOlder(true)}>Mostrar mais {settled.length - 6}</Button>}
+                    <div className="svc-rows">{settledPager.items.map((o) => <OrderCard key={o.id} order={o} draggable={canDrag} />)}</div>
+                    <Pager pager={settledPager} label="serviços pagos" noun="serviços" />
                   </section>
                 )}
               </>
             ) : (
-              <div className="svc-rows">{stageOrders.map((o) => <OrderCard key={o.id} order={o} draggable={canDrag} />)}</div>
+              <>
+                <div className="svc-rows">{stagePager.items.map((o) => <OrderCard key={o.id} order={o} draggable={canDrag} />)}</div>
+                <Pager pager={stagePager} label={STAGE_META[stage].label} noun="carros" />
+              </>
             )}
           </div>
         </div>

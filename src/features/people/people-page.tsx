@@ -6,6 +6,7 @@ import { useApp } from "@/app-state/app-context";
 import { ChoiceGroup, MoreDetails } from "@/components/ui/choice";
 import { CountUp } from "@/components/ui/count-up";
 import { Dialog } from "@/components/ui/dialog";
+import { Pager, usePager } from "@/components/ui/pager";
 import { PersonAvatar } from "@/components/ui/person-avatar";
 import { Button, EmptyState, Field, Input, PageHeader } from "@/components/ui/primitives";
 import { motionReduced } from "@/lib/view-transition";
@@ -19,6 +20,7 @@ import { formatDate, formatPhone, formatPlate } from "@/lib/format";
 import { addMember, updateMember, updateMemberProfile } from "@/services/admin";
 import { createCustomer, saveVehicle } from "@/services/customers";
 import { BadgeCard, PhotoPicker } from "./badge-card";
+import { maskEmail, maskPhone, maskPlate } from "@/lib/masks";
 
 /**
  * Pessoas (decisão 62): clientes, funcionários e carros num lugar só, no mesmo
@@ -67,9 +69,9 @@ function NewCustomerDialog({ onClose }: { onClose: () => void }) {
         <BadgeCard kind="customer" name={name} phone={phone} plate={plate.replace(/[^a-z0-9]/gi, "").length >= 7 ? plate : undefined} stamped={stamped} />
         <form className="badge-form" onSubmit={(e) => { e.preventDefault(); save(); }}>
           <Field label="Nome do cliente">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoFocus autoComplete="off" />}</Field>
-          <Field label="Telefone (WhatsApp)" hint="Com DDD. Ex.: (85) 98888-7777">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />}</Field>
+          <Field label="Telefone (WhatsApp)" hint="Com DDD. Ex.: (85) 98888-7777">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="tel" />}</Field>
           <MoreDetails summary="Carro do cliente (opcional)">
-            <Field label="Placa">{(p) => <Input {...p} value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} maxLength={8} />}</Field>
+            <Field label="Placa">{(p) => <Input {...p} value={plate} onChange={(e) => setPlate(maskPlate(e.target.value))} maxLength={8} />}</Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Marca">{(p) => <Input {...p} value={brand} onChange={(e) => setBrand(e.target.value)} />}</Field>
               <Field label="Modelo">{(p) => <Input {...p} value={model} onChange={(e) => setModel(e.target.value)} />}</Field>
@@ -125,8 +127,8 @@ function StaffDialog({ member, onClose }: { member: WorkshopMembership | null; o
         <BadgeCard kind="staff" name={name} phone={phone} roleLabel={ROLE_LABELS[role]} photo={photo} stamped={stamped} />
         <form className="badge-form" onSubmit={(e) => { e.preventDefault(); save(); }}>
           <Field label="Nome do funcionário">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoFocus={!member} autoComplete="off" />}</Field>
-          {!member && <Field label="E-mail (para entrar no sistema)" hint="Ex.: joao@suaoficina.com">{(p) => <Input {...p} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />}</Field>}
-          <Field label="Telefone" optional hint="Com DDD.">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />}</Field>
+          {!member && <Field label="E-mail (para entrar no sistema)" hint="Ex.: joao@suaoficina.com">{(p) => <Input {...p} type="email" inputMode="email" autoCapitalize="none" spellCheck={false} value={email} onChange={(e) => setEmail(maskEmail(e.target.value))} />}</Field>}
+          <Field label="Telefone" optional hint="Com DDD.">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="tel" />}</Field>
           <PhotoPicker value={photo} onChange={setPhoto} />
           {isSelf && <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">Sua própria função e acesso só outro proprietário muda.</p>}
           <fieldset disabled={isSelf} className="grid gap-4">
@@ -195,6 +197,10 @@ export function PeoplePage() {
     return !q || (alnum && v.plate.toLowerCase().includes(alnum)) || `${v.brand} ${v.model}`.toLowerCase().includes(q) || (owner?.name.toLocaleLowerCase("pt-BR").includes(q) ?? false);
   }), [view, q, alnum, customerOf]);
 
+  const pageKey = `${tab}|${search}`;
+  const customerPager = usePager(customers, 12, pageKey);
+  const staffPager = usePager(staff, 12, pageKey);
+  const vehiclePager = usePager(vehicles, 12, pageKey);
   const lastOf = (pred: (o: { customerId: ID; vehicleId: ID }) => boolean) => view.orders.filter(pred).reduce<string | null>((l, o) => (!l || o.openedAt > l ? o.openedAt : l), null);
   const tabKey = (e: React.KeyboardEvent) => {
     const i = tabs.indexOf(tab);
@@ -233,8 +239,8 @@ export function PeoplePage() {
           {tab === "customers" && (customers.length === 0 ? (
             <EmptyState title={q ? "Ninguém com esse nome, telefone ou placa" : "Nenhum cliente ainda"} description={q ? "Confira o que foi digitado." : "O cliente é cadastrado sozinho ao abrir um serviço, ou pelo botão Novo cliente."} />
           ) : (
-            <ul className="svc-rows people-rows">
-              {customers.map((c) => {
+            <><ul className="svc-rows people-rows">
+              {customerPager.items.map((c) => {
                 const cars = view.vehicles.filter((v) => v.customerId === c.id);
                 const count = view.orders.filter((o) => o.customerId === c.id).length;
                 const last = lastOf((o) => o.customerId === c.id);
@@ -260,12 +266,13 @@ export function PeoplePage() {
                 );
               })}
             </ul>
+            <Pager pager={customerPager} label="clientes" noun="clientes" /></>
           ))}
 
           {tab === "staff" && (
-            <ul className="svc-rows people-rows">
+            <><ul className="svc-rows people-rows">
               {staff.length === 0 && <EmptyState title="Ninguém com esse nome ou função" description="Confira o que foi digitado." />}
-              {staff.map((m) => {
+              {staffPager.items.map((m) => {
                 const u = userOf(m.userId);
                 if (!u) return null;
                 return (
@@ -286,13 +293,14 @@ export function PeoplePage() {
                 );
               })}
             </ul>
+            <Pager pager={staffPager} label="funcionários" noun="funcionários" /></>
           )}
 
           {tab === "vehicles" && (vehicles.length === 0 ? (
             <EmptyState title={q ? "Nenhum carro com essa placa ou modelo" : "Nenhum carro ainda"} description={q ? "Confira o que foi digitado." : "O carro é cadastrado sozinho ao abrir um serviço com a placa."} />
           ) : (
-            <ul className="svc-rows people-rows">
-              {vehicles.map((v) => {
+            <><ul className="svc-rows people-rows">
+              {vehiclePager.items.map((v) => {
                 const owner = customerOf(v.customerId);
                 const last = lastOf((o) => o.vehicleId === v.id);
                 return (
@@ -313,6 +321,7 @@ export function PeoplePage() {
                 );
               })}
             </ul>
+            <Pager pager={vehiclePager} label="carros" noun="carros" /></>
           ))}
         </div>
       </div>

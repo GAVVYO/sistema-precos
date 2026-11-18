@@ -6,6 +6,7 @@ import { CalendarDays, CalendarPlus, ChevronLeft, ChevronRight } from "lucide-re
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
+import { Pager, usePager } from "@/components/ui/pager";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
 import { Badge, Button, Card, cx, EmptyState, Field, Input, PageHeader, Segmented, Textarea, Tone } from "@/components/ui/primitives";
 import { APPOINTMENT_STATUS_LABELS } from "@/domain/labels";
@@ -15,6 +16,7 @@ import {
 } from "@/lib/format";
 import { ChoiceGroup, DayPicker, MoreDetails, TimePicker } from "@/components/ui/choice";
 import { createAppointment, setAppointmentStatus, updateAppointment } from "@/services/appointments";
+import { maskPhone, maskPlate } from "@/lib/masks";
 
 const STATUS_TONE: Record<AppointmentStatus, Tone> = { scheduled: "info", confirmed: "success", attended: "neutral", cancelled: "danger" };
 const CHIP: Record<AppointmentStatus, string> = {
@@ -123,7 +125,7 @@ function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment:
               </ul>
             )}
           </div>
-          <Field label="Telefone (WhatsApp)" className="col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />}</Field>
+          <Field label="Telefone (WhatsApp)" className="col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="tel" />}</Field>
           <Field label="Qual carro? (modelo)" className="col-span-6">{(p) => <Input {...p} value={model} onChange={(e) => setModel(e.target.value)} />}</Field>
           <div className="col-span-6 grid gap-2">
             <Field label="O que vai fazer?">{(p) => <Input {...p} value={service} onChange={(e) => setService(e.target.value)} />}</Field>
@@ -140,7 +142,7 @@ function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment:
               <ChoiceGroup label="Quem vai atender?" value={mechanicId} onChange={setMechanicId} options={[{ value: "", label: "Ainda não sei" }, ...mechanics.map((m) => ({ value: m.id, label: m.name.split(" ").slice(0, 2).join(" ") }))]} />
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Marca">{(p) => <Input {...p} value={brand} onChange={(e) => setBrand(e.target.value)} />}</Field>
-                <Field label="Placa">{(p) => <Input {...p} value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} maxLength={8} />}</Field>
+                <Field label="Placa">{(p) => <Input {...p} value={plate} onChange={(e) => setPlate(maskPlate(e.target.value))} maxLength={8} />}</Field>
               </div>
               <Field label="Observações">{(p) => <Textarea {...p} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />}</Field>
             </MoreDetails>
@@ -190,6 +192,7 @@ export function SchedulePage() {
   const upcoming = view.appointments
     .filter((a) => a.date >= today && a.status !== "cancelled" && a.status !== "attended")
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  const upcomingPager = usePager(upcoming, 20);
   const title =
     mode === "day" ? `${weekdayName(cursor)}, ${formatDate(cursor)}` : mode === "week" ? `${formatDate(weekStart)} a ${formatDate(addDays(weekStart, 6))}` : mode === "month" ? monthName(cursor) : "Próximos atendimentos";
   const openNew = (d: ISODate) => { setNewDate(d < today ? today : d); setOpen("new"); };
@@ -303,10 +306,11 @@ export function SchedulePage() {
           {upcoming.length === 0 ? (
             <EmptyState icon={<CalendarDays className="size-8" aria-hidden />} title="Nenhum cliente marcado para os próximos dias" description="Quando um cliente ligar para marcar, registre aqui." action={<Button variant="primary" disabled={!online} onClick={() => openNew(today)}>Novo agendamento</Button>} />
           ) : (
+            <>
             <table className="data-table">
               <thead><tr><th>Data</th><th>Horário</th><th>Cliente</th><th>Veículo</th><th>Serviço</th><th>Mecânico</th><th>Situação</th></tr></thead>
               <tbody>
-                {upcoming.map((a) => (
+                {upcomingPager.items.map((a) => (
                   <tr key={a.id} className="cursor-pointer" onClick={() => setOpen(a)}>
                     <td className="whitespace-nowrap">{a.date === today ? "Hoje" : `${weekdayName(a.date, true)}, ${formatDate(a.date)}`}</td>
                     <td className="font-semibold tabular-nums">{a.time}</td>
@@ -319,6 +323,8 @@ export function SchedulePage() {
                 ))}
               </tbody>
             </table>
+              <Pager pager={upcomingPager} label="próximos agendamentos" noun="agendamentos" />
+            </>
           )}
         </Card>
       )}

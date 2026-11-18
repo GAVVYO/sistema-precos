@@ -13,6 +13,7 @@ import { MODULES } from "@/domain/permissions";
 import type { ModuleKey } from "@/domain/types";
 import { formatPhone } from "@/lib/format";
 import { updateSettings } from "@/services/admin";
+import { maskPhone } from "@/lib/masks";
 
 const DEFAULT_COLORS = { primary: "#2563EB", secondary: "#172033" };
 const PRIMARY_PRESETS = ["#2563EB", "#0F766E", "#B45309", "#BE123C", "#6D28D9", "#15803D"];
@@ -66,7 +67,7 @@ function WorkshopSettingsForm() {
         <div className="space-y-4 p-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
             <Field label="Nome da oficina" className="sm:col-span-3">{(p) => <Input {...p} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />}</Field>
-            <Field label="Telefone" optional className="sm:col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />}</Field>
+            <Field label="Telefone" optional className="sm:col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="tel" />}</Field>
           </div>
           <div>
             <p className="mb-1 text-xs font-medium">Logotipo</p>

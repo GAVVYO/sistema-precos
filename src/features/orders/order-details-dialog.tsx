@@ -20,6 +20,7 @@ import { useOrderActions } from "./order-actions";
 import { CancelOrderDialog, EditOrderDialog, PaymentDialog, WhatsAppDialog } from "./order-dialogs";
 import { QuickOrderAction } from "./quick-order-action";
 import { DraftItem, draftsToItems, orderTotalText, PartsEditor, toDrafts, vehicleLabel } from "./shared";
+import { maskMoney } from "@/lib/masks";
 
 /** "hoje às 14:43", "ontem às 9:10", "em 13/11 às 8:00". */
 function sinceWhen(at: string): string {
@@ -276,7 +277,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
                 <Button className="w-full" icon={<PencilSimple size={16} weight="duotone" aria-hidden />} disabled={!online} onClick={() => setLaborDraft("")}>Definir mão de obra</Button>
               ) : (
                 <form className="osd-labor" onSubmit={(e) => { e.preventDefault(); saveLabor(); }}>
-                  <Field label="Mão de obra (R$)">{(p) => <Input {...p} inputMode="decimal" autoFocus value={laborValue} onChange={(e) => setLaborDraft(e.target.value)} />}</Field>
+                  <Field label="Mão de obra (R$)">{(p) => <Input {...p} inputMode="decimal" autoFocus value={laborValue} onChange={(e) => setLaborDraft(maskMoney(e.target.value))} />}</Field>
                   <div className="flex gap-2"><Button onClick={() => setLaborDraft(null)}>Cancelar</Button><Button type="submit" variant="primary" disabled={!online}>Salvar</Button></div>
                 </form>
               ))}

@@ -4,6 +4,7 @@ import { CircleDollarSign, Minus, Plus, Receipt } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useApp } from "@/app-state/app-context";
+import { Pager, usePager } from "@/components/ui/pager";
 import { ChoiceGroup, DayPicker, MoreDetails } from "@/components/ui/choice";
 import { Dialog } from "@/components/ui/dialog";
 import { Period, PeriodPicker, usePeriod } from "@/components/ui/period";
@@ -18,6 +19,7 @@ import { CashChange, cashShort, PaymentMethodTiles, PaymentStage } from "@/featu
 import { vehicleLabel } from "@/features/orders/shared";
 import { addDays, formatBRL, formatDate, formatOrderNumber, formatPlate, inRange, parseBRL, startOfWeek, todayISO } from "@/lib/format";
 import { createExpense, createIncome, financeSummary, listReceivables, settleIncome } from "@/services/finance";
+import { maskMoney } from "@/lib/masks";
 
 /** Par de cores validado para daltonismo; independe da cor da oficina. */
 const SERIES = { received: "#2563EB", expenses: "#D97706" };
@@ -115,7 +117,7 @@ function TransactionDialog({ kind, onClose }: { kind: "income" | "expense"; onCl
     >
       <div className="grid gap-4">
         <Field label={kind === "expense" ? "Com o que gastou?" : "Do que é esse dinheiro?"} hint={kind === "expense" ? "Ex.: conta de luz de novembro" : "Ex.: venda de peça no balcão"}>{(p) => <Input {...p} value={description} onChange={(e) => setDescription(e.target.value)} autoFocus />}</Field>
-        <Field label="Quanto? (R$)">{(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}</Field>
+        <Field label="Quanto? (R$)">{(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(maskMoney(e.target.value))} />}</Field>
         {kind === "expense" && (
           <ChoiceGroup label="Que tipo de gasto?" value={category} onChange={setCategory} options={EXPENSE_CATEGORIES.map((c) => ({ value: c, label: c }))} />
         )}
@@ -188,9 +190,12 @@ export function FinancePage() {
 
   const summary = financeSummary(view, period.from, period.to);
   const receivables = listReceivables(view);
+  const receivablesPager = usePager(receivables, 20);
   const inPeriod = view.transactions.filter((t) => inRange(t.date, period.from, period.to)).sort((a, b) => b.date.localeCompare(a.date));
   const incomes = inPeriod.filter((t) => t.kind === "income");
+  const incomesPager = usePager(incomes, 20);
   const expenses = inPeriod.filter((t) => t.kind === "expense");
+  const expensesPager = usePager(expenses, 20);
 
   return (
     <div className="module-page module-finance">
@@ -251,7 +256,7 @@ export function FinancePage() {
               <table className="data-table">
                 <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th>Descrição</th><th>Forma</th><th>Situação</th><th className="num">Valor</th></tr></thead>
                 <tbody>
-                  {incomes.map((t) => {
+                  {incomesPager.items.map((t) => {
                     const order = t.orderId ? view.orders.find((o) => o.id === t.orderId) : null;
                     return (
                       <tr key={t.id}>
@@ -267,6 +272,7 @@ export function FinancePage() {
                   })}
                 </tbody>
               </table>
+              <Pager pager={incomesPager} label="entradas" noun="entradas" />
             </div>
           ))}
 
@@ -278,7 +284,7 @@ export function FinancePage() {
               <table className="data-table">
                 <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Forma</th><th>Observações</th><th className="num">Valor</th></tr></thead>
                 <tbody>
-                  {expenses.map((t) => (
+                  {expensesPager.items.map((t) => (
                     <tr key={t.id}>
                       <td>{formatDate(t.date)}</td>
                       <td>{t.description}</td>
@@ -290,6 +296,7 @@ export function FinancePage() {
                   ))}
                 </tbody>
               </table>
+              <Pager pager={expensesPager} label="saídas" noun="saídas" />
             </div>
           ))}
 
@@ -301,7 +308,7 @@ export function FinancePage() {
               <table className="data-table">
                 <thead><tr><th>Desde</th><th>Cliente</th><th>Veículo</th><th>Origem</th><th className="num">Valor pendente</th><th className="text-right">Ação</th></tr></thead>
                 <tbody>
-                  {receivables.map((r) => {
+                  {receivablesPager.items.map((r) => {
                     const v = r.order ? vehicleOf(r.order.vehicleId) : undefined;
                     return (
                       <tr key={r.key}>
@@ -328,6 +335,7 @@ export function FinancePage() {
                   })}
                 </tbody>
               </table>
+              <Pager pager={receivablesPager} label="a receber" noun="valores" />
             </div>
           ))}
       </Card>

@@ -33,6 +33,7 @@
 | (18/11) | **Pessoas** (clientes, funcionários e carros) com crachá que se preenche e carimbo "Cadastro concluído"; foto do funcionário (decisão 62) |
 | (18/11) | Carimbador animado (63); **máscaras** em telefone, placa, dinheiro, e-mail e km, e **paginação** nas listas longas (64) |
 | (18/11) | Briefing do **app mobile** para outro agente: [APP-MOBILE.md](APP-MOBILE.md) (decisão 65) |
+| (18/11) | App mobile **E0**: base em `mobile/` (Expo SDK 58), regras do site compartilhadas, tema e componentes base (decisão 67) |
 
 ### Validação vigente
 

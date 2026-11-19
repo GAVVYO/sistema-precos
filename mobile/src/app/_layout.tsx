@@ -19,7 +19,8 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: colors.background },
         }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="entrar" options={{ headerShown: false, gestureEnabled: false, animation: "fade" }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "fade" }} />
         <Stack.Screen name="servico/[id]" options={{ title: "Serviço" }} />
         <Stack.Screen name="novo-servico" options={{ title: "Novo serviço", presentation: "modal" }} />
         <Stack.Screen name="receber/[id]" options={{ title: "Receber", presentation: "modal" }} />

@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { Car, House, UserCircle, UsersThree } from "phosphor-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/data/store";
@@ -6,10 +6,12 @@ import { colors } from "@/theme";
 
 /** Abas: recepção Hoje · Serviços · Pessoas · Conta; mecânico Seus carros · Conta (regras §4). */
 export default function TabsLayout() {
-  const { membership } = useApp();
-  const mechanic = membership.role === "mechanic";
+  const { membership, signedIn } = useApp();
   // A barra desconta a área dos botões do celular (Android) e da barra de início (iPhone).
   const insets = useSafeAreaInsets();
+  // Porta de mão única: sem alguém dentro, vai para a entrada (regras §4).
+  if (!signedIn || !membership) return <Redirect href="/entrar" />;
+  const mechanic = membership.role === "mechanic";
   return (
     <Tabs
       screenOptions={{

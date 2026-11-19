@@ -11,9 +11,9 @@ import { type Ctx, DomainError, scopeTo } from "@core/services/core";
  * na E1 passa a gravar no aparelho (AsyncStorage).
  */
 
-interface State { db: Database; userId: ID; workshopId: ID }
+interface State { db: Database; userId: ID; workshopId: ID; signedIn: boolean }
 
-let state: State = { db: buildSeed(), userId: "u-juliana", workshopId: DEMO_WORKSHOP_ID };
+let state: State = { db: buildSeed(), userId: "u-juliana", workshopId: DEMO_WORKSHOP_ID, signedIn: false };
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
@@ -30,10 +30,22 @@ export function act(fn: (db: Database, ctx: Ctx) => void): { ok: true } | { ok: 
   return { ok: true };
 }
 
-export function enterAs(userId: ID) {
-  const m = state.db.memberships.find((x) => x.userId === userId && x.active);
+/** Entrou com o PIN certo (a conferência é feita pela tela, com verifyPin do site). */
+export function enterAs(userId: ID, workshopId?: ID) {
+  const m = state.db.memberships.find((x) => x.userId === userId && x.active && (!workshopId || x.workshopId === workshopId));
   if (!m) return;
-  state = { ...state, userId, workshopId: m.workshopId };
+  state = { ...state, userId, workshopId: m.workshopId, signedIn: true };
+  emit();
+}
+
+export function signOut() {
+  state = { ...state, signedIn: false };
+  emit();
+}
+
+/** Oficina deste aparelho (na tela de entrada, antes de alguém entrar). */
+export function setDeviceWorkshop(workshopId: ID) {
+  state = { ...state, workshopId };
   emit();
 }
 
@@ -51,8 +63,11 @@ export function useApp() {
   const view = scopeTo(s.db, s.workshopId);
   const user = s.db.users.find((u) => u.id === s.userId)!;
   const membership = view.memberships.find((m) => m.userId === s.userId)!;
-  const can = (p: PermissionKey) => membership.permissions.includes(p);
+  // Na tela de entrada ainda não há ninguém dentro (membership pode não existir nesta oficina).
+  const can = (p: PermissionKey) => membership?.permissions.includes(p) ?? false;
   return {
+    signedIn: s.signedIn,
+    workshopId: s.workshopId,
     db: s.db,
     view,
     user,

@@ -1,17 +1,17 @@
-import { ArrowCounterClockwise, Desktop, IdentificationBadge, Wrench } from "phosphor-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { ArrowCounterClockwise, Desktop, SignOut } from "phosphor-react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ROLE_LABELS } from "@core/domain/permissions";
 import { Avatar } from "@/components/avatar";
 import { PillButton } from "@/components/pill-button";
-import { enterAs, resetDemo, useApp } from "@/data/store";
+import { resetDemo, signOut, useApp } from "@/data/store";
 import { colors, radius, shadow, space, type } from "@/theme";
 
 /** Conta: quem está usando, trocar de pessoa na demonstração, restaurar. */
 export function Account() {
   const { view, user, membership } = useApp();
   const insets = useSafeAreaInsets();
-  const options = view.memberships.filter((m) => m.active && (m.role === "receptionist" || m.role === "mechanic"));
   return (
     <ScrollView contentContainerStyle={[styles.page, { paddingTop: insets.top + space.md }]}>
       <Text style={type.title}>Conta</Text>
@@ -23,28 +23,11 @@ export function Account() {
         </View>
       </View>
 
-      <Text style={[type.label, styles.group]}>Entrar como (demonstração)</Text>
-      <View style={styles.list}>
-        {options.map((m) => {
-          const u = view.users.find((x) => x.id === m.userId)!;
-          const on = u.id === user.id;
-          return (
-            <Pressable key={m.id} role="radio" aria-checked={on} onPress={() => enterAs(u.id)} style={[styles.option, on && styles.optionOn]}>
-              {m.role === "mechanic" ? <Wrench size={24} color={on ? colors.primary : colors.muted} weight="duotone" /> : <IdentificationBadge size={24} color={on ? colors.primary : colors.muted} weight="duotone" />}
-              <View style={{ flex: 1 }}>
-                <Text style={type.bodyStrong}>{u.name}</Text>
-                <Text style={type.caption}>{ROLE_LABELS[m.role]}</Text>
-              </View>
-              <View style={[styles.radio, on && styles.radioOn]} />
-            </Pressable>
-          );
-        })}
-      </View>
-
       <View style={styles.note}>
         <Desktop size={22} color={colors.muted} weight="duotone" />
         <Text style={[type.caption, { flex: 1 }]}>Financeiro, estoque, relatórios e funcionários continuam no computador.</Text>
       </View>
+      <PillButton full label="Sair" icon={<SignOut size={20} color={colors.primaryFg} weight="bold" />} onPress={() => { signOut(); router.replace("/entrar"); }} accessibilityHint="Volta para a tela de PIN" />
       <PillButton label="Restaurar demonstração" variant="secondary" icon={<ArrowCounterClockwise size={18} color={colors.text} weight="bold" />} onPress={resetDemo} />
     </ScrollView>
   );

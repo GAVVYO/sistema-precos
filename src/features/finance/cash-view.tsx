@@ -27,12 +27,12 @@ type Kind = "income" | "expense" | "receivable";
 
 /** Um só conjunto (decisão 82): Phosphor duotone, mesma cor e mesmo círculo para tudo. */
 const CATEGORY_ICON: Record<string, ReactNode> = {
-  "Compra de peças": <Engine weight="duotone" />,
-  Aluguel: <Storefront weight="duotone" />,
-  Energia: <Lightbulb weight="duotone" />,
-  Água: <Drop weight="duotone" />,
-  Funcionários: <UsersThree weight="duotone" />,
-  Ferramentas: <Wrench weight="duotone" />,
+  "Compra de peças": <Engine weight="bold" />,
+  Aluguel: <Storefront weight="bold" />,
+  Energia: <Lightbulb weight="bold" />,
+  Água: <Drop weight="bold" />,
+  Funcionários: <UsersThree weight="bold" />,
+  Ferramentas: <Wrench weight="bold" />,
 };
 
 const WEEK = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
@@ -75,9 +75,9 @@ export function CashView({ period, receivedCents, expensesCents, receivables, on
   return (
     <div className="cash">
       <div role="tablist" aria-label="O que ver" className="cash-tabs">
-        <CashTab k="income" on={kind === "income"} onSelect={switchKind} icon={<TrayArrowDown weight="duotone" />} label="Entrou" value={receivedCents} count={incomes.length} />
-        <CashTab k="expense" on={kind === "expense"} onSelect={switchKind} icon={<TrayArrowUp weight="duotone" />} label="Saiu" value={expensesCents} count={expenses.length} />
-        <CashTab k="receivable" on={kind === "receivable"} onSelect={switchKind} icon={<ClockCountdown weight="duotone" />} label="Falta receber" value={receivables.reduce((s, r) => s + r.amountCents, 0) as Cents} count={receivables.length} />
+        <CashTab k="income" on={kind === "income"} onSelect={switchKind} icon={<TrayArrowDown weight="bold" />} label="Entrou" value={receivedCents} count={incomes.length} />
+        <CashTab k="expense" on={kind === "expense"} onSelect={switchKind} icon={<TrayArrowUp weight="bold" />} label="Saiu" value={expensesCents} count={expenses.length} />
+        <CashTab k="receivable" on={kind === "receivable"} onSelect={switchKind} icon={<ClockCountdown weight="bold" />} label="Falta receber" value={receivables.reduce((s, r) => s + r.amountCents, 0) as Cents} count={receivables.length} />
       </div>
 
       <p className="cash-say">
@@ -211,7 +211,7 @@ function DayDetail({ kind, day, moves, total, onPick, from, to, orderOf, custome
           const who = customerName(t.customerId);
           return (
             <li key={t.id} className="cash-row" style={{ "--i": i } as React.CSSProperties}>
-              {order ? <MiniPlate plate={plateOf(order)} /> : <span className="cash-cat" data-kind={t.kind} aria-hidden>{t.kind === "income" ? <Coins weight="duotone" /> : CATEGORY_ICON[t.category] ?? <Receipt weight="duotone" />}</span>}
+              {order ? <MiniPlate plate={plateOf(order)} /> : <span className="cash-cat" data-kind={t.kind} aria-hidden>{t.kind === "income" ? <Coins weight="bold" /> : CATEGORY_ICON[t.category] ?? <Receipt weight="bold" />}</span>}
               <span className="cash-row-main">
                 <b>{who ?? t.description}</b>
                 <small>

@@ -2467,7 +2467,9 @@ html[data-motion="reduce"] :is(.fr-box, .fr-row, .fr-bar > span) { animation: no
 .cash-tab:active { transform: scale(.985); }
 .cash-tab[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: 0 2px 4px rgb(23 32 51 / 6%), 0 14px 30px -14px rgb(23 32 51 / 30%); }
 .cash-tab:focus-visible, .cash-day:focus-visible, .cash-bar:focus-visible, .cash-cal-nav:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 2px; }
-.cash-tab-icon { display: grid; flex: none; place-items: center; width: 50px; height: 50px; border-radius: 999px; background: var(--color-primary-soft); color: var(--primary); font-size: 26px; }
+/* Ícones (decisão 83, escolha do usuário): traço grosso escuro em quadrado cinza arredondado. */
+.cash-tab-icon { display: grid; flex: none; place-items: center; width: 50px; height: 50px; border-radius: 15px; background: #eef1f5; color: var(--text); font-size: 26px; }
+.cash-tab[aria-selected="true"] .cash-tab-icon { background: #e6eaf0; }
 .cash-tab-text { display: grid; min-width: 0; }
 .cash-tab-text small { font-size: .9375rem; font-weight: 700; }
 .cash-tab-value { overflow: hidden; font-size: 1.625rem; font-weight: 800; letter-spacing: -.02em; color: var(--text); text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -2511,7 +2513,7 @@ html[data-motion="reduce"] :is(.fr-box, .fr-row, .fr-bar > span) { animation: no
 .cash-row-main small { font-size: .875rem; color: var(--muted); }
 .cash-link { font-weight: 700; color: var(--primary); }
 .cash-link:hover { text-decoration: underline; }
-.cash-cat { display: grid; flex: none; place-items: center; width: 46px; height: 46px; border-radius: 999px; background: var(--color-primary-soft); color: var(--primary); font-size: 24px; }
+.cash-cat { display: grid; flex: none; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: #eef1f5; color: var(--text); font-size: 24px; }
 .cash-amt { flex: none; font-size: 1.0625rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .cash-amt.is-in { color: #15803d; } .cash-amt.is-out { color: #c2410c; } .cash-amt.is-due { color: #b45309; }
 .cash-week { display: grid; gap: 10px; margin-top: 6px; padding: 16px; border-radius: 22px; background: var(--bg); }

@@ -1,16 +1,22 @@
 import { router } from "expo-router";
-import { ArrowCounterClockwise, Desktop, SignOut } from "phosphor-react-native";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ArrowCounterClockwise, Desktop, LinkBreak, SignOut } from "phosphor-react-native";
+import { Alert, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ROLE_LABELS } from "@core/domain/permissions";
 import { Avatar } from "@/components/avatar";
 import { PillButton } from "@/components/pill-button";
-import { resetDemo, signOut, useApp } from "@/data/store";
+import { disconnectDevice, resetDemo, signOut, useApp } from "@/data/store";
 import { colors, radius, shadow, space, type } from "@/theme";
 
-/** Conta: quem está usando, trocar de pessoa na demonstração, restaurar. */
+/** Conta: quem está usando, sair (volta para digital/PIN), desconectar o celular, restaurar a demonstração. */
 export function Account() {
-  const { view, user, membership } = useApp();
+  const { view, user, membership, device } = useApp();
+  const shared = device?.mode === "shared";
+  const disconnect = () => {
+    const go = () => { disconnectDevice(); router.replace("/entrar"); };
+    if (Platform.OS === "web") return go();
+    Alert.alert(shared ? "Desconectar este aparelho da oficina?" : "Desconectar este celular?", "Para entrar de novo, vai precisar do QR do dono.", [{ text: "Cancelar", style: "cancel" }, { text: "Desconectar", style: "destructive", onPress: go }]);
+  };
   const insets = useSafeAreaInsets();
   return (
     <ScrollView contentContainerStyle={[styles.page, { paddingTop: insets.top + space.md }]}>
@@ -27,7 +33,8 @@ export function Account() {
         <Desktop size={22} color={colors.muted} weight="duotone" />
         <Text style={[type.caption, { flex: 1 }]}>Financeiro, estoque, relatórios e funcionários continuam no computador.</Text>
       </View>
-      <PillButton full label="Sair" icon={<SignOut size={20} color={colors.primaryFg} weight="bold" />} onPress={() => { signOut(); router.replace("/entrar"); }} accessibilityHint="Volta para a tela de PIN" />
+      <PillButton full label="Sair" icon={<SignOut size={20} color={colors.primaryFg} weight="bold" />} onPress={() => { signOut(); router.replace("/entrar"); }} accessibilityHint={shared ? "Volta para Quem está entrando" : "Para voltar, use a digital ou o PIN"} />
+      <PillButton label={shared ? "Desconectar este aparelho" : "Desconectar este celular"} variant="secondary" icon={<LinkBreak size={18} color={colors.text} weight="bold" />} onPress={disconnect} />
       <PillButton label="Restaurar demonstração" variant="secondary" icon={<ArrowCounterClockwise size={18} color={colors.text} weight="bold" />} onPress={resetDemo} />
     </ScrollView>
   );

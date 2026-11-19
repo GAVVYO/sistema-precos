@@ -32,6 +32,20 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "A GAVYO usa a câmera para ler o QR que conecta este celular à oficina.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "A GAVYO usa o Face ID para abrir o app sem digitar o PIN."
+        }
       ]
     ],
     "experiments": {

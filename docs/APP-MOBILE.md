@@ -157,7 +157,7 @@ tsc e lint limpos, captura da tela de prova.
 Etapa E1: implemente DemoRepository com o seed do site e MMKV, executando os serviços
 de @core/services sobre uma cópia do banco e só gravando se não houver erro (igual
 src/demo/store.ts). Interface Repository pensada para a futura ApiRepository (mesmos
-métodos, assíncronos). Tela de entrada: aparelho conectado pelo dono com e-mail e senha da GAVYO (decisões 74–75, ainda só no site) e depois quem entra com PIN
+métodos, assíncronos). Tela de entrada (decisão 76): o celular é conectado pelo QR que o dono mostra em Pessoas (pessoal ou do aparelho da oficina); depois abre com digital ou PIN; o dono tem e-mail e senha da GAVYO como reserva
 (Recepcionista ou Mecânico), como em src/app/login. "Restaurar demonstração" em Minha conta.
 Pronto quando: trocar de usuário e oficina funciona e os dados persistem ao fechar o app.
 ```
@@ -250,3 +250,14 @@ feitas sem internet só se for decidido antes (por padrão: bloquear como no sit
 - E5: vale pagar por OCR em nuvem se o on-device não for bom o bastante?
 - E8: publicar na Play Store já na v1 ou só APK interno para teste?
 - E9: o app precisa funcionar sem internet (fila) ou pode bloquear como o site?
+
+## Entrada do app (decisão 76)
+
+![Entrada do app pelo QR](imagens/app/entrada-qr.png)
+
+- **Sem oficina:** "Conecte este celular à oficina" → **Ler QR** (câmera com moldura e linha de leitura). Reserva do dono: e-mail e senha da GAVYO.
+- **Celular da pessoa (QR pessoal):** abre pedindo a **digital/rosto**; sem isso, o **PIN**. "Não é você? Desconectar este celular".
+- **Aparelho da oficina (QR do balcão):** "Quem está entrando?" + PIN; quem entrou por último já vem aberto.
+- Ao entrar: a águia bate as asas e o **rasante do gavião** leva ao app (Reanimated, na thread de animação).
+- O jeito como o celular está ligado fica guardado no aparelho (AsyncStorage); fase 2: chave do servidor no cofre do aparelho.
+- Conta: **Sair** (volta à digital/PIN) e **Desconectar este celular/aparelho**.

@@ -1,7 +1,10 @@
 import "./polyfills";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSyncExternalStore } from "react";
 import { buildSeed, DEMO_WORKSHOP_ID } from "@core/demo/seed";
+import { ROLE_TEMPLATES } from "@core/domain/permissions";
 import type { Database, ID, PermissionKey } from "@core/domain/types";
+import type { Pairing, PairingProfile } from "@core/services/pairing";
 import { type Ctx, DomainError, scopeTo } from "@core/services/core";
 
 /**
@@ -11,9 +14,20 @@ import { type Ctx, DomainError, scopeTo } from "@core/services/core";
  * na E1 passa a gravar no aparelho (AsyncStorage).
  */
 
-interface State { db: Database; userId: ID; workshopId: ID; signedIn: boolean }
+/**
+ * Como este celular está ligado à oficina (decisão 76), guardado no aparelho:
+ * - `person`: celular de uma pessoa (entrou pelo QR pessoal); abre com digital ou PIN;
+ * - `shared`: aparelho da oficina (QR do balcão); abre em "Quem está entrando?".
+ * Fase 2: em vez dos dados, uma chave do servidor guardada no cofre do aparelho.
+ */
+export type Device =
+  | { mode: "person"; workshopId: ID; userId: ID; profile?: PairingProfile }
+  | { mode: "shared"; workshopId: ID; lastUserId?: ID };
 
-let state: State = { db: buildSeed(), userId: "u-juliana", workshopId: DEMO_WORKSHOP_ID, signedIn: false };
+interface State { db: Database; userId: ID; workshopId: ID; signedIn: boolean; device: Device | null; deviceLoaded: boolean }
+
+let state: State = { db: buildSeed(), userId: "u-juliana", workshopId: DEMO_WORKSHOP_ID, signedIn: false, device: null, deviceLoaded: false };
+const DEVICE_KEY = "gavyo:device:v1";
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
@@ -38,14 +52,61 @@ export function enterAs(userId: ID, workshopId?: ID) {
   emit();
 }
 
-export function signOut() {
-  state = { ...state, signedIn: false };
+/** Demonstração: quem foi cadastrado no site chega pelo QR com nome, e-mail e função. */
+function adopt(db: Database, workshopId: ID, userId: ID, profile?: PairingProfile) {
+  if (!profile || db.memberships.some((m) => m.workshopId === workshopId && m.userId === userId)) return;
+  if (!db.users.some((u) => u.id === userId)) db.users.push({ id: userId, name: profile.name, email: profile.email });
+  db.memberships.push({ id: `m-${userId}-${workshopId}`, workshopId, userId, role: profile.role, active: true, permissions: [...ROLE_TEMPLATES[profile.role]] });
+}
+
+function saveDevice(device: Device | null) {
+  (device ? AsyncStorage.setItem(DEVICE_KEY, JSON.stringify(device)) : AsyncStorage.removeItem(DEVICE_KEY)).catch(() => {
+    /* sem armazenamento: o celular pede o QR de novo na próxima vez */
+  });
+}
+
+/** Ao abrir o app: lê como este celular está ligado à oficina. */
+export async function loadDevice() {
+  let device: Device | null = null;
+  try {
+    const raw = await AsyncStorage.getItem(DEVICE_KEY);
+    device = raw ? (JSON.parse(raw) as Device) : null;
+  } catch { device = null; }
+  const db = state.db;
+  if (device && !db.workshops.some((w) => w.id === device!.workshopId)) device = null;
+  if (device?.mode === "person") adopt(db, device.workshopId, device.userId, device.profile);
+  state = { ...state, device, deviceLoaded: true, workshopId: device?.workshopId ?? state.workshopId };
   emit();
 }
 
-/** Oficina deste aparelho (na tela de entrada, antes de alguém entrar). */
-export function setDeviceWorkshop(workshopId: ID) {
-  state = { ...state, workshopId };
+/** Leu o QR: liga o celular à oficina (e à pessoa, no QR pessoal). */
+export function connectDevice(p: Pairing): Device {
+  const db = state.db;
+  const device: Device = p.kind === "person" ? { mode: "person", workshopId: p.workshopId, userId: p.userId, profile: p.profile } : { mode: "shared", workshopId: p.workshopId };
+  if (device.mode === "person") adopt(db, device.workshopId, device.userId, device.profile);
+  state = { ...state, db: { ...db }, device, workshopId: device.workshopId };
+  saveDevice(device);
+  emit();
+  return device;
+}
+
+/** Desliga o celular da oficina (volta para "Conectar com QR"). */
+export function disconnectDevice() {
+  state = { ...state, device: null, signedIn: false };
+  saveDevice(null);
+  emit();
+}
+
+/** Aparelho compartilhado: lembra quem entrou por último (já vem aberto no PIN). */
+export function rememberLastUser(userId: ID) {
+  if (state.device?.mode !== "shared") return;
+  const device: Device = { ...state.device, lastUserId: userId };
+  state = { ...state, device };
+  saveDevice(device);
+}
+
+export function signOut() {
+  state = { ...state, signedIn: false };
   emit();
 }
 
@@ -67,6 +128,8 @@ export function useApp() {
   const can = (p: PermissionKey) => membership?.permissions.includes(p) ?? false;
   return {
     signedIn: s.signedIn,
+    device: s.device,
+    deviceLoaded: s.deviceLoaded,
     workshopId: s.workshopId,
     db: s.db,
     view,

@@ -5,6 +5,7 @@
  * com datas relativas ao dia atual. Assim toda OS paga tem sua receita,
  * e toda peça usada tem a movimentação de estoque correspondente.
  */
+import { demoHash } from "@/services/auth";
 import { ALL_MODULES, ROLE_TEMPLATES } from "@/domain/permissions";
 import type { Database, ID, PaymentMethod, Role } from "@/domain/types";
 import { addDays, fortalezaInstant, todayISO } from "@/lib/format";
@@ -17,6 +18,8 @@ import { createPart } from "@/services/stock";
 export const DEMO_WORKSHOP_ID = "ws-passare";
 export const SECOND_WORKSHOP_ID = "ws-castelao";
 export const DEMO_OWNER_ID = "u-carlos";
+/** Senha do dono que já fez o primeiro acesso (Castelão), mostrada na demonstração. */
+export const DEMO_OWNER_PASSWORD = "gavyo2026";
 
 export function emptyDatabase(): Database {
   return {
@@ -111,6 +114,8 @@ export function buildSeed(now: Date = new Date()): Database {
     ],
     at(60).toISOString(),
   );
+  // Castelão já fez o primeiro acesso (tem senha); a Oficina Modelo ainda não (decisão 74).
+  db.users.find((u) => u.id === "u-marcos")!.passwordHash = demoHash(DEMO_OWNER_PASSWORD);
 
   seedWorkshop(db, now, DEMO_WORKSHOP_ID, DEMO_OWNER_ID, {
     parts: [

@@ -171,5 +171,9 @@ export function setMemberPin(db: Database, ctx: Ctx, membershipId: ID, pin: stri
   assertCan(db, ctx, "staff.manage");
   const value = parse(pinSchema, pin);
   const target = findScoped(db.memberships, ctx, membershipId, "Funcionário não encontrado.");
+  // Trocar o PIN do dono é entrar como ele: só outro dono (ou ele mesmo) pode.
+  if (target.role === "owner" && target.userId !== ctx.userId && membershipOf(db, ctx)?.role !== "owner") {
+    throw new DomainError("forbidden", "Somente um proprietário pode trocar o PIN de proprietários.");
+  }
   target.pin = value;
 }

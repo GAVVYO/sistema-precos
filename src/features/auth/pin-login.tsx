@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Backspace, Buildings, CaretRight } from "@phosphor-icons/react";
+import { ArrowLeft, Backspace, CaretRight } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useDemoState } from "@/app-state/app-context";
@@ -12,6 +12,7 @@ import type { ID } from "@/domain/types";
 import { usePref } from "@/lib/prefs";
 import { motionReduced } from "@/lib/view-transition";
 import { playSwoop } from "@/components/ui/swoop";
+import { ConnectDevice } from "./connect-device";
 import { DEMO_PIN, verifyPin } from "@/services/admin";
 
 /**
@@ -50,19 +51,23 @@ export function PinLogin() {
   const [pin, setPin] = useState("");
   const [shake, setShake] = useState(0);
   const [ok, setOk] = useState(false);
-  const [tries, setTries] = useState<Record<string, { n: number; until: number }>>({});
+  // Guardado no aparelho: recarregar a página não zera a trava (na fase 2, no servidor).
+  const [tries, setTries] = usePref<Record<string, { n: number; until: number }>>("pin-tries", {});
   const [now, setNow] = useState(() => Date.now());
   const pinTitle = useRef<HTMLHeadingElement>(null);
   const pinInput = useRef<HTMLInputElement>(null);
   const wide = useWide();
   const [clock, setClock] = useState(() => new Date());
 
-  const workshopId = db?.workshops.some((w) => w.id === deviceWs) ? deviceWs : db?.workshops[0]?.id ?? "";
+  // Aparelho sem oficina conectada: só o dono conecta, com e-mail (decisão 74).
+  const connected = !!db?.workshops.some((w) => w.id === deviceWs);
+  const workshopId = connected ? deviceWs : "";
   const settings = db?.settings.find((s) => s.workshopId === workshopId);
   const members = (db?.memberships.filter((m) => m.workshopId === workshopId && m.active) ?? [])
     .map((m) => ({ m, u: db!.users.find((x) => x.id === m.userId)! }))
     .sort((a, b) => a.u.name.localeCompare(b.u.name, "pt-BR"));
   const person = members.find((x) => x.u.id === userId);
+  const connecting = !connected || choosingWs;
   const lock = userId ? tries[userId] : undefined;
   const lockedFor = lock && lock.until > now ? Math.ceil((lock.until - now) / 1000) : 0;
 
@@ -72,13 +77,24 @@ export function PinLogin() {
     return () => clearInterval(t);
   }, [lockedFor]);
 
+  // Abrir a tela de entrada encerra quem estava dentro: ninguém volta ao sistema sem PIN.
+  useEffect(() => { if (demoStore.getState().session) demoStore.logout(); }, []);
+
+  const enter = useCallback((ws: ID, uid: ID) => {
+    setOk(true);
+    // Celular: a águia bate as asas (~0,5 s) e dá o rasante. Computador: a águia do
+    // painel decola para o alto e o rasante volta de lá logo em seguida.
+    window.setTimeout(() => playSwoop(() => {
+      try { demoStore.login(ws, uid); router.replace("/inicio"); }
+      catch { setOk(false); setUserId(null); setPin(""); }
+    }), motionReduced() ? 0 : wide ? 180 : 450);
+  }, [router, wide]);
+
   const submit = useCallback((value: string) => {
     if (!db || !userId) return;
     if (verifyPin(db, workshopId, userId, value)) {
-      setOk(true);
-      // Celular: a águia bate as asas (~0,5 s) e dá o rasante. Computador: a águia do
-      // painel decola para o alto e o rasante volta de lá logo em seguida.
-      window.setTimeout(() => playSwoop(() => { demoStore.login(workshopId, userId); router.replace("/inicio"); }), motionReduced() ? 0 : wide ? 180 : 450);
+      setTries((t) => { const rest = { ...t }; delete rest[userId]; return rest; });
+      enter(workshopId, userId);
       return;
     }
     const n = (tries[userId]?.n ?? 0) + 1;
@@ -86,7 +102,7 @@ export function PinLogin() {
     setNow(Date.now());
     setShake((x) => x + 1);
     window.setTimeout(() => setPin(""), 380);
-  }, [db, router, tries, userId, wide, workshopId]);
+  }, [db, enter, setTries, tries, userId, workshopId]);
 
   const press = useCallback((d: string) => {
     if (ok || lockedFor) return;
@@ -147,7 +163,7 @@ export function PinLogin() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/gavyo-aguia.png" alt="" className="login-brand-eagle" data-off={ok || undefined} width={437} height={284} />
           <div className="login-brand-foot">
-            <p className="login-brand-shop">{settings?.displayName}</p>
+            <p className="login-brand-shop">{connected ? settings?.displayName : "GAVYO Auto"}</p>
             <p className="login-brand-clock" suppressHydrationWarning>{clock.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
             <p className="login-brand-day" suppressHydrationWarning>
               {hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite"} · {clock.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
@@ -156,20 +172,14 @@ export function PinLogin() {
         </aside>
 
         <section className="login-form" aria-live="polite">
-          <div key={choosingWs ? "ws" : person ? "pin" : "who"} className="login-form-step">
-            {choosingWs ? (
-              <>
-                <h1 className="login-form-title">Qual oficina usa este computador?</h1>
-                <p className="login-form-sub">Na versão real, o dono entra uma vez com e-mail e senha para conectar o aparelho.</p>
-                <div className="login-shops">
-                  {db.workshops.map((w) => (
-                    <button key={w.id} type="button" className="login-shop" aria-pressed={w.id === workshopId} onClick={() => { setDeviceWs(w.id); setChoosingWs(false); setUserId(null); }}>
-                      <Buildings size={24} weight="duotone" aria-hidden />
-                      <span>{db.settings.find((st) => st.workshopId === w.id)?.displayName ?? w.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </>
+          <div key={connecting ? "ws" : person ? "pin" : "who"} className="login-form-step">
+            {connecting ? (
+              <ConnectDevice
+                wide={true}
+                canCancel={connected}
+                onCancel={() => setChoosingWs(false)}
+                onConnected={(ws, uid) => { setDeviceWs(ws); setTries({}); enter(ws, uid); }}
+              />
             ) : !person ? (
               <>
                 <h1 className="login-form-title">Quem está entrando?</h1>
@@ -211,7 +221,7 @@ export function PinLogin() {
               </>
             )}
           </div>
-          <p className="login-demo">Demonstração: dados fictícios, só neste navegador. PIN de todos: <strong>{DEMO_PIN}</strong>.</p>
+          {!connecting && <p className="login-demo">Demonstração: dados fictícios, só neste navegador. PIN de todos: <strong>{DEMO_PIN}</strong>.</p>}
         </section>
       </main>
     );
@@ -223,22 +233,13 @@ export function PinLogin() {
         <Logo flap={ok} />
 
         <section className="login-card" aria-live="polite">
-          {choosingWs ? (
-            <>
-              <h1 className="login-title">Qual oficina usa este computador?</h1>
-              <p className="login-sub">Na versão real, o dono entra uma vez com e-mail e senha para conectar o aparelho.</p>
-              <div className="login-shops">
-                {db.workshops.map((w) => {
-                  const st = db.settings.find((s) => s.workshopId === w.id);
-                  return (
-                    <button key={w.id} type="button" className="login-shop" aria-pressed={w.id === workshopId} onClick={() => { setDeviceWs(w.id); setChoosingWs(false); setUserId(null); }}>
-                      <Buildings size={24} weight="duotone" aria-hidden />
-                      <span>{st?.displayName ?? w.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
+          {connecting ? (
+            <ConnectDevice
+                wide={false}
+                canCancel={connected}
+                onCancel={() => setChoosingWs(false)}
+                onConnected={(ws, uid) => { setDeviceWs(ws); setTries({}); enter(ws, uid); }}
+              />
           ) : !person ? (
             <>
               <h1 className="login-title">Quem está entrando?</h1>
@@ -281,7 +282,7 @@ export function PinLogin() {
           )}
         </section>
 
-        <p className="login-demo">Demonstração: dados fictícios, só neste navegador. PIN de todos: <strong>{DEMO_PIN}</strong>.</p>
+        {!connecting && <p className="login-demo">Demonstração: dados fictícios, só neste navegador. PIN de todos: <strong>{DEMO_PIN}</strong>.</p>}
       </div>
     </main>
   );

@@ -52,6 +52,11 @@ Central e limpa: o logo GAVYO no alto (a águia pousa ao lado do nome ao abrir),
 ![Entrada no computador](imagens/interface/entrada-pc.png)
 ![PIN no computador](imagens/interface/entrada-pc-pin.png)
 
+**Conectar o aparelho (decisão 74):** na primeira vez, o dono entra com o e-mail cadastrado pela GAVYO: código por e-mail → cria a senha → cria o PIN → entra. Dono que já tem senha usa e-mail e senha ("Esqueci a senha" manda código). E-mail desconhecido ou de funcionário recebe explicação em vez de erro seco.
+
+![Conectar no computador](imagens/interface/conectar-aparelho-pc.png)
+![Conectar no celular](imagens/interface/conectar-aparelho-celular.png)
+
 ## 3. Hoje = o pátio (primeira tela depois de entrar)
 
 Decisão 58. A tela responde **"que carros estão aqui e o que cada um precisa agora?"**.

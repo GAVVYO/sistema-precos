@@ -73,6 +73,11 @@ export interface User {
   phone?: string;
   /** Foto do crachá (data URL JPEG pequeno, ~256 px), opcional. */
   photo?: string | null;
+  /**
+   * Senha do dono para conectar aparelhos (decisão 74). Ausente = primeiro acesso.
+   * Demonstração: resumo simples no navegador. Fase 2: bcrypt no servidor.
+   */
+  passwordHash?: string;
 }
 
 export interface WorkshopMembership {

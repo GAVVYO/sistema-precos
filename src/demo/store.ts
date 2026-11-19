@@ -141,6 +141,21 @@ export const demoStore = {
     return result;
   },
 
+  /**
+   * Gravação antes de alguém entrar (conectar o aparelho, criar senha e PIN do
+   * dono). Atômica como `mutate`, mas sem sessão; quem chama confere o acesso.
+   */
+  mutateSignedOut<T>(fn: (db: Database) => T): T {
+    const s = this.getState();
+    if (s.connection !== "online") {
+      throw new DomainError("offline", "Sem internet. Para conectar o aparelho é preciso internet.");
+    }
+    const draft = structuredClone(s.db);
+    const result = fn(draft);
+    set({ ...s, db: draft, lastSyncAt: new Date().toISOString() });
+    return result;
+  },
+
   /** Simula queda e retorno da conexão. Ao voltar, passa por "reconectando". */
   setOnline(online: boolean) {
     const s = this.getState();

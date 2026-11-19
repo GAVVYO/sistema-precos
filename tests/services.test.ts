@@ -325,3 +325,32 @@ function newOrderAs(userId: string) {
     description: "Teste", notes: "", mechanicId: null, laborCents: null, items: [],
   });
 }
+
+describe("conectar o aparelho (decisão 74)", () => {
+  it("separa e-mail desconhecido, funcionário, primeiro acesso e dono com senha", async () => {
+    const { checkEmail } = await import("@/services/auth");
+    const db = buildSeed();
+    expect(checkEmail(db, "ninguem@x.com").kind).toBe("unknown");
+    expect(checkEmail(db, "juliana@oficinamodelo.demo").kind).toBe("not-owner");
+    expect(checkEmail(db, "  Carlos@OficinaModelo.demo ").kind).toBe("first-access");
+    expect(checkEmail(db, "marcos@castelao.demo").kind).toBe("password");
+  });
+  it("primeiro acesso cria senha e PIN; senha confere depois", async () => {
+    const { checkPassword, setOwnerPassword, setOwnerPin } = await import("@/services/auth");
+    const db = buildSeed();
+    expect(() => setOwnerPassword(db, DEMO_OWNER_ID, "curta")).toThrow();
+    setOwnerPassword(db, DEMO_OWNER_ID, "senhaforte1");
+    setOwnerPin(db, DEMO_OWNER_ID, "4321");
+    expect(checkPassword(db, DEMO_OWNER_ID, "senhaforte1")).toBe(true);
+    expect(checkPassword(db, DEMO_OWNER_ID, "errada123")).toBe(false);
+    expect(verifyPin(db, DEMO_WORKSHOP_ID, DEMO_OWNER_ID, "4321")).toBe(true);
+    expect(() => setOwnerPassword(db, "u-juliana", "senhaforte1")).toThrow();
+  });
+  it("quem não é dono não troca o PIN do dono", () => {
+    const db = buildSeed();
+    const juliana = db.memberships.find((m) => m.userId === "u-juliana")!;
+    juliana.permissions.push("staff.manage");
+    const ownerM = db.memberships.find((m) => m.userId === DEMO_OWNER_ID)!;
+    expect(() => setMemberPin(db, { workshopId: DEMO_WORKSHOP_ID, userId: "u-juliana", now: new Date() }, ownerM.id, "0000")).toThrow(/proprietário/);
+  });
+});

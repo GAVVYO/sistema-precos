@@ -1,5 +1,6 @@
 "use client";
 
+import { writePref } from "@/lib/prefs";
 import {
   Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, LayoutDashboard, Lightbulb, Lock, MonitorPlay, PanelLeft, PanelTop, Settings2, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
 } from "lucide-react";
@@ -107,6 +108,7 @@ function DemoBar() {
     // A cor da oficina nova "varre" a tela a partir da logo.
     const logo = document.querySelector(".side-brand-logo .app-brand-logo, .island-brand .app-brand-logo")?.getBoundingClientRect();
     const x = logo ? `${logo.left + logo.width / 2}px` : "40px", y = logo ? `${logo.top + logo.height / 2}px` : "40px";
+    writePref("device-workshop", workshopId); // ao sair, a entrada mostra esta oficina
     withTransition("workshop", () => demoStore.login(workshopId, owner.userId), { vars: { "--vt-x": x, "--vt-y": y } });
     router.push("/inicio");
   };

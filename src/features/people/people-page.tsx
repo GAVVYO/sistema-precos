@@ -97,6 +97,7 @@ function StaffDialog({ member, onClose }: { member: WorkshopMembership | null; o
   const [permissions, setPermissions] = useState<PermissionKey[]>(member?.permissions ?? []);
   const [stamped, setStamped] = useState(false);
   const [pin, setPin] = useState("");
+  const [pinTouched, setPinTouched] = useState(false);
   const isSelf = member?.userId === user.id;
   const groups = [...new Set(PERMISSIONS.map((p) => p.group))];
   const grantable = (key: PermissionKey) => !!member?.permissions.includes(key) || mine.permissions.includes(key);
@@ -104,10 +105,11 @@ function StaffDialog({ member, onClose }: { member: WorkshopMembership | null; o
 
   const save = () => {
     if (!member) {
-      if (pin && !/^\d{4}$/.test(pin)) return;
+      // Funcionário novo já sai com PIN próprio: nada de PIN padrão conhecido por todos.
+      if (!/^\d{4}$/.test(pin)) { setPinTouched(true); return; }
       const r = act((db, ctx) => {
         const m = addMember(db, ctx, { name, email, role, phone, photo });
-        if (pin) setMemberPin(db, ctx, m.id, pin);
+        setMemberPin(db, ctx, m.id, pin);
       });
       if (r.ok) stampThenClose(setStamped, onClose);
       return;
@@ -138,9 +140,9 @@ function StaffDialog({ member, onClose }: { member: WorkshopMembership | null; o
           <PhotoPicker value={photo} onChange={setPhoto} />
           <Field
             label={member ? "Trocar o PIN de entrada" : "PIN de entrada"}
-            optional
-            hint={member ? "4 números. Em branco, continua o mesmo." : "4 números para entrar no aparelho da oficina. Em branco: 1234."}
-            error={pin && !/^\d{4}$/.test(pin) ? "O PIN tem 4 números." : undefined}
+            optional={!!member}
+            hint={member ? "4 números. Em branco, continua o mesmo." : "4 números que só a pessoa vai saber. Ela entra tocando no nome e digitando o PIN."}
+            error={(pin || pinTouched) && !/^\d{4}$/.test(pin) ? "O PIN tem 4 números." : undefined}
           >
             {(p) => <Input {...p} value={pin} onChange={(e) => setPin(maskDigits(e.target.value, 4))} inputMode="numeric" autoComplete="off" maxLength={4} className="max-w-40 tracking-[.4em]" />}
           </Field>

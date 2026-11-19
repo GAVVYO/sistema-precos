@@ -2327,3 +2327,25 @@ html[data-motion="reduce"] :is(.login-logo, .login-logo-eagle, .login-logo-eagle
 .login-desk .login-demo { align-self: end; }
 @media (prefers-reduced-motion: reduce) { .login-brand-name, .login-brand-eagle, .login-brand-eagle[data-off], .login-brand-foot, .login-form-step, .login-boxes-row[data-shake] { animation: none; } }
 html[data-motion="reduce"] :is(.login-brand-name, .login-brand-eagle, .login-brand-eagle[data-off], .login-brand-foot, .login-form-step, .login-boxes-row[data-shake]) { animation: none; }
+
+/* Conectar o aparelho (decisão 74): mesmo formulário no painel do computador e no cartão do celular. */
+.connect { display: grid; gap: 14px; text-align: left; }
+.login-card .connect .login-title { text-align: left; }
+.login-card .connect .login-sub { margin: -6px 0 4px; text-align: left; }
+.connect .login-back { justify-self: start; margin: 0 0 2px -12px; }
+.connect-input { height: 52px; font-size: 1.0625rem; border-radius: 14px; }
+.connect-code { max-width: 220px; font-size: 1.5rem; font-weight: 700; letter-spacing: .35em; font-variant-numeric: tabular-nums; }
+.connect-pass { position: relative; }
+.connect-pass .connect-input { padding-right: 52px; }
+.connect-eye { position: absolute; top: 50%; right: 6px; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; color: var(--muted); transform: translateY(-50%); }
+.connect-eye:hover { background: var(--bg); color: var(--text); }
+.connect-eye:focus-visible, .connect-cta:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 2px; }
+.connect-cta { display: grid; place-items: center; height: 52px; margin-top: 4px; border-radius: 14px; background: var(--primary); font-size: 1.0625rem; font-weight: 750; color: #fff; transition: transform 120ms cubic-bezier(.23, 1, .32, 1), background-color 140ms; }
+.connect-cta:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 88%, #000); }
+.connect-cta:active:not(:disabled) { transform: scale(.98); }
+.connect-cta:disabled { opacity: .45; cursor: not-allowed; }
+.connect-alt { justify-self: center; min-height: 40px; font-size: .9375rem; }
+.connect-note { padding: 12px 14px; border-radius: 14px; background: var(--color-warning-soft); font-size: .9375rem; line-height: 1.45; color: #7a3a06; }
+.connect-meter { margin: -6px 0 0; font-size: .875rem; color: var(--muted); }
+.connect-meter[data-ok] { color: var(--success); font-weight: 650; }
+.connect .login-demo { justify-self: start; border-radius: 14px; text-align: left; }

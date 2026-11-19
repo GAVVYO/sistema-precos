@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  ArrowCircleDown, ArrowCircleUp, CaretLeft, CaretRight, Coins, Drop, Gear, HourglassMedium, House, Lightning, Receipt, UsersThree, Wrench,
+  CaretLeft, CaretRight, ClockCountdown, Coins, Drop, Engine, Lightbulb, Receipt, Storefront, TrayArrowDown, TrayArrowUp, UsersThree, Wrench,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -25,10 +25,11 @@ import type { Receivable } from "@/services/finance";
 
 type Kind = "income" | "expense" | "receivable";
 
+/** Um só conjunto (decisão 82): Phosphor duotone, mesma cor e mesmo círculo para tudo. */
 const CATEGORY_ICON: Record<string, ReactNode> = {
-  "Compra de peças": <Gear weight="duotone" />,
-  Aluguel: <House weight="duotone" />,
-  Energia: <Lightning weight="duotone" />,
+  "Compra de peças": <Engine weight="duotone" />,
+  Aluguel: <Storefront weight="duotone" />,
+  Energia: <Lightbulb weight="duotone" />,
   Água: <Drop weight="duotone" />,
   Funcionários: <UsersThree weight="duotone" />,
   Ferramentas: <Wrench weight="duotone" />,
@@ -74,9 +75,9 @@ export function CashView({ period, receivedCents, expensesCents, receivables, on
   return (
     <div className="cash">
       <div role="tablist" aria-label="O que ver" className="cash-tabs">
-        <CashTab k="income" on={kind === "income"} onSelect={switchKind} icon={<ArrowCircleDown weight="duotone" />} label="Entrou" value={receivedCents} count={incomes.length} />
-        <CashTab k="expense" on={kind === "expense"} onSelect={switchKind} icon={<ArrowCircleUp weight="duotone" />} label="Saiu" value={expensesCents} count={expenses.length} />
-        <CashTab k="receivable" on={kind === "receivable"} onSelect={switchKind} icon={<HourglassMedium weight="duotone" />} label="Falta receber" value={receivables.reduce((s, r) => s + r.amountCents, 0) as Cents} count={receivables.length} />
+        <CashTab k="income" on={kind === "income"} onSelect={switchKind} icon={<TrayArrowDown weight="duotone" />} label="Entrou" value={receivedCents} count={incomes.length} />
+        <CashTab k="expense" on={kind === "expense"} onSelect={switchKind} icon={<TrayArrowUp weight="duotone" />} label="Saiu" value={expensesCents} count={expenses.length} />
+        <CashTab k="receivable" on={kind === "receivable"} onSelect={switchKind} icon={<ClockCountdown weight="duotone" />} label="Falta receber" value={receivables.reduce((s, r) => s + r.amountCents, 0) as Cents} count={receivables.length} />
       </div>
 
       <p className="cash-say">

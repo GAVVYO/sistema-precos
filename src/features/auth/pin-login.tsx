@@ -11,6 +11,7 @@ import { ROLE_LABELS } from "@/domain/permissions";
 import type { ID } from "@/domain/types";
 import { usePref } from "@/lib/prefs";
 import { motionReduced } from "@/lib/view-transition";
+import { playSwoop } from "@/components/ui/swoop";
 import { DEMO_PIN, verifyPin } from "@/services/admin";
 
 /**
@@ -66,8 +67,8 @@ export function PinLogin() {
     if (!db || !userId) return;
     if (verifyPin(db, workshopId, userId, value)) {
       setOk(true);
-      demoStore.login(workshopId, userId);
-      window.setTimeout(() => router.replace("/inicio"), motionReduced() ? 0 : 650);
+      // A águia bate as asas (~0,5 s) e então dá o rasante que leva ao sistema.
+      window.setTimeout(() => playSwoop(() => { demoStore.login(workshopId, userId); router.replace("/inicio"); }), motionReduced() ? 0 : 450);
       return;
     }
     const n = (tries[userId]?.n ?? 0) + 1;

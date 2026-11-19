@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SwoopHost } from "@/components/ui/swoop";
 import { Toaster } from "@/components/ui/toast";
 import "@fontsource-variable/manrope";
 import "./globals.css";
@@ -14,6 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full" suppressHydrationWarning>
         {children}
         <Toaster />
+        <SwoopHost />
       </body>
     </html>
   );

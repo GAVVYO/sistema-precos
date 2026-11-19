@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { ArrowLeft, Check } from "phosphor-react-native";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ID } from "@core/domain/types";
 import { formatPhone, normalizePlate } from "@core/lib/format";
@@ -14,9 +15,13 @@ import { Plate } from "@/components/plate";
 import { vehicleLabel } from "@/data/helpers";
 import { act, useApp } from "@/data/store";
 import { colors, radius, shadow, space, type } from "@/theme";
+import { CSS_EASE_OUT, softIn, stepBack, stepForward } from "@/theme/motion";
 
 const SUGGESTIONS = ["Troca de óleo", "Revisão", "Freios", "Alinhamento", "Suspensão", "Diagnóstico elétrico"];
 const BRANDS = ["Fiat", "Volkswagen", "Chevrolet", "Toyota", "Hyundai", "Renault", "Honda", "Jeep"];
+
+/** A barra de progresso pinta o passo novo em 200 ms. */
+const BAR_TRANSITION = { transitionProperty: "backgroundColor", transitionDuration: "200ms", transitionTimingFunction: CSS_EASE_OUT } as const;
 
 type Step = "plate" | "car" | "customer" | "work" | "who" | "review";
 
@@ -33,6 +38,7 @@ export function NewOrder() {
   const [work, setWork] = useState("");
   const [mechanicId, setMechanicId] = useState<ID | "">("");
   const [error, setError] = useState("");
+  const [dir, setDir] = useState<1 | -1>(1);
 
   const norm = normalizePlate(plate);
   const found = norm ? view.vehicles.find((v) => v.plate === norm) : undefined;
@@ -41,7 +47,7 @@ export function NewOrder() {
   const order: Step[] = found ? ["plate", "work", "who", "review"] : ["plate", "car", "customer", "work", "who", "review"];
   const i = order.indexOf(step);
 
-  const go = (to: Step) => { setError(""); setStep(to); };
+  const go = (to: Step) => { setError(""); setDir(order.indexOf(to) >= order.indexOf(step) ? 1 : -1); setStep(to); };
   const next = () => {
     if (step === "plate" && !norm) return setError("Digite a placa completa. Ex.: ABC1D23");
     if (step === "car" && (!brand || !model.trim())) return setError("Escolha a marca e escreva o modelo.");
@@ -70,9 +76,10 @@ export function NewOrder() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <View style={styles.progress} accessibilityLabel={`Passo ${i + 1} de ${order.length}`}>
-        {order.map((s, k) => <View key={s} style={[styles.bar, k <= i && styles.barOn]} />)}
+        {order.map((s, k) => <Animated.View key={s} style={[styles.bar, BAR_TRANSITION, k <= i && styles.barOn]} />)}
       </View>
       <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
+        <Animated.View key={step} entering={dir === 1 ? stepForward : stepBack} style={styles.stepBody}>
         {step === "plate" && (
           <>
             <Text style={type.heading}>Qual a placa do carro?</Text>
@@ -81,13 +88,13 @@ export function NewOrder() {
               <TextInput accessibilityLabel="Placa do carro" value={plate} onChangeText={(t) => setPlate(maskPlate(t))} autoCapitalize="characters" autoCorrect={false} autoFocus placeholder="ABC1D23" placeholderTextColor="#cbd2dc" style={styles.plateText} maxLength={7} />
             </View>
             {found && owner && (
-              <View style={styles.found}>
+              <Animated.View entering={softIn} style={styles.found}>
                 <Check size={22} color={colors.success} weight="bold" />
                 <View style={{ flex: 1 }}>
                   <Text style={type.bodyStrong}>É o {vehicleLabel(found)} de {owner.name.split(" ")[0]}</Text>
                   <Text style={type.caption}>{owner.name} · {formatPhone(owner.phone)}</Text>
                 </View>
-              </View>
+              </Animated.View>
             )}
             {norm && !found && <Text style={type.caption}>Carro novo. Nos próximos passos você cadastra o carro e o cliente.</Text>}
           </>
@@ -152,7 +159,8 @@ export function NewOrder() {
             </View>
           </>
         )}
-        {error ? <Text style={styles.error} role="alert">{error}</Text> : null}
+        </Animated.View>
+        {error ? <Animated.Text entering={softIn} style={styles.error} role="alert">{error}</Animated.Text> : null}
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + space.sm }]}>
         {i > 0 && <PillButton label="Voltar" variant="secondary" icon={<ArrowLeft size={18} color={colors.text} weight="bold" />} onPress={() => go(order[i - 1])} />}
@@ -174,7 +182,8 @@ const styles = StyleSheet.create({
   progress: { flexDirection: "row", gap: 6, paddingHorizontal: space.md, paddingTop: space.sm },
   bar: { flex: 1, height: 5, borderRadius: 3, backgroundColor: colors.track },
   barOn: { backgroundColor: colors.primary },
-  page: { padding: space.md, gap: space.md, paddingBottom: 140 },
+  page: { padding: space.md, gap: space.md, paddingBottom: 140, overflow: "hidden" },
+  stepBody: { gap: space.md },
   plateInput: { alignSelf: "center", width: "100%", maxWidth: 360, borderWidth: 3, borderColor: "#1f2937", borderRadius: 14, backgroundColor: "#fff", overflow: "hidden", ...shadow.card },
   plateBand: { height: 26, backgroundColor: "#1d4ed8", alignItems: "center", justifyContent: "center" },
   plateBandText: { color: "#fff", fontWeight: "800", letterSpacing: 6, fontSize: 12 },

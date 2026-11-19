@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { CheckCircle, HourglassMedium, MagnifyingGlass, Plus, SealCheck, Wrench } from "phosphor-react-native";
 import { useState } from "react";
-import { FlatList, StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { OrderStatus } from "@core/domain/types";
 import { formatOrderNumber } from "@core/lib/format";
@@ -11,6 +12,7 @@ import { StageTabs } from "@/components/stage-tabs";
 import { vehicleLabel } from "@/data/helpers";
 import { useApp } from "@/data/store";
 import { colors, radius, space, stageColors, type } from "@/theme";
+import { reflow } from "@/theme/motion";
 
 const LABEL: Record<OrderStatus, string> = { waiting: "Aguardando", in_progress: "Em andamento", done: "Pronto" };
 
@@ -34,8 +36,9 @@ export function Services() {
   const icons = { waiting: HourglassMedium, in_progress: Wrench, done: SealCheck };
 
   return (
-    <FlatList
+    <Animated.FlatList
       data={list}
+      itemLayoutAnimation={reflow}
       keyExtractor={(o) => o.id}
       contentContainerStyle={[styles.page, { paddingTop: insets.top + space.md }]}
       ListHeaderComponent={

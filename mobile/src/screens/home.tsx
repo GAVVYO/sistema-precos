@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { Car, CurrencyCircleDollar, MagnifyingGlass, Plus } from "phosphor-react-native";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { formatDate, todayISO, weekdayName } from "@core/lib/format";
 import { BigTile } from "@/components/big-tile";
@@ -8,6 +9,7 @@ import { CarCard } from "@/components/car-card";
 import { greeting, yard } from "@/data/helpers";
 import { useApp } from "@/data/store";
 import { colors, space, type } from "@/theme";
+import { enterStagger, reflow } from "@/theme/motion";
 
 /**
  * Tela inicial em botões grandes (escolha do dono, 19/11): quatro tarefas,
@@ -27,14 +29,14 @@ export function Home() {
       <Text style={type.title}>{greeting()}, {user.name.split(" ")[0]}</Text>
 
       <View style={styles.grid}>
-        <View style={styles.row}>
+        <Animated.View entering={enterStagger(0)} style={styles.row}>
           <BigTile filled label="Chegou carro" icon={(c) => <Plus size={34} color={c} weight="bold" />} onPress={() => router.push("/novo-servico")} hint="Abre um serviço novo" />
           <BigTile label="Carros na oficina" count={y.cars} icon={(c) => <Car size={36} color={c} weight="duotone" />} onPress={() => router.push("/servicos")} />
-        </View>
-        <View style={styles.row}>
+        </Animated.View>
+        <Animated.View entering={enterStagger(2)} style={styles.row}>
           <BigTile label="Receber" count={y.ready.length} icon={(c) => <CurrencyCircleDollar size={36} color={c} weight="duotone" />} onPress={() => router.push({ pathname: "/servicos", params: { etapa: "done" } })} hint="Carros prontos que faltam pagar" />
           <BigTile label="Procurar cliente" icon={(c) => <MagnifyingGlass size={36} color={c} weight="duotone" />} onPress={() => router.push("/pessoas")} />
-        </View>
+        </Animated.View>
       </View>
 
       {arrivals > 0 && <Text style={styles.hint}>{arrivals === 1 ? "1 cliente marcado para hoje." : `${arrivals} clientes marcados para hoje.`}</Text>}
@@ -53,7 +55,7 @@ function MechanicHome() {
     <ScrollView contentContainerStyle={[styles.page, { paddingTop: insets.top + space.lg }]}>
       <Text style={type.caption}>{greeting()}, {user.name.split(" ")[0]}</Text>
       <Text style={type.title}>Seus carros</Text>
-      {mine.length === 0 ? <Text style={type.body}>Nenhum carro com você agora.</Text> : mine.map((o) => <CarCard key={o.id} order={o} />)}
+      {mine.length === 0 ? <Text style={type.body}>Nenhum carro com você agora.</Text> : mine.map((o) => <Animated.View key={o.id} layout={reflow}><CarCard order={o} /></Animated.View>)}
     </ScrollView>
   );
 }

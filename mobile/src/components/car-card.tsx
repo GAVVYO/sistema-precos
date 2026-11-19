@@ -3,10 +3,11 @@ import { CheckCircle, CurrencyCircleDollar, Play } from "phosphor-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { ServiceOrder } from "@core/domain/types";
 import { formatBRL } from "@core/lib/format";
-import { canChangeStatus, changeOrderStatus, orderTotals, paymentSituation } from "@core/services/orders";
+import { canChangeStatus, orderTotals, paymentSituation } from "@core/services/orders";
+import { moveOrder } from "@/data/actions";
 import { PillButton } from "@/components/pill-button";
 import { Plate } from "@/components/plate";
-import { act, useApp } from "@/data/store";
+import { useApp } from "@/data/store";
 import { colors, radius, shadow, space } from "@/theme";
 
 /**
@@ -44,7 +45,7 @@ export function CarCard({ order }: { order: ServiceOrder }) {
           haptic
           label={next === "done" ? "Pronto" : "Começar"}
           icon={next === "done" ? <CheckCircle size={22} color={colors.primaryFg} weight="duotone" /> : <Play size={18} color={colors.primaryFg} weight="fill" />}
-          onPress={() => act((d, c) => changeOrderStatus(d, c, order.id, next))}
+          onPress={() => moveOrder(db, user.id, order, next, customer.split(" ")[0])}
         />
       ) : null}
     </View>

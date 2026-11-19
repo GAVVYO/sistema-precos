@@ -4,7 +4,8 @@ import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ID } from "@core/domain/types";
 import { formatBRL, formatBRLOrPending, formatOrderNumber, formatPhone } from "@core/lib/format";
-import { canChangeStatus, changeOrderStatus, orderTotals, paymentSituation } from "@core/services/orders";
+import { canChangeStatus, orderTotals, paymentSituation } from "@core/services/orders";
+import { moveOrder } from "@/data/actions";
 import { statusMessage } from "@core/lib/whatsapp";
 import { ORDER_STATUS_LABELS } from "@core/domain/labels";
 import { Avatar } from "@/components/avatar";
@@ -12,7 +13,7 @@ import { Chip } from "@/components/chip";
 import { PillButton } from "@/components/pill-button";
 import { Plate } from "@/components/plate";
 import { sinceShop, vehicleLabel } from "@/data/helpers";
-import { act, useApp } from "@/data/store";
+import { useApp } from "@/data/store";
 import { colors, radius, shadow, space, stageColors, type } from "@/theme";
 
 const STEPS = [
@@ -116,7 +117,7 @@ export function OrderDetail({ id }: { id: ID }) {
           {owes ? (
             <PillButton full label={`Receber ${formatBRL(totals.totalCents)}`} icon={<CurrencyCircleDollar size={22} color={colors.primaryFg} weight="duotone" />} onPress={() => router.push({ pathname: "/receber/[id]", params: { id: order.id } })} />
           ) : (
-            <PillButton full haptic label={next === "done" ? "Marcar como pronto" : "Começar"} icon={next === "done" ? <CheckCircle size={22} color={colors.primaryFg} weight="duotone" /> : <Play size={18} color={colors.primaryFg} weight="fill" />} onPress={() => act((d, c) => changeOrderStatus(d, c, order.id, next!))} />
+            <PillButton full haptic label={next === "done" ? "Marcar como pronto" : "Começar"} icon={next === "done" ? <CheckCircle size={22} color={colors.primaryFg} weight="duotone" /> : <Play size={18} color={colors.primaryFg} weight="fill" />} onPress={() => moveOrder(db, user.id, order, next!, customer?.name.split(" ")[0] ?? "Carro")} />
           )}
         </View>
       )}

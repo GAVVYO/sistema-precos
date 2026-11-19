@@ -1,6 +1,7 @@
 import * as Haptics from "expo-haptics";
 import type { ReactNode } from "react";
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
+import { PressScale } from "@/components/press-scale";
 import { colors, radius, space, touch } from "@/theme";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
@@ -23,7 +24,7 @@ export function PillButton({ label, onPress, variant = "primary", icon, disabled
   const v = VARIANTS[variant];
   const off = disabled || loading;
   return (
-    <Pressable
+    <PressScale
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={accessibilityHint}
@@ -33,13 +34,15 @@ export function PillButton({ label, onPress, variant = "primary", icon, disabled
         if (haptic && Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
       }}
-      style={({ pressed }) => [styles.base, { backgroundColor: v.bg, borderColor: v.border }, full && styles.full, off && styles.off, pressed && !off && styles.pressed]}
+      containerStyle={full ? styles.full : styles.hug}
+      style={[styles.base, { backgroundColor: v.bg, borderColor: v.border }, off && styles.off]}
+      pressedStyle={styles.pressed}
     >
       <View style={styles.row}>
         {loading ? <ActivityIndicator color={v.fg} /> : icon}
         <Text style={[styles.label, { color: v.fg }]} numberOfLines={1}>{label}</Text>
       </View>
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -51,10 +54,11 @@ const VARIANTS: Record<Variant, { bg: string; fg: string; border: string }> = {
 };
 
 const styles = StyleSheet.create({
-  base: { minHeight: touch.min, paddingHorizontal: space.lg, borderRadius: radius.pill, borderWidth: 1, justifyContent: "center", alignSelf: "flex-start" },
+  base: { minHeight: touch.min, paddingHorizontal: space.lg, borderRadius: radius.pill, borderWidth: 1, justifyContent: "center" },
   full: { alignSelf: "stretch" },
+  hug: { alignSelf: "flex-start" },
   row: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: space.xs },
   label: { fontSize: 16, fontWeight: "700" },
-  pressed: { transform: [{ scale: 0.97 }], opacity: 0.92 },
+  pressed: { opacity: 0.92 },
   off: { opacity: 0.45 },
 });

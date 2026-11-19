@@ -39,6 +39,12 @@ Termos usados na tela (decisão 37): **Serviço** (nunca "OS"), "Serviço nº 11
 ![Menu lateral recolhido](imagens/interface/menu-lateral.png)
 ![Menu lateral aberto com o mouse](imagens/interface/menu-lateral-aberto.png)
 
+## 2.1 Entrada (decisão 70)
+
+Central e limpa: o logo GAVYO no alto (a águia pousa ao lado do nome ao abrir), um cartão com **Quem está entrando?** (foto ou iniciais, nome e função de cada funcionário) e, ao tocar, o **PIN de 4 números** com teclado grande (o teclado do computador também funciona). PIN errado: as bolinhas balançam e aparece quantas tentativas faltam; 5 erros travam 30 s; certo: bolinhas verdes, a águia bate as asas e o sistema abre. "Trocar de oficina" escolhe a oficina do aparelho (na versão real, o dono conecta o aparelho uma vez com e-mail e senha). O dono troca o PIN em Pessoas › Funcionários. Demonstração: PIN 1234.
+
+![Entrada com PIN](imagens/interface/entrada-pin.png)
+
 ## 3. Hoje = o pátio (primeira tela depois de entrar)
 
 Decisão 58. A tela responde **"que carros estão aqui e o que cada um precisa agora?"**.

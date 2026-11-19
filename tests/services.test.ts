@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { buildSeed, DEMO_OWNER_ID, DEMO_WORKSHOP_ID, SECOND_WORKSHOP_ID } from "@/demo/seed";
 import type { Database } from "@/domain/types";
 import { todayISO } from "@/lib/format";
-import { addMember, updateMember, updateMemberProfile, updateSettings } from "@/services/admin";
+import { addMember, DEMO_PIN, setMemberPin, updateMember, updateMemberProfile, updateSettings, verifyPin } from "@/services/admin";
 import { createAppointment } from "@/services/appointments";
 import { Ctx, DomainError, scopeTo } from "@/services/core";
 import { createExpense, financeSummary, listReceivables } from "@/services/finance";
@@ -251,6 +251,20 @@ describe("crachá do funcionário", () => {
     const m = addMember(db, ctx(), { name: "Pedro", email: "pedro@demo.test", role: "mechanic" });
     expectError(() => updateMemberProfile(db, ctx(), m.id, { name: "Pedro", photo: "javascript:alert(1)" }), "validation");
     expectError(() => updateMemberProfile(db, ctx("u-raimundo"), m.id, { name: "Pedro" }), "forbidden");
+  });
+});
+
+describe("PIN de entrada", () => {
+  it("usa 1234 na demonstração, troca pelo dono e recusa PIN inválido ou de outra oficina", () => {
+    expect(verifyPin(db, DEMO_WORKSHOP_ID, "u-juliana", DEMO_PIN)).toBe(true);
+    expect(verifyPin(db, DEMO_WORKSHOP_ID, "u-juliana", "0000")).toBe(false);
+    const m = db.memberships.find((x) => x.workshopId === DEMO_WORKSHOP_ID && x.userId === "u-juliana")!;
+    setMemberPin(db, ctx(), m.id, "4821");
+    expect(verifyPin(db, DEMO_WORKSHOP_ID, "u-juliana", "4821")).toBe(true);
+    expect(verifyPin(db, DEMO_WORKSHOP_ID, "u-juliana", DEMO_PIN)).toBe(false);
+    expect(verifyPin(db, SECOND_WORKSHOP_ID, "u-juliana", "4821")).toBe(false);
+    expectError(() => setMemberPin(db, ctx(), m.id, "12a4"), "validation");
+    expectError(() => setMemberPin(db, ctx("u-raimundo"), m.id, "1111"), "forbidden");
   });
 });
 

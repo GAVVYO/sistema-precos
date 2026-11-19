@@ -1,6 +1,14 @@
 // Passo 6: simula uma pessoa sem experiência nas 4 tarefas, só clicando no que está ESCRITO na tela.
 // Conta cliques/teclas, registra o texto que ela precisa ler e roda o axe em cada tela.
 const { chromium } = require('playwright');
+// Entrada nova (decisão 70): escolhe a oficina, toca na pessoa da função e digita o PIN 1234.
+const loginAs = async (page, role = 'Proprietário', ws = 0) => {
+  await page.goto('http://localhost:3017/login'); await page.waitForSelector('.login-card');
+  await page.getByRole('button', { name: /Trocar de oficina/ }).click(); await page.locator('.login-shop').nth(ws).click();
+  await page.locator('.login-person', { hasText: role }).first().click();
+  for (const d of '1234') await page.keyboard.press(d);
+  await page.waitForURL(/inicio/);
+};
 const fs = require('fs');
 const OUT = process.env.OUT || './';
 // Requer axe-core instalado à parte (npm i axe-core) e o app em http://localhost:3017.
@@ -26,9 +34,7 @@ const ROLE = process.argv[3] || 'Proprietário';
   };
   const done = (ok, note = '') => { log.push(`= ${task}: ${ok ? 'CONCLUÍDA' : 'FALHOU'} em ${clicks} cliques + ${keys} campos ${note}`); clicks = 0; keys = 0; };
 
-  await p.goto('http://localhost:3017/login'); await p.waitForSelector('select');
-  await p.locator('label', { hasText: ROLE }).first().click();
-  await p.getByRole('button', { name: /Entrar/ }).click(); await p.waitForURL(/inicio/);
+  await loginAs(p, ROLE);
   // Primeira vez: ela lê o tour e clica até o fim.
   task = 'tour'; await p.waitForSelector('.tour-pop', { timeout: 4000 }).catch(() => {});
   while (await p.locator('.tour-pop').count()) { await click(p.locator('.tour-pop button:has-text("Próximo"), .tour-pop button:has-text("Entendi")').last(), 'Próximo/Entendi'); await p.waitForTimeout(500); }

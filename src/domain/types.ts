@@ -83,6 +83,11 @@ export interface WorkshopMembership {
   active: boolean;
   /** Permissões efetivas; o cargo serve apenas de modelo inicial. */
   permissions: PermissionKey[];
+  /**
+   * PIN de 4 números para entrar no aparelho da oficina (decisão 70).
+   * Demonstração: guardado no aparelho e "1234" quando vazio. Fase 2: só o hash, no servidor.
+   */
+  pin?: string;
 }
 
 export interface Customer {

@@ -17,10 +17,10 @@ import { MiniPlate } from "@/features/dashboard/yard";
 import { CustomerDialog, VehicleDialog } from "@/features/customers/customers-page";
 import { vehicleLabel } from "@/features/orders/shared";
 import { formatDate, formatPhone, formatPlate } from "@/lib/format";
-import { addMember, updateMember, updateMemberProfile } from "@/services/admin";
+import { addMember, setMemberPin, updateMember, updateMemberProfile } from "@/services/admin";
 import { createCustomer, saveVehicle } from "@/services/customers";
 import { BadgeCard, PhotoPicker } from "./badge-card";
-import { maskEmail, maskPhone, maskPlate } from "@/lib/masks";
+import { maskDigits, maskEmail, maskPhone, maskPlate } from "@/lib/masks";
 
 /**
  * Pessoas (decisão 62): clientes, funcionários e carros num lugar só, no mesmo
@@ -96,6 +96,7 @@ function StaffDialog({ member, onClose }: { member: WorkshopMembership | null; o
   const [active, setActive] = useState(member?.active ?? true);
   const [permissions, setPermissions] = useState<PermissionKey[]>(member?.permissions ?? []);
   const [stamped, setStamped] = useState(false);
+  const [pin, setPin] = useState("");
   const isSelf = member?.userId === user.id;
   const groups = [...new Set(PERMISSIONS.map((p) => p.group))];
   const grantable = (key: PermissionKey) => !!member?.permissions.includes(key) || mine.permissions.includes(key);
@@ -103,12 +104,17 @@ function StaffDialog({ member, onClose }: { member: WorkshopMembership | null; o
 
   const save = () => {
     if (!member) {
-      const r = act((db, ctx) => addMember(db, ctx, { name, email, role, phone, photo }));
+      if (pin && !/^\d{4}$/.test(pin)) return;
+      const r = act((db, ctx) => {
+        const m = addMember(db, ctx, { name, email, role, phone, photo });
+        if (pin) setMemberPin(db, ctx, m.id, pin);
+      });
       if (r.ok) stampThenClose(setStamped, onClose);
       return;
     }
     const r = act((db, ctx) => {
       updateMemberProfile(db, ctx, member.id, { name, phone, photo });
+      if (pin) setMemberPin(db, ctx, member.id, pin);
       if (!isSelf) updateMember(db, ctx, member.id, { role, active, permissions });
     }, "Cadastro atualizado.");
     if (r.ok) onClose();
@@ -130,6 +136,14 @@ function StaffDialog({ member, onClose }: { member: WorkshopMembership | null; o
           {!member && <Field label="E-mail (para entrar no sistema)" hint="Ex.: joao@suaoficina.com">{(p) => <Input {...p} type="email" inputMode="email" autoCapitalize="none" spellCheck={false} value={email} onChange={(e) => setEmail(maskEmail(e.target.value))} />}</Field>}
           <Field label="Telefone" optional hint="Com DDD.">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="tel" />}</Field>
           <PhotoPicker value={photo} onChange={setPhoto} />
+          <Field
+            label={member ? "Trocar o PIN de entrada" : "PIN de entrada"}
+            optional
+            hint={member ? "4 números. Em branco, continua o mesmo." : "4 números para entrar no aparelho da oficina. Em branco: 1234."}
+            error={pin && !/^\d{4}$/.test(pin) ? "O PIN tem 4 números." : undefined}
+          >
+            {(p) => <Input {...p} value={pin} onChange={(e) => setPin(maskDigits(e.target.value, 4))} inputMode="numeric" autoComplete="off" maxLength={4} className="max-w-40 tracking-[.4em]" />}
+          </Field>
           {isSelf && <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">Sua própria função e acesso só outro proprietário muda.</p>}
           <fieldset disabled={isSelf} className="grid gap-4">
             <ChoiceGroup label="Qual a função?" value={role} onChange={(r) => { setRole(r); if (member) setPermissions(ROLE_TEMPLATES[r].filter(grantable)); }} options={roleOptions(mine.role === "owner")} columns={2} />

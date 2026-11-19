@@ -36,7 +36,9 @@ describe("relatórios", () => {
   it("respeita filtros e o isolamento entre oficinas", () => {
     const mine = buildReport(scopeTo(db, DEMO_WORKSHOP_ID), "orders", filters);
     const other = buildReport(scopeTo(db, SECOND_WORKSHOP_ID), "orders", filters);
-    expect(mine.rows).toHaveLength(11);
+    // Serviços abertos no período (o seed tem histórico de meses; decisão 77).
+    const expected = scopeTo(db, DEMO_WORKSHOP_ID).orders.filter((o) => o.openedAt.slice(0, 10) >= filters.from && o.openedAt.slice(0, 10) <= filters.to).length;
+    expect(mine.rows).toHaveLength(expected);
     expect(other.rows).toHaveLength(3);
     expect(mine.rows.some((r) => r.customer === "Edilson Monteiro Braga")).toBe(false);
     const done = buildReport(scopeTo(db, DEMO_WORKSHOP_ID), "orders", { ...filters, option: "done" });
@@ -63,9 +65,9 @@ describe("exportações", () => {
     });
     expect(headerRow).toBeGreaterThan(0);
     const first = sheet.getRow(headerRow + 1);
-    expect(first.getCell(1).value).toBe("Serviço nº 1");
+    expect(String(first.getCell(1).value)).toMatch(/^Serviço nº \d+$/);
     expect(first.getCell(2).value).toBeInstanceOf(Date);
-    expect(first.getCell(12).value).toBe(212);
+    expect(first.getCell(12).value).toBe((report.rows[0].total as number) / 100);
     expect(sheet.getColumn(12).numFmt).toContain("#,##0.00");
     const total = sheet.getRow(headerRow + 1 + report.rows.length);
     expect(total.getCell(1).value).toBe("Total");
@@ -78,5 +80,32 @@ describe("exportações", () => {
     expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe("%PDF-");
     expect(bytes.length).toBeGreaterThan(3000);
     expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("desempenho (decisão 77)", () => {
+  it("separa por mecânico, agrupa serviços parecidos e acha clientes que voltam e que sumiram", async () => {
+    const { buildPerformance, serviceKey } = await import("@/services/performance");
+    expect(serviceKey("Troca de óleo e filtro")).toBe(serviceKey("Troca de Óleo"));
+    const view = scopeTo(db, DEMO_WORKSHOP_ID);
+    const p = buildPerformance(view, addDays(today, -59), today);
+    expect(p.count).toBeGreaterThan(0);
+    expect(p.mechanics.reduce((s, m) => s + m.count, 0)).toBe(p.count);
+    expect(p.mechanics.reduce((s, m) => s + m.totalCents, 0)).toBe(p.totalCents);
+    expect(p.services[0].count).toBeGreaterThanOrEqual(2);
+    expect(p.loyal.every((c) => c.visits >= 2)).toBe(true);
+    expect(p.gone.length).toBeGreaterThan(0);
+    expect(p.gone.every((c) => c.lastDate < addDays(today, -180))).toBe(true);
+    // Outra oficina não aparece.
+    const ids = new Set(view.customers.map((c) => c.id));
+    expect([...p.loyal, ...p.gone].every((c) => ids.has(c.customerId))).toBe(true);
+  });
+  it("planilha do contador tem uma aba por lista", async () => {
+    const { buildWorkbookXlsx } = await import("@/lib/export");
+    const view = scopeTo(db, DEMO_WORKSHOP_ID);
+    const buffer = await buildWorkbookXlsx(["orders", "finance", "receivables"].map((k) => buildReport(view, k as "orders", filters)), branding);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buffer);
+    expect(wb.worksheets).toHaveLength(3);
   });
 });

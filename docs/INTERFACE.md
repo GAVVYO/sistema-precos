@@ -193,3 +193,9 @@ Balões em sequência ("1 de 5") que escurecem a tela, recortam o elemento e apo
 ## 11. Demonstração
 
 Barra amarela: trocar **Oficina** (a cor nova varre a tela a partir da logo — animação 4b) e **Entrar como** (cargo). **Opções da demonstração**: simular queda de conexão e restaurar os dados iniciais.
+
+## Desempenho (decisão 77)
+
+Quem fez, o que a oficina mais faz, clientes que voltam e clientes sumidos (com "Chamar" no WhatsApp). O dinheiro do caixa fica no Financeiro. "Mandar para o contador" baixa um Excel com uma aba por lista; as tabelas completas ficam recolhidas no fim.
+
+![Desempenho](imagens/interface/desempenho.png)

@@ -4,7 +4,7 @@ import { FileSpreadsheet, FileText, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { PeriodPicker, usePeriod } from "@/components/ui/period";
-import { Button, Card, CardHeader, EmptyState, Input, PageHeader, Select } from "@/components/ui/primitives";
+import { Button, Card, CardHeader, EmptyState, Input, Select } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { MOVEMENT_TYPE_LABELS, ORDER_STATUS_LABELS } from "@/domain/labels";
 import { exportReportPdf, exportReportXlsx, formatCell } from "@/lib/export";
@@ -19,7 +19,8 @@ const OPTIONS: Partial<Record<ReportKind, { label: string; all: string; items: [
 
 const PREVIEW_LIMIT = 200;
 
-export function ReportsPage() {
+/** Listas completas com filtros e exportação (ficam dentro do Desempenho, em "Listas e planilhas"). */
+export function ReportTables() {
   const { view, can, settings, mechanics } = useApp();
   // Somente relatórios que o usuário pode consultar.
   const available = REPORTS.filter((r) => can(r.permission));
@@ -57,8 +58,7 @@ export function ReportsPage() {
   const canExport = can("reports.export");
 
   return (
-    <div className="module-page module-reports">
-      <PageHeader title="Relatórios" description="Consulte, filtre e exporte os registros da oficina em PDF ou Excel." />
+    <div className="module-reports">
       {/* Tipo de relatório em faixa horizontal: a tabela ganha a largura toda (referência: Metabase, Stripe Reports). */}
       <div role="group" aria-label="Tipo de relatório" className="report-kinds">
         {available.map((r) => (

@@ -28,8 +28,8 @@ export const PERMISSIONS: PermissionInfo[] = [
   { key: "finance.expense", label: "Registrar despesas", group: "Financeiro" },
   { key: "schedule.manage", label: "Gerenciar agenda", group: "Agenda e clientes" },
   { key: "customers.view", label: "Consultar clientes e veículos", group: "Agenda e clientes" },
-  { key: "reports.view", label: "Consultar relatórios", group: "Relatórios" },
-  { key: "reports.export", label: "Exportar relatórios", group: "Relatórios" },
+  { key: "reports.view", label: "Ver o desempenho da oficina", group: "Desempenho" },
+  { key: "reports.export", label: "Baixar planilhas (contador)", group: "Desempenho" },
   { key: "staff.manage", label: "Gerenciar funcionários", group: "Administração" },
   { key: "settings.manage", label: "Alterar configurações", group: "Administração" },
 ];
@@ -79,7 +79,7 @@ export const MODULES: ModuleInfo[] = [
   { key: "finance", label: "Financeiro", href: "/financeiro", anyOf: ["finance.view"] },
   { key: "schedule", label: "Agenda", href: "/agenda", anyOf: ["schedule.manage"] },
   { key: "customers", label: "Pessoas", href: "/clientes", anyOf: ["customers.view", "staff.manage"] },
-  { key: "reports", label: "Relatórios", href: "/relatorios", anyOf: ["reports.view"] },
+  { key: "reports", label: "Desempenho", href: "/relatorios", anyOf: ["reports.view"] },
   {
     key: "settings",
     label: "Configurações",

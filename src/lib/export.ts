@@ -2,6 +2,7 @@
  * Exportações reais em PDF (jsPDF) e Excel (ExcelJS), geradas no navegador.
  * As bibliotecas são carregadas sob demanda para não pesar no carregamento inicial.
  */
+import type { Workbook } from "exceljs";
 import type { ISODate } from "@/domain/types";
 import { formatBRL, formatDate, formatDateTime } from "./format";
 
@@ -153,10 +154,33 @@ export async function exportReportXlsx(report: ReportData, branding: Branding): 
 
 /** Monta a planilha .xlsx em memória (usado também nos testes automatizados). */
 export async function buildReportXlsx(report: ReportData, branding: Branding): Promise<ArrayBuffer> {
+  return buildWorkbookXlsx([report], branding);
+}
+
+/** Várias listas num arquivo só, uma aba para cada ("Mandar para o contador", decisão 77). */
+export async function buildWorkbookXlsx(reports: ReportData[], branding: Branding): Promise<ArrayBuffer> {
   const { default: ExcelJS } = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "GAVYO Auto";
   workbook.created = new Date();
+  for (const report of reports) addReportSheet(workbook, report, branding);
+  return (await workbook.xlsx.writeBuffer()) as ArrayBuffer;
+}
+
+export async function exportWorkbookXlsx(reports: ReportData[], branding: Branding, title: string): Promise<void> {
+  const buffer = await buildWorkbookXlsx(reports, branding);
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName(title, "xlsx");
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function addReportSheet(workbook: Workbook, report: ReportData, branding: Branding) {
   const sheet = workbook.addWorksheet(report.title.slice(0, 31));
 
   sheet.addRow([branding.workshopName]).font = { bold: true, size: 13 };
@@ -200,7 +224,6 @@ export async function buildReportXlsx(report: ReportData, branding: Branding): P
   // Os títulos ficam na coluna A; mantém-nos alinhados à esquerda.
   for (let i = 1; i < header.number; i++) sheet.getRow(i).getCell(1).alignment = { horizontal: "left" };
 
-  return (await workbook.xlsx.writeBuffer()) as ArrayBuffer;
 }
 
 export interface OrderDocument {

@@ -47,6 +47,11 @@ Central e limpa: o logo GAVYO no alto (a águia pousa ao lado do nome ao abrir),
 
 ![Rasante do gavião ao entrar](imagens/interface/entrada-rasante.png)
 
+**No computador (decisão 73):** painel azul da marca à esquerda (águia, oficina, relógio e data) e formulário à direita — funcionários em linhas e o PIN em 4 caixas digitadas no teclado. No PIN certo, a águia do painel decola e volta no rasante.
+
+![Entrada no computador](imagens/interface/entrada-pc.png)
+![PIN no computador](imagens/interface/entrada-pc-pin.png)
+
 ## 3. Hoje = o pátio (primeira tela depois de entrar)
 
 Decisão 58. A tela responde **"que carros estão aqui e o que cada um precisa agora?"**.

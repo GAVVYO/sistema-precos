@@ -2271,3 +2271,59 @@ html[data-motion="reduce"] :is(.login-logo, .login-logo-eagle, .login-logo-eagle
 .swoop-word { width: min(48vw, 520px); height: auto; filter: brightness(0) invert(1); opacity: .95; }
 /* contorno de luz para o gavião aparecer no fundo claro e no azul */
 .swoop-eagle { position: absolute; top: 0; left: 0; height: auto; transform-origin: 50% 32%; filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 22px rgb(255 255 255 / 55%)) drop-shadow(0 18px 26px rgb(5 20 70 / 45%)); will-change: transform; }
+
+/* Entrada no computador (decisão 73): painel da marca + formulário. O azul é o
+   mesmo da cortina do rasante, então a transição parece sair do próprio painel. */
+.login-desk { display: grid; grid-template-columns: minmax(400px, 44%) 1fr; min-height: 100dvh; background: var(--surface); }
+.login-brand { position: relative; display: grid; grid-template-rows: auto 1fr auto; padding: 44px 48px 40px; overflow: hidden; color: #fff; background: radial-gradient(120% 90% at 30% 40%, #1f6bff 0%, #1447c4 55%, #0d2a78 100%); }
+/* Linhas finas de voo ao fundo: assinatura discreta, sem textura de enfeite. */
+.login-brand::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(-28deg, transparent 0 46px, rgb(255 255 255 / 4%) 46px 47px); mask-image: linear-gradient(160deg, #000 10%, transparent 75%); }
+.login-brand-name { position: relative; width: 168px; height: auto; filter: brightness(0) invert(1); animation: login-fade 500ms ease-out both; }
+.login-brand-eagle { position: relative; align-self: center; justify-self: center; width: min(78%, 360px); height: auto; filter: brightness(0) invert(1) drop-shadow(0 24px 40px rgb(5 20 70 / 40%)); transform-origin: 40% 60%; animation: eagle-land 1000ms 150ms cubic-bezier(.22, 1, .36, 1) both; }
+/* PIN certo: a águia do painel levanta voo para o alto à direita, de onde volta no rasante. */
+.login-brand-eagle[data-off] { animation: brand-takeoff 460ms cubic-bezier(.55, 0, .75, .3) both; }
+@keyframes brand-takeoff {
+  0% { transform: none; opacity: 1; }
+  25% { transform: translate(-6px, 8px) scaleY(.88); opacity: 1; }
+  100% { transform: translate(60vw, -70vh) rotate(-18deg) scale(.7); opacity: 0; }
+}
+.login-brand-foot { position: relative; display: grid; gap: 2px; animation: login-fade 500ms 200ms ease-out both; }
+.login-brand-shop { margin: 0; font-size: .8125rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgb(255 255 255 / 72%); }
+.login-brand-clock { margin: 0; font-size: 4.25rem; font-weight: 800; line-height: 1.05; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.login-brand-day { margin: 0; font-size: 1.0625rem; color: rgb(255 255 255 / 82%); }
+.login-brand-day::first-letter { text-transform: uppercase; }
+
+.login-form { display: grid; grid-template-rows: 1fr auto; justify-items: center; gap: 24px; padding: 48px 40px 28px; overflow-y: auto; max-height: 100dvh; }
+.login-form-step { align-self: center; display: grid; align-content: start; gap: 14px; width: min(420px, 100%); animation: login-step 280ms cubic-bezier(.23, 1, .32, 1) both; }
+@keyframes login-step { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+.login-form-title { margin: 0; font-size: 1.75rem; font-weight: 800; line-height: 1.2; letter-spacing: -.01em; color: var(--text); }
+.login-form-sub { margin: -6px 0 6px; font-size: 1rem; color: var(--muted); }
+.login-rows { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.login-row { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 68px; padding: 10px 16px 10px 12px; border: 1.5px solid var(--border); border-radius: 16px; background: var(--surface); text-align: left; transition: border-color 140ms, background-color 140ms, transform 120ms cubic-bezier(.23, 1, .32, 1); }
+.login-row:hover { border-color: color-mix(in srgb, var(--primary) 45%, transparent); background: var(--color-primary-soft); }
+.login-row:active { transform: scale(.99); }
+.login-row:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 2px; }
+.login-row-text { display: grid; flex: 1; min-width: 0; }
+.login-row-name { font-size: 1.0625rem; font-weight: 750; color: var(--text); }
+.login-row-role { margin: 0; font-size: .875rem; color: var(--muted); }
+.login-row-go { color: var(--muted); transition: transform 140ms cubic-bezier(.23, 1, .32, 1), color 140ms; }
+.login-row:hover .login-row-go { transform: translateX(3px); color: var(--primary); }
+.login-desk .login-back { margin: 0 0 4px -12px; }
+.login-who { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.login-field-label { font-size: 1rem; font-weight: 700; color: var(--text); }
+.login-boxes { position: relative; width: max-content; cursor: text; }
+.login-boxes-row { display: grid; grid-template-columns: repeat(4, 64px); gap: 12px; }
+.login-boxes-input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; opacity: 0; font-size: 16px; cursor: text; }
+.login-box { position: relative; display: grid; place-items: center; height: 72px; border: 2px solid var(--border); border-radius: 16px; background: var(--bg); transition: border-color 120ms, background-color 120ms; pointer-events: none; }
+.login-box::after { content: ""; width: 14px; height: 14px; border-radius: 999px; background: var(--secondary); transform: scale(0); transition: transform 160ms cubic-bezier(.34, 1.56, .64, 1); }
+.login-box[data-on]::after { transform: scale(1); }
+.login-boxes:focus-within .login-box[data-next] { border-color: var(--primary); background: var(--surface); }
+.login-boxes[data-ok] .login-box { border-color: var(--success); background: var(--color-success-soft, #e8f6ee); }
+.login-boxes[data-ok] .login-box::after { background: var(--success); }
+.login-boxes-row[data-shake] { animation: pin-shake 420ms cubic-bezier(.36, .07, .19, .97) both; }
+.login-desk .login-msg { margin: 0; }
+.login-boxes[data-ok] ~ .login-msg { color: var(--success); }
+.login-desk .login-help { margin: 0; }
+.login-desk .login-demo { align-self: end; }
+@media (prefers-reduced-motion: reduce) { .login-brand-name, .login-brand-eagle, .login-brand-eagle[data-off], .login-brand-foot, .login-form-step, .login-boxes-row[data-shake] { animation: none; } }
+html[data-motion="reduce"] :is(.login-brand-name, .login-brand-eagle, .login-brand-eagle[data-off], .login-brand-foot, .login-form-step, .login-boxes-row[data-shake]) { animation: none; }

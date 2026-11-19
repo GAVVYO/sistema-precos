@@ -83,7 +83,7 @@ export function SignIn() {
   };
 
   const left = MAX_TRIES - (userId ? tries[userId]?.n ?? 0 : 0);
-  const message = lockedFor ? `Muitas tentativas. Espere ${lockedFor} segundos.` : ok ? "Entrando…" : wrong ? `PIN errado. Faltam ${left} tentativas.` : " ";
+  const message = lockedFor ? `Muitas tentativas. Espere ${lockedFor} segundos.` : ok ? "Entrando…" : wrong ? (left === 1 ? "PIN errado. Falta 1 tentativa." : `PIN errado. Faltam ${left} tentativas.`) : " ";
 
   return (
     <ScrollView contentContainerStyle={[styles.page, { paddingTop: insets.top + space.xl, paddingBottom: insets.bottom + space.lg }]} bounces={false}>

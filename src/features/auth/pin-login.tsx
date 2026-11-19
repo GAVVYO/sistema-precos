@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowLeft, Backspace, Buildings } from "@phosphor-icons/react";
+import { ArrowLeft, Backspace, Buildings, CaretRight } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useDemoState } from "@/app-state/app-context";
 import { PersonAvatar } from "@/components/ui/person-avatar";
 import { Skeleton } from "@/components/ui/primitives";
@@ -18,7 +18,13 @@ import { DEMO_PIN, verifyPin } from "@/services/admin";
  * Tela de entrada (decisão 70): central e limpa, a águia pousa ao lado do nome
  * GAVYO; cada funcionário toca no próprio nome e digita o PIN de 4 números
  * (como as maquininhas Square/Toast). 5 erros travam 30 s.
+ * No computador (decisão 73): painel azul da marca à esquerda (águia, oficina,
+ * relógio) e formulário à direita, com o PIN digitado no teclado.
  */
+
+const WIDE = "(min-width: 1024px) and (min-height: 560px)";
+const subscribeWide = (cb: () => void) => { const m = window.matchMedia(WIDE); m.addEventListener("change", cb); return () => m.removeEventListener("change", cb); };
+const useWide = () => useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE).matches, () => true);
 
 const MAX_TRIES = 5;
 const LOCK_MS = 30_000;
@@ -47,6 +53,9 @@ export function PinLogin() {
   const [tries, setTries] = useState<Record<string, { n: number; until: number }>>({});
   const [now, setNow] = useState(() => Date.now());
   const pinTitle = useRef<HTMLHeadingElement>(null);
+  const pinInput = useRef<HTMLInputElement>(null);
+  const wide = useWide();
+  const [clock, setClock] = useState(() => new Date());
 
   const workshopId = db?.workshops.some((w) => w.id === deviceWs) ? deviceWs : db?.workshops[0]?.id ?? "";
   const settings = db?.settings.find((s) => s.workshopId === workshopId);
@@ -67,8 +76,9 @@ export function PinLogin() {
     if (!db || !userId) return;
     if (verifyPin(db, workshopId, userId, value)) {
       setOk(true);
-      // A águia bate as asas (~0,5 s) e então dá o rasante que leva ao sistema.
-      window.setTimeout(() => playSwoop(() => { demoStore.login(workshopId, userId); router.replace("/inicio"); }), motionReduced() ? 0 : 450);
+      // Celular: a águia bate as asas (~0,5 s) e dá o rasante. Computador: a águia do
+      // painel decola para o alto e o rasante volta de lá logo em seguida.
+      window.setTimeout(() => playSwoop(() => { demoStore.login(workshopId, userId); router.replace("/inicio"); }), motionReduced() ? 0 : wide ? 180 : 450);
       return;
     }
     const n = (tries[userId]?.n ?? 0) + 1;
@@ -76,7 +86,7 @@ export function PinLogin() {
     setNow(Date.now());
     setShake((x) => x + 1);
     window.setTimeout(() => setPin(""), 380);
-  }, [db, router, tries, userId, workshopId]);
+  }, [db, router, tries, userId, wide, workshopId]);
 
   const press = useCallback((d: string) => {
     if (ok || lockedFor) return;
@@ -93,18 +103,118 @@ export function PinLogin() {
   useEffect(() => {
     if (!userId) return;
     const onKey = (e: KeyboardEvent) => {
-      if (/^\d$/.test(e.key)) { e.preventDefault(); press(e.key); }
+      if (e.key === "Escape") { setUserId(null); setPin(""); }
+      else if (wide) return;
+      else if (/^\d$/.test(e.key)) { e.preventDefault(); press(e.key); }
       else if (e.key === "Backspace") { e.preventDefault(); back(); }
-      else if (e.key === "Escape") { setUserId(null); setPin(""); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [back, press, userId]);
+  }, [back, press, userId, wide]);
 
-  useEffect(() => { if (userId) pinTitle.current?.focus(); }, [userId]);
+  useEffect(() => { if (userId) (wide ? pinInput.current : pinTitle.current)?.focus(); }, [userId, wide]);
+  // Acabou a trava: o campo volta a receber o PIN sem precisar clicar.
+  useEffect(() => { if (wide && userId && !lockedFor) pinInput.current?.focus(); }, [lockedFor, userId, wide]);
+
+  useEffect(() => {
+    if (!wide) return;
+    const t = setInterval(() => setClock(new Date()), 15_000);
+    return () => clearInterval(t);
+  }, [wide]);
+
+  // No computador o PIN é um campo de verdade (aceita colar e leitor de tela).
+  const typed = (raw: string) => {
+    if (ok || lockedFor) return;
+    const v = raw.replace(/\D/g, "").slice(0, 4);
+    setPin(v);
+    if (v.length === 4) window.setTimeout(() => submit(v), 120);
+  };
 
   if (!db) {
     return <main className="login-screen"><div className="login-card" aria-busy="true"><Skeleton className="h-10" /><Skeleton className="h-40" /></div></main>;
+  }
+
+  const left = MAX_TRIES - (person ? tries[person.u.id]?.n ?? 0 : 0);
+  const message = lockedFor ? `Muitas tentativas. Espere ${lockedFor} segundos.` : shake && !ok && person ? (left === 1 ? "PIN errado. Falta 1 tentativa." : `PIN errado. Faltam ${left} tentativas.`) : ok ? "Entrando…" : " ";
+
+  if (wide) {
+    const hour = clock.getHours();
+    return (
+      <main className="login-desk">
+        <aside className="login-brand" aria-label="GAVYO">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/gavyo-nome.png" alt="GAVYO" className="login-brand-name" width={1030} height={278} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/gavyo-aguia.png" alt="" className="login-brand-eagle" data-off={ok || undefined} width={437} height={284} />
+          <div className="login-brand-foot">
+            <p className="login-brand-shop">{settings?.displayName}</p>
+            <p className="login-brand-clock" suppressHydrationWarning>{clock.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+            <p className="login-brand-day" suppressHydrationWarning>
+              {hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite"} · {clock.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+          </div>
+        </aside>
+
+        <section className="login-form" aria-live="polite">
+          <div key={choosingWs ? "ws" : person ? "pin" : "who"} className="login-form-step">
+            {choosingWs ? (
+              <>
+                <h1 className="login-form-title">Qual oficina usa este computador?</h1>
+                <p className="login-form-sub">Na versão real, o dono entra uma vez com e-mail e senha para conectar o aparelho.</p>
+                <div className="login-shops">
+                  {db.workshops.map((w) => (
+                    <button key={w.id} type="button" className="login-shop" aria-pressed={w.id === workshopId} onClick={() => { setDeviceWs(w.id); setChoosingWs(false); setUserId(null); }}>
+                      <Buildings size={24} weight="duotone" aria-hidden />
+                      <span>{db.settings.find((st) => st.workshopId === w.id)?.displayName ?? w.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : !person ? (
+              <>
+                <h1 className="login-form-title">Quem está entrando?</h1>
+                <p className="login-form-sub">Clique no seu nome. <button type="button" className="login-link" onClick={() => setChoosingWs(true)}>Trocar de oficina</button></p>
+                <ul className="login-rows">
+                  {members.map(({ m, u }) => (
+                    <li key={m.id}>
+                      <button type="button" className="login-row" onClick={() => { setUserId(u.id); setPin(""); setOk(false); }}>
+                        <PersonAvatar name={u.name} photo={u.photo} size={44} />
+                        <span className="login-row-text"><span className="login-row-name">{u.name}</span><span className="login-row-role">{ROLE_LABELS[m.role]}</span></span>
+                        <CaretRight size={20} weight="bold" aria-hidden className="login-row-go" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <>
+                <button type="button" className="login-back" onClick={() => { setUserId(null); setPin(""); }}>
+                  <ArrowLeft size={18} weight="bold" aria-hidden /> Não é você?
+                </button>
+                <div className="login-who">
+                  <PersonAvatar name={person.u.name} photo={person.u.photo} size={56} />
+                  <div><h1 className="login-form-title">Olá, {person.u.name.split(" ")[0]}</h1><p className="login-row-role">{ROLE_LABELS[person.m.role]}</p></div>
+                </div>
+                <label className="login-field-label" htmlFor="login-pin">Digite seu PIN de 4 números</label>
+                <div className="login-boxes" data-ok={ok || undefined} onClick={() => pinInput.current?.focus()}>
+                  <input
+                    id="login-pin" ref={pinInput} className="login-boxes-input" type="password" inputMode="numeric" autoComplete="off" maxLength={4}
+                    value={pin} disabled={!!lockedFor || ok} onChange={(e) => typed(e.target.value)} aria-describedby="login-pin-msg"
+                  />
+                  {/* Só a fileira é recriada para balançar; o campo fica, e com ele o foco. */}
+                  <div key={shake} className="login-boxes-row" data-shake={shake ? true : undefined}>
+                    {[0, 1, 2, 3].map((i) => <span key={i} className="login-box" data-on={i < pin.length || undefined} data-next={i === pin.length || undefined} />)}
+                  </div>
+                </div>
+                <p id="login-pin-msg" className="login-msg" role="alert">{message}</p>
+                <p className="login-help">Entra sozinho ao digitar o 4º número. Esqueceu o PIN? Peça ao dono para trocar em Pessoas › Funcionários.</p>
+              </>
+            )}
+          </div>
+          <p className="login-demo">Demonstração: dados fictícios, só neste navegador. PIN de todos: <strong>{DEMO_PIN}</strong>.</p>
+        </section>
+      </main>
+    );
   }
 
   return (
@@ -156,7 +266,7 @@ export function PinLogin() {
                 {[0, 1, 2, 3].map((i) => <span key={i} className="login-dot" data-on={i < pin.length || undefined} />)}
               </div>
               <p className="login-msg" role="alert">
-                {lockedFor ? `Muitas tentativas. Espere ${lockedFor} segundos.` : shake && !ok ? `PIN errado. Faltam ${MAX_TRIES - (tries[person.u.id]?.n ?? 0)} tentativas.` : ok ? "Entrando…" : " "}
+                {message}
               </p>
               <div className="login-pad" aria-label="Teclado do PIN">
                 {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (

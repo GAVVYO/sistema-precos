@@ -42,9 +42,9 @@ export function Scan() {
     try {
       const p = readPairing(db, data, new Date());
       setDone(true);
-      connectDevice(p);
-      if (p.kind === "person") { router.back(); enterApp(p.userId, p.workshopId, 350); }
+      if (p.kind === "person") { router.back(); enterApp(p.userId, p.workshopId, 350, () => connectDevice(p)); }
       else {
+        connectDevice(p);
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setTimeout(() => router.back(), 450);
       }

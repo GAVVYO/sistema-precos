@@ -39,8 +39,7 @@ export function Welcome() {
       if (!checkPassword(db, r.userId, password)) return setError("Senha errada.");
       const ws = ownedWorkshops(db, r.userId)[0];
       setBusy(true);
-      connectDevice({ kind: "person", workshopId: ws, userId: r.userId });
-      enterApp(r.userId, ws, 120);
+      enterApp(r.userId, ws, 120, () => connectDevice({ kind: "person", workshopId: ws, userId: r.userId }));
     } catch (e) {
       setError(e instanceof DomainError ? e.message : "Digite um e-mail. Ex.: joao@suaoficina.com");
     }
@@ -53,9 +52,9 @@ export function Welcome() {
     const { code } = createPairing(db, ctx, kind === "person" ? { kind, membershipId: ju.id } : { kind });
     const p = readPairing(db, code, new Date());
     setBusy(true);
-    connectDevice(p);
     // Aparelho da oficina: a própria tela de entrada vira "Quem está entrando?".
-    if (p.kind === "person") enterApp(p.userId, p.workshopId, 120);
+    if (p.kind === "person") enterApp(p.userId, p.workshopId, 120, () => connectDevice(p));
+    else connectDevice(p);
   };
 
   return (

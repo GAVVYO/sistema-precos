@@ -261,3 +261,13 @@ feitas sem internet só se for decidido antes (por padrão: bloquear como no sit
 - Ao entrar: a águia bate as asas e o **rasante do gavião** leva ao app (Reanimated, na thread de animação).
 - O jeito como o celular está ligado fica guardado no aparelho (AsyncStorage); fase 2: chave do servidor no cofre do aparelho.
 - Conta: **Sair** (volta à digital/PIN) e **Desconectar este celular/aparelho**.
+
+## Pátio por função (decisão 76)
+
+![Pátio: recepção, dono e mecânico](imagens/app/patio-por-funcao.png)
+
+- Abas: **Pátio · Clientes · Conta** (mecânico: Pátio · Conta). Saíram os 4 botões grandes e a aba Carros: era um "menu do menu".
+- Pátio = carros separados por situação: **Pronto para entregar** (botão "Receber R$ …"), **Sendo feito**, **Esperando começar**; busca por placa ou cliente no topo.
+- Cartão: placa, cliente, o que fazer, carro · com quem · desde quando, e **um botão da próxima ação** (toque; aviso com Desfazer).
+- **Mecânico:** só os carros dele, "Comecei" / "Ficou pronto". **Recepção:** resumo (na oficina, para receber) e **"Chegou carro"** fixo embaixo. **Dono:** o mesmo, mais **"Entrou hoje"**.
+- Animações: cartões entram em cascata curta e se reorganizam quando mudam de seção (240 ms); o botão "Chegou carro" sobe ao abrir.

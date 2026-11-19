@@ -7,6 +7,7 @@ import { canChangeStatus, orderTotals, paymentSituation } from "@core/services/o
 import { moveOrder } from "@/data/actions";
 import { PillButton } from "@/components/pill-button";
 import { Plate } from "@/components/plate";
+import { sinceShop, vehicleLabel } from "@/data/helpers";
 import { useApp } from "@/data/store";
 import { colors, radius, shadow, space } from "@/theme";
 
@@ -15,7 +16,9 @@ import { colors, radius, shadow, space } from "@/theme";
  * o que fazer e UM botão grande. Tocar no resto abre a ficha.
  */
 export function CarCard({ order }: { order: ServiceOrder }) {
-  const { db, view, user, can, customerOf, vehicleOf } = useApp();
+  const { db, view, user, membership, can, customerOf, vehicleOf, userOf } = useApp();
+  const mechanic = membership.role === "mechanic";
+  const who = order.mechanicId && !mechanic ? userOf(order.mechanicId)?.name.split(" ")[0] : undefined;
   const v = vehicleOf(order.vehicleId);
   const customer = customerOf(order.customerId)?.name.split(" ").slice(0, 2).join(" ") ?? "Cliente";
   const totals = orderTotals(view, order);
@@ -35,6 +38,7 @@ export function CarCard({ order }: { order: ServiceOrder }) {
         <View style={styles.main}>
           <Text style={styles.name} numberOfLines={1}>{customer}</Text>
           <Text style={styles.what} numberOfLines={1}>{order.description}</Text>
+          <Text style={styles.meta} numberOfLines={1}>{[vehicleLabel(v), who && `com ${who}`, sinceShop(order.openedAt)].filter(Boolean).join(" · ")}</Text>
         </View>
       </Pressable>
       {owes ? (
@@ -43,7 +47,7 @@ export function CarCard({ order }: { order: ServiceOrder }) {
         <PillButton
           full
           haptic
-          label={next === "done" ? "Pronto" : "Começar"}
+          label={next === "done" ? (mechanic ? "Ficou pronto" : "Marcar como pronto") : mechanic ? "Comecei" : "Começar"}
           icon={next === "done" ? <CheckCircle size={22} color={colors.primaryFg} weight="duotone" /> : <Play size={18} color={colors.primaryFg} weight="fill" />}
           onPress={() => moveOrder(db, user.id, order, next, customer.split(" ")[0])}
         />
@@ -58,5 +62,6 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.8 },
   main: { flex: 1, minWidth: 0, gap: 2 },
   name: { fontSize: 18, fontWeight: "800", color: colors.text },
-  what: { fontSize: 16, color: colors.muted },
+  what: { fontSize: 16, color: colors.text },
+  meta: { fontSize: 14, color: colors.muted },
 });

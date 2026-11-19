@@ -35,7 +35,7 @@ export function Home() {
         </Animated.View>
         <Animated.View entering={enterStagger(2)} style={styles.row}>
           <BigTile label="Receber" count={y.ready.length} icon={(c) => <CurrencyCircleDollar size={36} color={c} weight="duotone" />} onPress={() => router.push({ pathname: "/servicos", params: { etapa: "done" } })} hint="Carros prontos que faltam pagar" />
-          <BigTile label="Procurar cliente" icon={(c) => <MagnifyingGlass size={36} color={c} weight="duotone" />} onPress={() => router.push("/pessoas")} />
+          <BigTile label="Clientes" icon={(c) => <MagnifyingGlass size={36} color={c} weight="duotone" />} onPress={() => router.push("/pessoas")} />
         </Animated.View>
       </View>
 

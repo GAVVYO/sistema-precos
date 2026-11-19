@@ -1,22 +1,22 @@
-import { MagnifyingGlass } from "phosphor-react-native";
+import { router } from "expo-router";
+import { CaretRight, MagnifyingGlass, UserPlus } from "phosphor-react-native";
 import { useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { formatDate, formatPhone } from "@core/lib/format";
+import { formatPhone } from "@core/lib/format";
 import { Avatar } from "@/components/avatar";
-import { Chip } from "@/components/chip";
+import { PillButton } from "@/components/pill-button";
 import { Plate } from "@/components/plate";
-import { vehicleLabel } from "@/data/helpers";
+import { PressScale } from "@/components/press-scale";
 import { useApp } from "@/data/store";
 import { colors, radius, shadow, space, type } from "@/theme";
+import { reflow } from "@/theme/motion";
 
-type Tab = "customers" | "cars";
-
-/** Pessoas: clientes e carros (funcionários ficam no site). */
+/** Clientes: buscar por nome, telefone ou placa e abrir a ficha. Simples (19/11). */
 export function People() {
-  const { view, customerOf } = useApp();
+  const { view, can } = useApp();
   const insets = useSafeAreaInsets();
-  const [tab, setTab] = useState<Tab>("customers");
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
   const digits = query.replace(/\D/g, "");
@@ -24,65 +24,42 @@ export function People() {
   const customers = view.customers
     .filter((c) => !query || c.name.toLowerCase().includes(query) || (digits.length >= 3 && c.phone.includes(digits)) || view.vehicles.some((v) => v.customerId === c.id && alnum && v.plate.toLowerCase().includes(alnum)))
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
-  const cars = view.vehicles.filter((v) => !query || (alnum && v.plate.toLowerCase().includes(alnum)) || vehicleLabel(v).toLowerCase().includes(query) || (customerOf(v.customerId)?.name.toLowerCase().includes(query) ?? false));
+  const canAdd = can("os.create") || can("os.edit") || can("schedule.manage");
 
-  const header = (
-    <View style={styles.header}>
-      <Text style={type.title}>Pessoas</Text>
-      <View style={styles.search}>
-        <MagnifyingGlass size={20} color={colors.muted} weight="duotone" />
-        <TextInput accessibilityLabel="Buscar por nome, telefone ou placa" placeholder="Nome, telefone ou placa" placeholderTextColor={colors.muted} value={q} onChangeText={setQ} style={styles.input} />
-      </View>
-      <View style={styles.seg} role="tablist">
-        {([["customers", `Clientes · ${customers.length}`], ["cars", `Carros · ${cars.length}`]] as const).map(([k, label]) => (
-          <Pressable key={k} role="tab" aria-selected={tab === k} onPress={() => setTab(k)} style={[styles.segItem, tab === k && styles.segOn]}>
-            <Text style={[styles.segText, tab === k && styles.segTextOn]}>{label}</Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
-
-  return tab === "customers" ? (
-    <FlatList
+  return (
+    <Animated.FlatList
       data={customers}
       keyExtractor={(c) => c.id}
+      itemLayoutAnimation={reflow}
+      keyboardShouldPersistTaps="handled"
       contentContainerStyle={[styles.page, { paddingTop: insets.top + space.md }]}
-      ListHeaderComponent={header}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <View style={styles.titleRow}>
+            <Text style={type.title}>Clientes</Text>
+            {canAdd && <PillButton label="Novo cliente" icon={<UserPlus size={18} color={colors.primaryFg} weight="bold" />} onPress={() => router.push("/novo-cliente")} />}
+          </View>
+          <View style={styles.search}>
+            <MagnifyingGlass size={22} color={colors.muted} weight="duotone" />
+            <TextInput accessibilityLabel="Buscar por nome, telefone ou placa" placeholder="Nome, telefone ou placa" placeholderTextColor={colors.muted} value={q} onChangeText={setQ} style={styles.input} />
+          </View>
+        </View>
+      }
       ItemSeparatorComponent={() => <View style={{ height: space.sm }} />}
+      ListEmptyComponent={<Text style={[type.body, styles.empty]}>{query ? "Ninguém com esse nome, telefone ou placa." : "Nenhum cliente ainda."}</Text>}
       renderItem={({ item: c }) => {
-        const vs = view.vehicles.filter((v) => v.customerId === c.id);
-        const n = view.orders.filter((o) => o.customerId === c.id).length;
+        // A placa só aparece quando a busca foi por placa; senão o nome fica inteiro.
+        const car = alnum.length >= 2 ? view.vehicles.find((v) => v.customerId === c.id && v.plate.toLowerCase().includes(alnum)) : undefined;
         return (
-          <View style={styles.row} accessible accessibilityLabel={`${c.name}, ${formatPhone(c.phone)}, ${vs.length} carros`}>
-            <Avatar name={c.name} size={48} />
+          <PressScale scale={0.98} accessibilityRole="button" accessibilityLabel={`${c.name}, ${formatPhone(c.phone)}. Abrir ficha.`} onPress={() => router.push({ pathname: "/cliente/[id]", params: { id: c.id } })} style={styles.row}>
+            <Avatar name={c.name} size={52} />
             <View style={styles.main}>
-              <Text style={type.bodyStrong} numberOfLines={1}>{c.name}</Text>
+              <Text style={styles.name} numberOfLines={2}>{c.name}</Text>
               <Text style={type.caption}>{formatPhone(c.phone)}</Text>
-              <View style={styles.chips}><Chip label={`${n} ${n === 1 ? "serviço" : "serviços"}`} />{vs[0] && <Plate plate={vs[0].plate} size="sm" />}</View>
             </View>
-          </View>
-        );
-      }}
-    />
-  ) : (
-    <FlatList
-      data={cars}
-      keyExtractor={(v) => v.id}
-      contentContainerStyle={[styles.page, { paddingTop: insets.top + space.md }]}
-      ListHeaderComponent={header}
-      ItemSeparatorComponent={() => <View style={{ height: space.sm }} />}
-      renderItem={({ item: v }) => {
-        const last = view.orders.filter((o) => o.vehicleId === v.id).sort((a, b) => b.openedAt.localeCompare(a.openedAt))[0];
-        return (
-          <View style={styles.row}>
-            <Plate plate={v.plate} size="md" />
-            <View style={styles.main}>
-              <Text style={type.bodyStrong} numberOfLines={1}>{vehicleLabel(v)}{v.year ? ` ${v.year}` : ""}</Text>
-              <Text style={type.caption} numberOfLines={1}>{customerOf(v.customerId)?.name}</Text>
-              {last && <Text style={type.small}>Último serviço em {formatDate(last.openedAt).slice(0, 5)}</Text>}
-            </View>
-          </View>
+            {car && <Plate plate={car.plate} size="sm" />}
+            <CaretRight size={20} color={colors.muted} weight="bold" />
+          </PressScale>
         );
       }}
     />
@@ -92,14 +69,11 @@ export function People() {
 const styles = StyleSheet.create({
   page: { padding: space.md, paddingBottom: space.xxl * 2 },
   header: { gap: space.md, marginBottom: space.md },
-  search: { flexDirection: "row", alignItems: "center", gap: space.xs, minHeight: 50, paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.hairline },
-  input: { flex: 1, fontSize: 16, color: colors.text, minHeight: 48 },
-  seg: { flexDirection: "row", padding: 4, gap: 4, borderRadius: radius.pill, backgroundColor: colors.track },
-  segItem: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", borderRadius: radius.pill },
-  segOn: { backgroundColor: colors.surface, ...shadow.raised },
-  segText: { fontSize: 15, fontWeight: "600", color: colors.muted },
-  segTextOn: { color: colors.text, fontWeight: "700" },
-  row: { flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.hairline, ...shadow.card },
+  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  search: { flexDirection: "row", alignItems: "center", gap: space.xs, minHeight: 54, paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.hairline },
+  input: { flex: 1, fontSize: 17, color: colors.text, minHeight: 50 },
+  row: { flexDirection: "row", alignItems: "center", gap: space.md, minHeight: 76, paddingHorizontal: space.md, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.hairline, ...shadow.card },
   main: { flex: 1, minWidth: 0, gap: 2 },
-  chips: { flexDirection: "row", alignItems: "center", gap: space.xs, marginTop: 4 },
+  name: { fontSize: 18, fontWeight: "800", color: colors.text },
+  empty: { textAlign: "center", color: colors.muted, padding: space.xl },
 });

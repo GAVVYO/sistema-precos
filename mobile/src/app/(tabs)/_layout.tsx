@@ -22,7 +22,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{ title: mechanic ? "Seus carros" : "Início", tabBarIcon: ({ color, focused }) => <House size={26} color={color as string} weight={focused ? "duotone" : "regular"} /> }} />
       <Tabs.Screen name="servicos" options={{ title: "Carros", href: mechanic ? null : undefined, tabBarIcon: ({ color, focused }) => <Car size={26} color={color as string} weight={focused ? "duotone" : "regular"} /> }} />
-      <Tabs.Screen name="pessoas" options={{ title: "Pessoas", href: mechanic ? null : undefined, tabBarIcon: ({ color, focused }) => <UsersThree size={26} color={color as string} weight={focused ? "duotone" : "regular"} /> }} />
+      <Tabs.Screen name="pessoas" options={{ title: "Clientes", href: mechanic ? null : undefined, tabBarIcon: ({ color, focused }) => <UsersThree size={26} color={color as string} weight={focused ? "duotone" : "regular"} /> }} />
       <Tabs.Screen name="conta" options={{ title: "Conta", tabBarIcon: ({ color, focused }) => <UserCircle size={26} color={color as string} weight={focused ? "duotone" : "regular"} /> }} />
     </Tabs>
   );

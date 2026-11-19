@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { ArrowLeft, Check } from "phosphor-react-native";
 import { useState } from "react";
@@ -30,7 +30,9 @@ export function NewOrder() {
   const { view } = useApp();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState<Step>("plate");
-  const [plate, setPlate] = useState("");
+  // "Chegou com este carro" (ficha do cliente) já traz a placa.
+  const { placa } = useLocalSearchParams<{ placa?: string }>();
+  const [plate, setPlate] = useState(placa ? maskPlate(placa) : "");
   const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
   const [name, setName] = useState("");

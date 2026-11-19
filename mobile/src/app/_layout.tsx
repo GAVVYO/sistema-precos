@@ -23,6 +23,8 @@ export default function RootLayout() {
         <Stack.Screen name="servico/[id]" options={{ title: "Serviço" }} />
         <Stack.Screen name="novo-servico" options={{ title: "Novo serviço", presentation: "modal" }} />
         <Stack.Screen name="receber/[id]" options={{ title: "Receber", presentation: "modal" }} />
+        <Stack.Screen name="cliente/[id]" options={{ title: "Cliente" }} />
+        <Stack.Screen name="novo-cliente" options={{ title: "Novo cliente", presentation: "modal" }} />
       </Stack>
       <ToastHost />
     </>

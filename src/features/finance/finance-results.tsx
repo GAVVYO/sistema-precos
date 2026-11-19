@@ -53,9 +53,9 @@ export function FinanceResults({ period }: { period: Period }) {
     <div className="fr">
       <div className="fr-top">
         <p className="fr-line">
-          {p.count === 0 ? "Nenhum carro entregue neste período." : (
+          {p.count === 0 ? "Nenhum carro ficou pronto neste período." : (
             <>
-              <strong>{p.count} {p.count === 1 ? "carro entregue" : "carros entregues"}</strong> · média de <strong>{formatBRL(p.avgCents)}</strong> por carro
+              <strong>{p.count} {p.count === 1 ? "carro pronto" : "carros prontos"}</strong> · cada um deu em média <strong>{formatBRL(p.avgCents)}</strong>
               {p.previous.count > 0 && diff !== 0 && <span className="fr-delta" data-tone={diff > 0 ? "up" : "down"}>{Math.abs(diff)} a {diff > 0 ? "mais" : "menos"} que no período anterior</span>}
             </>
           )}
@@ -66,7 +66,7 @@ export function FinanceResults({ period }: { period: Period }) {
       </div>
 
       <div className="fr-grid">
-        <Box icon={<Wrench size={22} weight="duotone" />} title="Quanto cada mecânico entregou" empty={!p.mechanics.length && "Ninguém entregou carro neste período."}>
+        <Box icon={<Wrench size={22} weight="duotone" />} title="Quanto cada mecânico fez" hint="Valor dos serviços que cada um deixou pronto." empty={!p.mechanics.length && "Nenhum carro ficou pronto neste período."}>
           {p.mechanics.map((m, i) => (
             <li key={m.userId ?? "none"} className="fr-row" style={{ "--i": i } as React.CSSProperties}>
               <PersonAvatar name={m.name} size={40} />
@@ -80,7 +80,7 @@ export function FinanceResults({ period }: { period: Period }) {
           ))}
         </Box>
 
-        <Box icon={<Medal size={22} weight="duotone" />} title="O que mais vende" empty={!p.services.length && "Nenhum serviço pronto neste período."}>
+        <Box icon={<Medal size={22} weight="duotone" />} title="O que mais vende" hint="Quantas vezes foi feito e quanto deu no total." empty={!p.services.length && "Nenhum serviço pronto neste período."}>
           {p.services.map((s, i) => (
             <li key={s.label} className="fr-row" style={{ "--i": i } as React.CSSProperties}>
               <span className="fr-rank" aria-hidden>{i + 1}</span>
@@ -93,7 +93,7 @@ export function FinanceResults({ period }: { period: Period }) {
           ))}
         </Box>
 
-        <Box icon={<ChatCircleText size={22} weight="duotone" />} title="Clientes para chamar de volta" hint="Sem aparecer há mais de 6 meses." tone="call" empty={!p.gone.length && "Nenhum cliente sumido. Ótimo sinal."}>
+        <Box icon={<ChatCircleText size={22} weight="duotone" />} title="Clientes para chamar de volta" hint="Não aparecem há mais de 6 meses. Toque em Chamar para mandar uma mensagem." tone="call" empty={!p.gone.length && "Nenhum cliente sumido. Ótimo sinal."}>
           {p.gone.map((c, i) => {
             const url = callBack(c.name, c.phone);
             return (
@@ -109,7 +109,7 @@ export function FinanceResults({ period }: { period: Period }) {
           })}
         </Box>
 
-        <Box icon={<UsersThree size={22} weight="duotone" />} title="Clientes que mais voltam" hint="Nos últimos 12 meses." empty={!p.loyal.length && "Ninguém voltou mais de uma vez ainda."}>
+        <Box icon={<UsersThree size={22} weight="duotone" />} title="Clientes que mais voltam" hint="Quantas vezes vieram e quanto gastaram nos últimos 12 meses." empty={!p.loyal.length && "Ninguém voltou mais de uma vez ainda."}>
           {p.loyal.map((c, i) => (
             <li key={c.customerId} className="fr-row" style={{ "--i": i } as React.CSSProperties}>
               <PersonAvatar name={c.name} size={40} />

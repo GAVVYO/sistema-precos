@@ -199,3 +199,7 @@ Barra amarela: trocar **Oficina** (a cor nova varre a tela a partir da logo — 
 O Financeiro tem as abas **Caixa** e **Resultados**. Em Resultados: resumo de carros entregues e média por carro, "Mandar para o contador" e quatro quadros (mecânicos, o que mais vende, clientes para chamar de volta com WhatsApp, clientes que mais voltam). As listas completas ficam recolhidas no fim. A antiga tela Desempenho/Relatórios saiu do menu.
 
 ![Financeiro › Resultados](imagens/interface/financeiro-resultados.png)
+
+**Caixa (decisão 80):** Entrou, Saiu, Sobrou e Falta receber; "Entradas e saídas" no gráfico com as mesmas cores dos cartões; abas Entrou · Saiu · Falta receber; "Lançar gasto".
+
+![Financeiro › Caixa](imagens/interface/financeiro-caixa.png)

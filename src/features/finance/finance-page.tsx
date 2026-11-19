@@ -25,6 +25,11 @@ import { FinanceResults } from "./finance-results";
 /** Par de cores validado para daltonismo; independe da cor da oficina. */
 const SERIES = { received: "#2563EB", expenses: "#D97706" };
 
+/** Quadradinho da cor da série: liga o número do cartão à barra do gráfico. */
+function Swatch({ color }: { color: string }) {
+  return <span aria-hidden className="inline-block size-3 rounded-sm" style={{ background: color }} />;
+}
+
 function CashChart({ period, transactions }: { period: Period; transactions: FinancialTransaction[] }) {
   const reducedMotion = useReducedMotion();
   const { preferences } = useAccessibility();
@@ -48,12 +53,12 @@ function CashChart({ period, transactions }: { period: Period; transactions: Fin
   }, [period, transactions, grouping]);
 
   if (!data.some((d) => d.received || d.expenses)) {
-    return <EmptyState title="Nenhum dinheiro entrou ou saiu neste período" description="Quando você receber um serviço ou lançar uma despesa, o gráfico aparece aqui. Também dá para escolher outro período no alto da tela." />;
+    return <EmptyState title="Nenhum dinheiro entrou ou saiu neste período" description="Quando você receber um serviço ou lançar um gasto, ele aparece aqui. Para ver outros dias, troque o período no alto da tela." />;
   }
   const brl = (v: number) => formatBRL(Math.round(v * 100));
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-4"><p className="text-xs text-muted">{grouping === "week" ? "Totais por semana dentro do período selecionado" : "Movimentações por dia"}</p><Segmented label="Agrupar fluxo de caixa" value={grouping} onChange={setGrouping} options={[{ value: "day", label: "Por dia" }, { value: "week", label: "Por semana" }]} /></div>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-4"><span /><Segmented label="Mostrar entradas e saídas" value={grouping} onChange={setGrouping} options={[{ value: "day", label: "Por dia" }, { value: "week", label: "Por semana" }]} /></div>
       <div className="h-56 px-2 pt-3 pb-1">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} barGap={2} barCategoryGap="25%">
@@ -67,15 +72,15 @@ function CashChart({ period, transactions }: { period: Period; transactions: Fin
             itemStyle={{ color: "#172033" }}
           />
           <Legend iconType="square" iconSize={10} wrapperStyle={{ fontSize: ".875rem" }} formatter={(v) => <span style={{ color: "#172033" }}>{v}</span>} />
-          <Bar dataKey="received" name="Receitas recebidas" fill={SERIES.received} radius={[4, 4, 0, 0]} maxBarSize={grouping === "week" ? 52 : 22} isAnimationActive={!reducedMotion} animationDuration={360} animationEasing="ease-out" />
-          <Bar dataKey="expenses" name="Despesas pagas" fill={SERIES.expenses} radius={[4, 4, 0, 0]} maxBarSize={grouping === "week" ? 52 : 22} isAnimationActive={!reducedMotion} animationDuration={360} animationEasing="ease-out" />
+          <Bar dataKey="received" name="Entrou" fill={SERIES.received} radius={[4, 4, 0, 0]} maxBarSize={grouping === "week" ? 52 : 22} isAnimationActive={!reducedMotion} animationDuration={360} animationEasing="ease-out" />
+          <Bar dataKey="expenses" name="Saiu" fill={SERIES.expenses} radius={[4, 4, 0, 0]} maxBarSize={grouping === "week" ? 52 : 22} isAnimationActive={!reducedMotion} animationDuration={360} animationEasing="ease-out" />
         </BarChart>
       </ResponsiveContainer>
       </div>
       <details className="border-t border-line p-4">
         <summary className="rounded py-2 text-sm font-semibold text-primary">Ver valores do gráfico em tabela</summary>
-        <table tabIndex={0} aria-label="Valores do fluxo de caixa" className="data-table mt-3">
-          <thead><tr><th scope="col">Período</th><th scope="col">Receitas recebidas</th><th scope="col">Despesas pagas</th></tr></thead>
+        <table tabIndex={0} aria-label="Valores de entradas e saídas" className="data-table mt-3">
+          <thead><tr><th scope="col">{grouping === "week" ? "Semana" : "Dia"}</th><th scope="col">Entrou</th><th scope="col">Saiu</th></tr></thead>
           <tbody>{data.map(bucket => <tr key={bucket.label}><th scope="row">{bucket.label}</th><td>{brl(bucket.received)}</td><td>{brl(bucket.expenses)}</td></tr>)}</tbody>
         </table>
       </details>
@@ -106,13 +111,13 @@ function TransactionDialog({ kind, onClose }: { kind: "income" | "expense"; onCl
 
   return (
     <Dialog
-      title={kind === "expense" ? "Nova despesa" : "Entrada sem serviço"}
+      title={kind === "expense" ? "Lançar gasto" : "Entrada sem serviço"}
       subtitle={kind === "income" ? "Para receber de um serviço, use o botão Receber no próprio serviço." : undefined}
       onClose={onClose}
       footer={
         <>
           <Button onClick={onClose}>Cancelar</Button>
-          <Button variant="primary" disabled={!online} onClick={save}>{kind === "expense" ? "Registrar despesa" : "Registrar entrada"}</Button>
+          <Button variant="primary" disabled={!online} onClick={save}>{kind === "expense" ? "Salvar gasto" : "Salvar entrada"}</Button>
         </>
       }
     >
@@ -204,12 +209,12 @@ export function FinancePage() {
     <div className="module-page module-finance">
       <PageHeader
         title="Financeiro"
-        description="Quanto a oficina recebeu, gastou e ainda tem a receber."
+        description="Quanto entrou, quanto saiu e quem ainda está devendo."
         actions={
           <>
             <PeriodPicker value={period} onChange={setPeriod} />
             {can("finance.payment") && <Button icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => setDialog("income")}>Entrada sem serviço</Button>}
-            {can("finance.expense") && <Button variant="primary" icon={<Minus className="size-4" aria-hidden />} disabled={!online} onClick={() => setDialog("expense")}>Nova despesa</Button>}
+            {can("finance.expense") && <Button variant="primary" icon={<Minus className="size-4" aria-hidden />} disabled={!online} onClick={() => setDialog("expense")}>Lançar gasto</Button>}
           </>
         }
       />
@@ -222,25 +227,18 @@ export function FinancePage() {
       <div id="fin-area" role="tabpanel" aria-labelledby={area === "cash" ? "fin-tab-cash" : "fin-tab-results"}>
       {area === "results" ? <FinanceResults period={period} /> : <>
       <div className="mb-4 grid grid-cols-4 gap-3">
-        <Stat label="Receitas recebidas" value={summary.receivedCents} format={formatBRL} tone="success" hint="Entradas de caixa no período" />
-        <Stat label="Despesas pagas" value={summary.expensesCents} format={formatBRL} tone="danger" hint="Saídas de caixa no período" />
-        <Stat label="Contas a receber" value={summary.receivableCents} format={formatBRL} tone={receivables.length ? "warning" : "neutral"} hint={`${receivables.length} em aberto hoje`} />
-        <Stat label="Sobrou no caixa" value={summary.cashResultCents} format={formatBRL} tone={summary.cashResultCents < 0 ? "danger" : "neutral"} hint="Recebido − despesas pagas" />
+        {/* Mesmas palavras e cores do gráfico (decisão 80): azul = entrou, laranja = saiu. Vermelho só se sobrar negativo. */}
+        <Stat label="Entrou" icon={<Swatch color={SERIES.received} />} value={summary.receivedCents} format={formatBRL} hint="Dinheiro recebido no período" />
+        <Stat label="Saiu" icon={<Swatch color={SERIES.expenses} />} value={summary.expensesCents} format={formatBRL} hint="Gastos pagos no período" />
+        <Stat label="Sobrou" value={summary.cashResultCents} format={formatBRL} tone={summary.cashResultCents < 0 ? "danger" : "success"} hint={summary.cashResultCents < 0 ? "Saiu mais do que entrou" : "O que entrou menos o que saiu"} />
+        <Stat label="Falta receber" value={summary.receivableCents} format={formatBRL} tone={receivables.length ? "warning" : "neutral"} hint={receivables.length ? `${receivables.length} ${receivables.length === 1 ? "valor em aberto" : "valores em aberto"}, de qualquer data` : "Ninguém devendo"} />
       </div>
 
       <Card className="mb-4">
-        <CardHeader
-          title="Fluxo de caixa"
-          subtitle={`${formatDate(period.from)} a ${formatDate(period.to)}`}
-          actions={
-            <span className="text-xs text-muted">
-              Valor dos serviços prontos (pagos ou não): <strong className="text-ink">{formatBRL(summary.billedCents)}</strong>
-            </span>
-          }
-        />
+        <CardHeader title="Entradas e saídas" subtitle={`${formatDate(period.from)} a ${formatDate(period.to)}`} />
         <CashChart period={period} transactions={view.transactions} />
         <p className="border-t border-line px-4 py-2 text-xs text-muted">
-          “Sobrou no caixa” não é lucro contábil: considera apenas valores efetivamente recebidos e pagos no período. O custo das peças entra pelas despesas de compra, não é descontado novamente das receitas.
+          “Sobrou” é o que entrou menos o que saiu no período. Não é o lucro que o contador calcula.
         </p>
       </Card>
 
@@ -251,9 +249,9 @@ export function FinancePage() {
             value={tab}
             onChange={setTab}
             tabs={[
-              { value: "income", label: "Receitas", count: incomes.length },
-              { value: "expense", label: "Despesas", count: expenses.length },
-              { value: "receivable", label: "Contas a receber", count: receivables.length },
+              { value: "income", label: "Entrou", count: incomes.length },
+              { value: "expense", label: "Saiu", count: expenses.length },
+              { value: "receivable", label: "Falta receber", count: receivables.length },
             ]}
           />
         </div>
@@ -264,7 +262,7 @@ export function FinancePage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="data-table">
-                <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th>Descrição</th><th>Forma</th><th>Situação</th><th className="num">Valor</th></tr></thead>
+                <thead><tr><th>Data</th><th>Cliente</th><th>De onde veio</th><th>Forma</th><th className="num">Valor</th></tr></thead>
                 <tbody>
                   {incomesPager.items.map((t) => {
                     const order = t.orderId ? view.orders.find((o) => o.id === t.orderId) : null;
@@ -272,10 +270,8 @@ export function FinancePage() {
                       <tr key={t.id}>
                         <td>{formatDate(t.date)}</td>
                         <td>{customerOf(t.customerId)?.name ?? "—"}</td>
-                        <td>{order ? <button type="button" className="font-semibold text-primary hover:underline" onClick={() => openOrder(order.id)}>{formatOrderNumber(order.number)}</button> : "—"}</td>
-                        <td>{t.description}</td>
-                        <td>{t.status === "paid" ? PAYMENT_METHOD_LABELS[t.method] : "—"}</td>
-                        <td>{t.status === "paid" ? <Badge tone="success">Recebida</Badge> : <Badge tone="warning">A receber</Badge>}</td>
+                        <td>{order ? <button type="button" className="font-semibold text-primary hover:underline" onClick={() => openOrder(order.id)}>{formatOrderNumber(order.number)}</button> : t.description}</td>
+                        <td>{t.status === "paid" ? PAYMENT_METHOD_LABELS[t.method] : <Badge tone="warning">A receber</Badge>}</td>
                         <td className="num font-medium">{formatBRL(t.amountCents)}</td>
                       </tr>
                     );
@@ -288,11 +284,11 @@ export function FinancePage() {
 
         {tab === "expense" &&
           (expenses.length === 0 ? (
-            <EmptyState icon={<Receipt className="size-8" aria-hidden />} title="Nenhuma despesa neste período" description="Lance aqui contas pagas: compra de peças, aluguel, energia…" action={can("finance.expense") ? <Button disabled={!online} onClick={() => setDialog("expense")}>Nova despesa</Button> : undefined} />
+            <EmptyState icon={<Receipt className="size-8" aria-hidden />} title="Nenhum gasto neste período" description="Lance aqui o que foi pago: compra de peças, aluguel, energia…" action={can("finance.expense") ? <Button disabled={!online} onClick={() => setDialog("expense")}>Lançar gasto</Button> : undefined} />
           ) : (
             <div className="overflow-x-auto">
               <table className="data-table">
-                <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Forma</th><th>Observações</th><th className="num">Valor</th></tr></thead>
+                <thead><tr><th>Data</th><th>Com o que gastou</th><th>Tipo</th><th>Forma</th><th>Observações</th><th className="num">Valor</th></tr></thead>
                 <tbody>
                   {expensesPager.items.map((t) => (
                     <tr key={t.id}>
@@ -316,7 +312,7 @@ export function FinancePage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="data-table">
-                <thead><tr><th>Desde</th><th>Cliente</th><th>Veículo</th><th>Origem</th><th className="num">Valor pendente</th><th className="text-right">Ação</th></tr></thead>
+                <thead><tr><th>Desde</th><th>Cliente</th><th>Carro</th><th>De onde veio</th><th className="num">Falta receber</th><th className="text-right"><span className="sr-only">Ação</span></th></tr></thead>
                 <tbody>
                   {receivablesPager.items.map((r) => {
                     const v = r.order ? vehicleOf(r.order.vehicleId) : undefined;

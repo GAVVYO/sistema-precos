@@ -47,6 +47,8 @@ export function PinLogin() {
   const db = state?.db;
   const [deviceWs, setDeviceWs] = usePref<string>("device-workshop", "");
   const [choosingWs, setChoosingWs] = useState(false);
+  // Acabou de conectar: a tela de conexão fica até o rasante cobrir (sem piscar a lista de pessoas).
+  const [joining, setJoining] = useState(false);
   const [userId, setUserId] = useState<ID | null>(null);
   const [pin, setPin] = useState("");
   const [shake, setShake] = useState(0);
@@ -67,7 +69,7 @@ export function PinLogin() {
     .map((m) => ({ m, u: db!.users.find((x) => x.id === m.userId)! }))
     .sort((a, b) => a.u.name.localeCompare(b.u.name, "pt-BR"));
   const person = members.find((x) => x.u.id === userId);
-  const connecting = !connected || choosingWs;
+  const connecting = !connected || choosingWs || joining;
   const lock = userId ? tries[userId] : undefined;
   const lockedFor = lock && lock.until > now ? Math.ceil((lock.until - now) / 1000) : 0;
 
@@ -86,7 +88,7 @@ export function PinLogin() {
     // painel decola para o alto e o rasante volta de lá logo em seguida.
     window.setTimeout(() => playSwoop(() => {
       try { demoStore.login(ws, uid); router.replace("/inicio"); }
-      catch { setOk(false); setUserId(null); setPin(""); }
+      catch { setOk(false); setJoining(false); setUserId(null); setPin(""); }
     }), motionReduced() ? 0 : wide ? 180 : 450);
   }, [router, wide]);
 
@@ -178,7 +180,7 @@ export function PinLogin() {
                 wide={true}
                 canCancel={connected}
                 onCancel={() => setChoosingWs(false)}
-                onConnected={(ws, uid) => { setDeviceWs(ws); setTries({}); enter(ws, uid); }}
+                onConnected={(ws, uid) => { setJoining(true); setDeviceWs(ws); setTries({}); enter(ws, uid); }}
               />
             ) : !person ? (
               <>
@@ -238,7 +240,7 @@ export function PinLogin() {
                 wide={false}
                 canCancel={connected}
                 onCancel={() => setChoosingWs(false)}
-                onConnected={(ws, uid) => { setDeviceWs(ws); setTries({}); enter(ws, uid); }}
+                onConnected={(ws, uid) => { setJoining(true); setDeviceWs(ws); setTries({}); enter(ws, uid); }}
               />
           ) : !person ? (
             <>

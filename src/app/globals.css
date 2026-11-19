@@ -2455,3 +2455,76 @@ html[data-motion="reduce"] .pair-code::after { display: none; }
 html[data-motion="reduce"] :is(.fr-box, .fr-row, .fr-bar > span) { animation: none; }
 .nav-tiny { display: none; }
 @media (max-width: 640px) { .personal-nav-label .nav-full { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .personal-nav-label .nav-tiny { display: inline; } }
+
+/* Caixa (decisão 81): três abas grandes como as de Serviços, frase do que sobrou e calendário pintado. */
+.cash { display: grid; gap: 16px; }
+.cash-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 8px; border-radius: 34px; background: color-mix(in srgb, var(--text) 5%, transparent); }
+@media (max-width: 760px) { .cash-tabs { grid-template-columns: minmax(0, 1fr); border-radius: 28px; } }
+.cash-tab { --c: #15803d; --soft: #dcfce7; display: flex; align-items: center; gap: 14px; min-width: 0; padding: 16px 18px; border-radius: 28px; text-align: left; color: var(--muted); transition: background-color 200ms, box-shadow 260ms cubic-bezier(.16, 1, .3, 1), transform 120ms cubic-bezier(.23, 1, .32, 1); }
+.cash-tab[data-kind="expense"] { --c: #c2410c; --soft: #ffedd5; }
+.cash-tab[data-kind="receivable"] { --c: #b45309; --soft: #fef3c7; }
+.cash-tab:hover { background: rgb(255 255 255 / 55%); }
+.cash-tab:active { transform: scale(.985); }
+.cash-tab[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: 0 2px 4px rgb(23 32 51 / 6%), 0 14px 30px -14px rgb(23 32 51 / 30%); }
+.cash-tab:focus-visible, .cash-day:focus-visible, .cash-bar:focus-visible, .cash-cal-nav:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 2px; }
+.cash-tab-icon { display: grid; flex: none; place-items: center; width: 50px; height: 50px; border-radius: 999px; background: var(--soft); color: var(--c); font-size: 28px; }
+.cash-tab-text { display: grid; min-width: 0; }
+.cash-tab-text small { font-size: .9375rem; font-weight: 700; }
+.cash-tab-value { overflow: hidden; font-size: 1.625rem; font-weight: 800; letter-spacing: -.02em; color: var(--text); text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cash-tab-count { display: grid; flex: none; place-items: center; min-width: 32px; height: 32px; margin-left: auto; padding: 0 8px; border-radius: 999px; background: var(--c); font-size: .9375rem; font-weight: 800; color: #fff; }
+.cash-tab:not([aria-selected="true"]) .cash-tab-count { background: color-mix(in srgb, var(--c) 75%, #fff); }
+.cash-say { margin: 2px 4px 4px; font-size: 1.25rem; color: var(--muted); }
+.cash-say strong { font-weight: 800; color: var(--success); }
+.cash-say strong[data-tone="down"] { color: var(--danger); }
+.cash-two { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 1000px) { .cash-two { grid-template-columns: minmax(0, 1fr); } }
+.cash-card { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 10px; min-width: 0; padding: 22px 24px; border-radius: 28px; background: var(--surface); box-shadow: 0 1px 2px rgb(23 32 51 / 5%), 0 18px 40px -22px rgb(23 32 51 / 25%); animation: login-rise 380ms cubic-bezier(.16, 1, .3, 1) both; }
+.cash-two > .cash-card:nth-child(2) { animation-delay: 60ms; }
+.cash-h2 { margin: 0; font-size: 1.125rem; font-weight: 800; color: var(--text); }
+.cash-hint, .cash-empty { margin: -4px 0 0; font-size: .9375rem; color: var(--muted); }
+.cash-empty { margin: 4px 0; }
+.cash-cal-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; }
+.cash-cal-legend { font-size: .875rem; color: var(--muted); }
+.cash-cal-month { display: flex; align-items: center; gap: 8px; }
+.cash-cal-name { min-width: 160px; font-weight: 750; text-align: center; color: var(--text); }
+.cash-cal-name::first-letter { text-transform: uppercase; }
+.cash-cal-nav { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 999px; color: var(--text); }
+.cash-cal-nav:hover:not(:disabled) { background: var(--bg); }
+.cash-cal-nav:disabled { opacity: .3; }
+.cash-cal { --hue: #22c55e; --ink: #0b3a1e; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.cash-cal[data-kind="expense"] { --hue: #fb923c; --ink: #4a1a05; }
+.cash-cal-wd { padding-bottom: 2px; font-size: .8125rem; font-weight: 700; color: var(--muted); text-align: center; }
+.cash-day { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; height: 74px; padding: 8px 10px; border-radius: 18px; background: color-mix(in srgb, var(--hue) calc(var(--a) * 100%), #f4f6f9); text-align: left; transition: transform 140ms cubic-bezier(.23, 1, .32, 1), box-shadow 160ms; animation: cash-pop 320ms calc(var(--i, 0) * 12ms) cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes cash-pop { from { opacity: 0; transform: scale(.92); } }
+.cash-day:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 18px -10px rgb(23 32 51 / 35%); }
+.cash-day[aria-pressed="true"] { outline: 3px solid var(--text); outline-offset: 2px; }
+.cash-day[data-out] { background: #fafbfc; opacity: .5; }
+.cash-day-n { font-size: .875rem; font-weight: 750; color: #334155; }
+.cash-day-v { overflow: hidden; font-size: .8125rem; font-weight: 800; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+/* Celular: o dia mostra só a cor (o valor aparece ao tocar, ao lado); a placa sai da lista para o nome caber. */
+@media (max-width: 520px) { .cash-cal { gap: 4px; } .cash-day { height: 50px; padding: 6px 8px; border-radius: 14px; } .cash-day-v { display: none; } .cash-day[data-has]::after { content: ""; align-self: flex-end; width: 6px; height: 6px; border-radius: 999px; background: var(--ink); } .cash-row .mini-plate { display: none; } .cash-card { padding: 18px; border-radius: 24px; } }
+.cash-list { display: grid; grid-template-columns: minmax(0, 1fr); margin: 0; padding: 0; list-style: none; }
+.cash-row { display: flex; align-items: center; gap: 14px; min-height: 68px; padding: 10px 2px; animation: login-rise 320ms calc(var(--i, 0) * 50ms) cubic-bezier(.16, 1, .3, 1) both; }
+.cash-row + .cash-row { border-top: 1px solid rgb(23 32 51 / 7%); }
+.cash-row-main { display: grid; flex: 1; min-width: 0; }
+.cash-row-main b { overflow: hidden; font-size: 1rem; font-weight: 750; color: var(--text); text-overflow: ellipsis; white-space: nowrap; }
+.cash-row-main small { font-size: .875rem; color: var(--muted); }
+.cash-link { font-weight: 700; color: var(--primary); }
+.cash-link:hover { text-decoration: underline; }
+.cash-cat { display: grid; flex: none; place-items: center; width: 46px; height: 46px; border-radius: 999px; background: #ffedd5; color: #c2410c; font-size: 24px; }
+.cash-cat[data-kind="income"] { background: #dcfce7; color: #15803d; }
+.cash-amt { flex: none; font-size: 1.0625rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.cash-amt.is-in { color: #15803d; } .cash-amt.is-out { color: #c2410c; } .cash-amt.is-due { color: #b45309; }
+.cash-week { display: grid; gap: 10px; margin-top: 6px; padding: 16px; border-radius: 22px; background: var(--bg); }
+.cash-week-title { font-size: .9375rem; color: var(--text); }
+.cash-week-bars { --hue: #22c55e; --strong: #15803d; display: flex; align-items: flex-end; gap: 8px; height: 112px; }
+.cash-week-bars[data-kind="expense"] { --hue: #fdba74; --strong: #ea580c; }
+.cash-bar { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%; min-width: 0; }
+.cash-bar-fill { width: 100%; max-width: 36px; height: calc(var(--h) * 82px); border-radius: 999px; background: color-mix(in srgb, var(--hue) 70%, #fff); transform-origin: bottom; animation: cash-grow 520ms calc(var(--i, 0) * 50ms + 120ms) cubic-bezier(.16, 1, .3, 1) both; }
+.cash-bar:not([data-has]) .cash-bar-fill { background: #e2e8f0; }
+.cash-bar[aria-pressed="true"] .cash-bar-fill { background: var(--strong); }
+.cash-bar small { font-size: .8125rem; color: var(--muted); }
+.cash-bar:disabled { opacity: .4; }
+@keyframes cash-grow { from { transform: scaleY(0); } }
+@media (prefers-reduced-motion: reduce) { .cash-card, .cash-day, .cash-row, .cash-bar-fill { animation: none; } }
+html[data-motion="reduce"] :is(.cash-card, .cash-day, .cash-row, .cash-bar-fill) { animation: none; }

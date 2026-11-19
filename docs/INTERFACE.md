@@ -200,6 +200,6 @@ O Financeiro tem as abas **Caixa** e **Resultados**. Em Resultados: resumo de ca
 
 ![Financeiro › Resultados](imagens/interface/financeiro-resultados.png)
 
-**Caixa (decisão 80):** Entrou, Saiu, Sobrou e Falta receber; "Entradas e saídas" no gráfico com as mesmas cores dos cartões; abas Entrou · Saiu · Falta receber; "Lançar gasto".
+**Caixa (decisões 80–81):** três abas grandes (Entrou · Saiu · Falta receber), a frase com o que sobrou, o calendário do mês pintado pelo valor de cada dia e, ao tocar num dia, o que aconteceu nele e a semana em barras. Falta receber lista quem deve, com Receber.
 
 ![Financeiro › Caixa](imagens/interface/financeiro-caixa.png)

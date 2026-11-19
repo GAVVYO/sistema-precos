@@ -49,7 +49,9 @@ export function PinLogin() {
   const [choosingWs, setChoosingWs] = useState(false);
   // Acabou de conectar: a tela de conexão fica até o rasante cobrir (sem piscar a lista de pessoas).
   const [joining, setJoining] = useState(false);
-  const [userId, setUserId] = useState<ID | null>(null);
+  // undefined = ninguém escolheu ainda: abre direto em quem entrou por último (só digitar o PIN).
+  const [chosen, setUserId] = useState<ID | null | undefined>(undefined);
+  const [lastUser, setLastUser] = usePref<string>("last-user", "");
   const [pin, setPin] = useState("");
   const [shake, setShake] = useState(0);
   const [ok, setOk] = useState(false);
@@ -68,6 +70,7 @@ export function PinLogin() {
   const members = (db?.memberships.filter((m) => m.workshopId === workshopId && m.active) ?? [])
     .map((m) => ({ m, u: db!.users.find((x) => x.id === m.userId)! }))
     .sort((a, b) => a.u.name.localeCompare(b.u.name, "pt-BR"));
+  const userId: ID | null = chosen !== undefined ? chosen : members.some((x) => x.u.id === lastUser) ? lastUser : null;
   const person = members.find((x) => x.u.id === userId);
   const connecting = !connected || choosingWs || joining;
   const lock = userId ? tries[userId] : undefined;
@@ -96,6 +99,7 @@ export function PinLogin() {
     if (!db || !userId) return;
     if (verifyPin(db, workshopId, userId, value)) {
       setTries((t) => { const rest = { ...t }; delete rest[userId]; return rest; });
+      setLastUser(userId);
       enter(workshopId, userId);
       return;
     }
@@ -104,7 +108,7 @@ export function PinLogin() {
     setNow(Date.now());
     setShake((x) => x + 1);
     window.setTimeout(() => setPin(""), 380);
-  }, [db, enter, setTries, tries, userId, workshopId]);
+  }, [db, enter, setLastUser, setTries, tries, userId, workshopId]);
 
   const press = useCallback((d: string) => {
     if (ok || lockedFor) return;
@@ -178,48 +182,48 @@ export function PinLogin() {
             {connecting ? (
               <ConnectDevice
                 wide={true}
-                canCancel={connected}
+                canCancel={connected && !joining}
                 onCancel={() => setChoosingWs(false)}
-                onConnected={(ws, uid) => { setJoining(true); setDeviceWs(ws); setTries({}); enter(ws, uid); }}
+                onConnected={(ws, uid) => { setJoining(true); setDeviceWs(ws); setLastUser(uid); setTries({}); enter(ws, uid); }}
               />
-            ) : !person ? (
-              <>
-                <h1 className="login-form-title">Quem está entrando?</h1>
-                <p className="login-form-sub">Clique no seu nome. <button type="button" className="login-link" onClick={() => setChoosingWs(true)}>Trocar de oficina</button></p>
-                <ul className="login-rows">
-                  {members.map(({ m, u }) => (
-                    <li key={m.id}>
-                      <button type="button" className="login-row" onClick={() => { setUserId(u.id); setPin(""); setOk(false); }}>
-                        <PersonAvatar name={u.name} photo={u.photo} size={44} />
-                        <span className="login-row-text"><span className="login-row-name">{u.name}</span><span className="login-row-role">{ROLE_LABELS[m.role]}</span></span>
-                        <CaretRight size={20} weight="bold" aria-hidden className="login-row-go" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </>
             ) : (
               <>
-                <button type="button" className="login-back" onClick={() => { setUserId(null); setPin(""); }}>
-                  <ArrowLeft size={18} weight="bold" aria-hidden /> Não é você?
-                </button>
-                <div className="login-who">
-                  <PersonAvatar name={person.u.name} photo={person.u.photo} size={56} />
-                  <div><h1 className="login-form-title">Olá, {person.u.name.split(" ")[0]}</h1><p className="login-row-role">{ROLE_LABELS[person.m.role]}</p></div>
-                </div>
-                <label className="login-field-label" htmlFor="login-pin">Digite seu PIN de 4 números</label>
-                <div className="login-boxes" data-ok={ok || undefined} onClick={() => pinInput.current?.focus()}>
-                  <input
-                    id="login-pin" ref={pinInput} className="login-boxes-input" type="password" inputMode="numeric" autoComplete="off" maxLength={4}
-                    value={pin} disabled={!!lockedFor || ok} onChange={(e) => typed(e.target.value)} aria-describedby="login-pin-msg"
-                  />
-                  {/* Só a fileira é recriada para balançar; o campo fica, e com ele o foco. */}
-                  <div key={shake} className="login-boxes-row" data-shake={shake ? true : undefined}>
-                    {[0, 1, 2, 3].map((i) => <span key={i} className="login-box" data-on={i < pin.length || undefined} data-next={i === pin.length || undefined} />)}
-                  </div>
-                </div>
-                <p id="login-pin-msg" className="login-msg" role="alert">{message}</p>
-                <p className="login-help">Entra sozinho ao digitar o 4º número. Esqueceu o PIN? Peça ao dono para trocar em Pessoas › Funcionários.</p>
+                <h1 className="login-form-title">Quem está entrando?</h1>
+                <p className="login-form-sub">Clique no seu nome e digite o PIN. <button type="button" className="login-link" onClick={() => setChoosingWs(true)}>Trocar de oficina</button></p>
+                {/* O PIN abre na própria linha: nada de trocar de tela para entrar (decisão 75). */}
+                <ul className="login-rows">
+                  {members.map(({ m, u }, i) => {
+                    const open = u.id === userId;
+                    return (
+                      <li key={m.id} className="login-item" data-open={open || undefined} style={{ "--i": i } as React.CSSProperties}>
+                        <button type="button" className="login-row" aria-expanded={open} onClick={() => { setUserId(open ? null : u.id); setPin(""); }} disabled={ok}>
+                          <PersonAvatar name={u.name} photo={u.photo} size={44} />
+                          <span className="login-row-text"><span className="login-row-name">{u.name}</span><span className="login-row-role">{ROLE_LABELS[m.role]}</span></span>
+                          <CaretRight size={20} weight="bold" aria-hidden className="login-row-go" />
+                        </button>
+                        <div className="login-row-pin">
+                          {open && (
+                            <div className="login-row-pin-in">
+                              <label className="login-field-label" htmlFor="login-pin">PIN de {u.name.split(" ")[0]}</label>
+                              <div className="login-boxes" data-ok={ok || undefined} onClick={() => pinInput.current?.focus()}>
+                                <input
+                                  id="login-pin" ref={pinInput} className="login-boxes-input" type="password" inputMode="numeric" autoComplete="off" maxLength={4}
+                                  value={pin} disabled={!!lockedFor || ok} onChange={(e) => typed(e.target.value)} aria-describedby="login-pin-msg"
+                                />
+                                {/* Só a fileira é recriada para balançar; o campo fica, e com ele o foco. */}
+                                <div key={shake} className="login-boxes-row" data-shake={shake ? true : undefined}>
+                                  {[0, 1, 2, 3].map((k) => <span key={k} className="login-box" style={{ "--k": k } as React.CSSProperties} data-on={k < pin.length || undefined} data-next={k === pin.length || undefined} />)}
+                                </div>
+                              </div>
+                              <p id="login-pin-msg" className="login-msg" role="alert">{message}</p>
+                            </div>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="login-help">Entra sozinho no 4º número. Esqueceu o PIN? Peça ao dono para trocar em Pessoas.</p>
               </>
             )}
           </div>
@@ -238,9 +242,9 @@ export function PinLogin() {
           {connecting ? (
             <ConnectDevice
                 wide={false}
-                canCancel={connected}
+                canCancel={connected && !joining}
                 onCancel={() => setChoosingWs(false)}
-                onConnected={(ws, uid) => { setJoining(true); setDeviceWs(ws); setTries({}); enter(ws, uid); }}
+                onConnected={(ws, uid) => { setJoining(true); setDeviceWs(ws); setLastUser(uid); setTries({}); enter(ws, uid); }}
               />
           ) : !person ? (
             <>

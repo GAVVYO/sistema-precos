@@ -33,7 +33,7 @@
 | (18/11) | **Pessoas** (clientes, funcionários e carros) com crachá que se preenche e carimbo "Cadastro concluído"; foto do funcionário (decisão 62) |
 | (18/11) | Carimbador animado (63); **máscaras** em telefone, placa, dinheiro, e-mail e km, e **paginação** nas listas longas (64) |
 | (18/11) | Briefing do **app mobile** para outro agente: [APP-MOBILE.md](APP-MOBILE.md) (decisão 65) |
-| (19/11) | App simplificado (botões grandes), animações, clientes com crachá e carimbo (decisões 68–69); **entrada nova com nome + PIN** no site (decisão 70) e rasante do gavião ao entrar (decisão 72); entrada própria para computador com painel azul (decisão 73); conectar o aparelho com o e-mail do dono e correções do fluxo de entrada (decisão 74) |
+| (19/11) | App simplificado (botões grandes), animações, clientes com crachá e carimbo (decisões 68–69); **entrada nova com nome + PIN** no site (decisão 70) e rasante do gavião ao entrar (decisão 72); entrada própria para computador com painel azul (decisão 73); conectar o aparelho com e-mail e senha da GAVYO e PIN em 1 passo (decisões 74–75) |
 | (18/11) | App mobile **E0**: base em `mobile/` (Expo SDK 58), regras do site compartilhadas, tema e componentes base (decisão 67) |
 | (18/11) | App: **primeira versão navegável das telas** (Hoje/pátio, Serviços em abas, ficha, Receber, Novo serviço passo a passo, Pessoas, Conta, Seus carros do mecânico) com dados de demonstração em memória — para discutir a direção visual |
 

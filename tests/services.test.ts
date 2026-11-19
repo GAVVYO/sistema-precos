@@ -326,24 +326,23 @@ function newOrderAs(userId: string) {
   });
 }
 
-describe("conectar o aparelho (decisão 74)", () => {
-  it("separa e-mail desconhecido, funcionário, primeiro acesso e dono com senha", async () => {
+describe("conectar o aparelho (decisões 74–75)", () => {
+  it("separa e-mail desconhecido, funcionário e dono", async () => {
     const { checkEmail } = await import("@/services/auth");
     const db = buildSeed();
     expect(checkEmail(db, "ninguem@x.com").kind).toBe("unknown");
     expect(checkEmail(db, "juliana@oficinamodelo.demo").kind).toBe("not-owner");
-    expect(checkEmail(db, "  Carlos@OficinaModelo.demo ").kind).toBe("first-access");
-    expect(checkEmail(db, "marcos@castelao.demo").kind).toBe("password");
+    expect(checkEmail(db, "  Carlos@OficinaModelo.demo ").kind).toBe("owner");
   });
-  it("primeiro acesso cria senha e PIN; senha confere depois", async () => {
-    const { checkPassword, setOwnerPassword, setOwnerPin } = await import("@/services/auth");
+  it("o dono entra com a senha que a GAVYO entregou; a GAVYO troca a senha", async () => {
+    const { checkPassword, setOwnerPassword } = await import("@/services/auth");
+    const { DEMO_OWNER_PASSWORD } = await import("@/demo/seed");
     const db = buildSeed();
+    expect(checkPassword(db, DEMO_OWNER_ID, DEMO_OWNER_PASSWORD)).toBe(true);
+    expect(checkPassword(db, DEMO_OWNER_ID, "errada123")).toBe(false);
     expect(() => setOwnerPassword(db, DEMO_OWNER_ID, "curta")).toThrow();
     setOwnerPassword(db, DEMO_OWNER_ID, "senhaforte1");
-    setOwnerPin(db, DEMO_OWNER_ID, "4321");
     expect(checkPassword(db, DEMO_OWNER_ID, "senhaforte1")).toBe(true);
-    expect(checkPassword(db, DEMO_OWNER_ID, "errada123")).toBe(false);
-    expect(verifyPin(db, DEMO_WORKSHOP_ID, DEMO_OWNER_ID, "4321")).toBe(true);
     expect(() => setOwnerPassword(db, "u-juliana", "senhaforte1")).toThrow();
   });
   it("quem não é dono não troca o PIN do dono", () => {

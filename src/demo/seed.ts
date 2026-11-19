@@ -18,7 +18,7 @@ import { createPart } from "@/services/stock";
 export const DEMO_WORKSHOP_ID = "ws-passare";
 export const SECOND_WORKSHOP_ID = "ws-castelao";
 export const DEMO_OWNER_ID = "u-carlos";
-/** Senha do dono que já fez o primeiro acesso (Castelão), mostrada na demonstração. */
+/** Senha que a GAVYO entregou aos donos da demonstração (mostrada na tela de entrada). */
 export const DEMO_OWNER_PASSWORD = "gavyo2026";
 
 export function emptyDatabase(): Database {
@@ -114,8 +114,8 @@ export function buildSeed(now: Date = new Date()): Database {
     ],
     at(60).toISOString(),
   );
-  // Castelão já fez o primeiro acesso (tem senha); a Oficina Modelo ainda não (decisão 74).
-  db.users.find((u) => u.id === "u-marcos")!.passwordHash = demoHash(DEMO_OWNER_PASSWORD);
+  // A GAVYO entrega e-mail e senha a cada dono (decisão 75).
+  for (const id of [DEMO_OWNER_ID, "u-marcos"]) db.users.find((u) => u.id === id)!.passwordHash = demoHash(DEMO_OWNER_PASSWORD);
 
   seedWorkshop(db, now, DEMO_WORKSHOP_ID, DEMO_OWNER_ID, {
     parts: [

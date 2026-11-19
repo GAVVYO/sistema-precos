@@ -157,7 +157,7 @@ tsc e lint limpos, captura da tela de prova.
 Etapa E1: implemente DemoRepository com o seed do site e MMKV, executando os serviços
 de @core/services sobre uma cópia do banco e só gravando se não houver erro (igual
 src/demo/store.ts). Interface Repository pensada para a futura ApiRepository (mesmos
-métodos, assíncronos). Tela de entrada: aparelho conectado pelo dono com e-mail (decisão 74, ainda só no site) e depois quem entra com PIN
+métodos, assíncronos). Tela de entrada: aparelho conectado pelo dono com e-mail e senha da GAVYO (decisões 74–75, ainda só no site) e depois quem entra com PIN
 (Recepcionista ou Mecânico), como em src/app/login. "Restaurar demonstração" em Minha conta.
 Pronto quando: trocar de usuário e oficina funciona e os dados persistem ao fechar o app.
 ```

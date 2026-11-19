@@ -7,7 +7,8 @@
  */
 import type { Database, ID } from "@/domain/types";
 import { Ctx, DomainError, membershipOf } from "@/services/core";
-import { buildSeed, DEMO_OWNER_ID, DEMO_WORKSHOP_ID } from "./seed";
+import { demoHash } from "@/services/auth";
+import { buildSeed, DEMO_OWNER_ID, DEMO_OWNER_PASSWORD, DEMO_WORKSHOP_ID } from "./seed";
 
 const STORAGE_KEY = "gavyo-auto:demo:v1";
 
@@ -55,6 +56,9 @@ function load(): DemoState {
     if (raw) {
       const saved = JSON.parse(raw) as Partial<DemoState>;
       if (saved.db?.version === 1 && Array.isArray(saved.db.workshops)) {
+        // Dados salvos antes da decisão 75: donos sem senha recebem a senha da demonstração.
+        const owners = new Set(saved.db.memberships.filter((m) => m.role === "owner").map((m) => m.userId));
+        saved.db.users.forEach((u) => { if (owners.has(u.id) && !u.passwordHash) u.passwordHash = demoHash(DEMO_OWNER_PASSWORD); });
         return {
           db: saved.db,
           session: saved.session ?? null,
@@ -137,21 +141,6 @@ export const demoStore = {
     if (!s.session) throw new DomainError("forbidden", "Sessão encerrada. Entre novamente.");
     const draft = structuredClone(s.db);
     const result = fn(draft, { ...s.session, now: new Date() });
-    set({ ...s, db: draft, lastSyncAt: new Date().toISOString() });
-    return result;
-  },
-
-  /**
-   * Gravação antes de alguém entrar (conectar o aparelho, criar senha e PIN do
-   * dono). Atômica como `mutate`, mas sem sessão; quem chama confere o acesso.
-   */
-  mutateSignedOut<T>(fn: (db: Database) => T): T {
-    const s = this.getState();
-    if (s.connection !== "online") {
-      throw new DomainError("offline", "Sem internet. Para conectar o aparelho é preciso internet.");
-    }
-    const draft = structuredClone(s.db);
-    const result = fn(draft);
     set({ ...s, db: draft, lastSyncAt: new Date().toISOString() });
     return result;
   },

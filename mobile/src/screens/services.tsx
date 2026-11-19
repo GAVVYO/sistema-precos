@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { CheckCircle, HourglassMedium, MagnifyingGlass, Plus, SealCheck, Wrench } from "phosphor-react-native";
 import { useState } from "react";
 import { FlatList, StyleSheet, Text, TextInput, View } from "react-native";
@@ -18,7 +18,11 @@ const LABEL: Record<OrderStatus, string> = { waiting: "Aguardando", in_progress:
 export function Services() {
   const { view, customerOf, vehicleOf } = useApp();
   const insets = useSafeAreaInsets();
-  const [stage, setStage] = useState<OrderStatus>("waiting");
+  const { etapa } = useLocalSearchParams<{ etapa?: OrderStatus }>();
+  const [stage, setStage] = useState<OrderStatus>(etapa ?? "waiting");
+  // Vindo do botão "Receber" da tela inicial, abre direto em Pronto.
+  const [lastParam, setLastParam] = useState(etapa);
+  if (etapa !== lastParam) { setLastParam(etapa); if (etapa) setStage(etapa); }
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
   const all = view.orders.filter((o) => !o.cancelledAt).filter((o) => {
@@ -37,8 +41,8 @@ export function Services() {
       ListHeaderComponent={
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Text style={type.title}>Serviços</Text>
-            <PillButton label="Novo" icon={<Plus size={18} color={colors.primaryFg} weight="bold" />} onPress={() => router.push("/novo-servico")} />
+            <Text style={type.title}>Carros</Text>
+            <PillButton label="Chegou carro" icon={<Plus size={18} color={colors.primaryFg} weight="bold" />} onPress={() => router.push("/novo-servico")} />
           </View>
           <View style={styles.search}>
             <MagnifyingGlass size={20} color={colors.muted} weight="duotone" />

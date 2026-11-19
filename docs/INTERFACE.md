@@ -13,7 +13,7 @@ Termos usados na tela (decisão 37): **Serviço** (nunca "OS"), "Serviço nº 11
 | Linha | O que tem |
 |---|---|
 | 1 | Oficina (logo e nome) · **campo de busca** "Buscar placa ou nome do cliente" (Ctrl/⌘+K também foca) · **Novo serviço** · Acessibilidade · **Avisos** · **Minha conta** |
-| 2 | Abas com nome: **Hoje, Serviços, Estoque, Financeiro, Agenda, Clientes, Relatórios, Configurações** (as que o cargo pode ver) |
+| 2 | Abas com nome: **Hoje, Serviços, Estoque, Financeiro (Caixa e Resultados), Agenda, Pessoas, Configurações** (as que o cargo pode ver) |
 
 - Quantas abas aparecem depende da largura: todas a partir de 1100 px, 6 + **Mais** no tablet, 4 + **Mais** no celular. A tela atual nunca vai para o "Mais".
 - A **pílula da aba ativa desliza** até a aba nova (animação 4a).
@@ -145,7 +145,7 @@ Todos os formulários seguem a linguagem do Novo serviço: **pergunta em tom de 
 - **Estoque**: peças, **Entrada / Saída** por peça ("Chegou peça / Saiu peça / Contei o estoque", mostra "Vai ficar com"), aba **Histórico de peças** (coluna "Ficou com").
 - **Financeiro**: indicadores (inclui **Sobrou no caixa**), gráfico (com tabela acessível), recebimentos, despesas, **Entrada sem serviço**, contas a receber com **Receber**.
 - **Pessoas** (decisão 62): busca + abas Clientes / Funcionários / Carros em cartões. Novo cliente ou funcionário: crachá que se preenche + carimbo "Cadastro concluído". Ficha do funcionário: foto, telefone, função, acesso e permissões.
-- **Relatórios**: Serviços, Dinheiro que entrou e saiu, Contas a receber, Peças em estoque, Histórico de peças, Histórico de serviços; PDF e Excel.
+- **Financeiro › Resultados** (antigos Relatórios): mecânicos, o que mais vende, clientes para chamar de volta e que mais voltam; listas completas (serviços, dinheiro, contas a receber, peças, histórico) recolhidas, em PDF e Excel; "Mandar para o contador".
 - **Configurações**: dados, logo e cores da oficina e módulos. Funcionários e permissões ficam em Pessoas.
 
 ### Pessoas e crachá

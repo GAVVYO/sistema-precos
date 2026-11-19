@@ -56,6 +56,10 @@ Central e limpa: o logo GAVYO no alto (a águia pousa ao lado do nome ao abrir),
 
 ![Entrar na oficina e PIN na linha](imagens/interface/entrada-rapida.png)
 
+**Conectar o celular por QR (decisão 76):** em Pessoas › Funcionários, ao salvar alguém (ou em "Conectar celular" na ficha) aparece o QR que a pessoa lê com o app; "Conectar aparelho da oficina" gera o QR do celular/tablet do balcão. Vale 10 minutos.
+
+![QR para conectar o celular](imagens/interface/qr-conectar-celular.png)
+
 ## 3. Hoje = o pátio (primeira tela depois de entrar)
 
 Decisão 58. A tela responde **"que carros estão aqui e o que cada um precisa agora?"**.

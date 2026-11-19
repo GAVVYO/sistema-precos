@@ -1,6 +1,6 @@
 "use client";
 
-import { Car, IdentificationBadge, MagnifyingGlass, Plus, UsersThree } from "@phosphor-icons/react";
+import { Car, DeviceMobileCamera, DeviceTablet, IdentificationBadge, MagnifyingGlass, Plus, UsersThree } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { ChoiceGroup, MoreDetails } from "@/components/ui/choice";
@@ -20,6 +20,7 @@ import { formatDate, formatPhone, formatPlate } from "@/lib/format";
 import { addMember, setMemberPin, updateMember, updateMemberProfile } from "@/services/admin";
 import { createCustomer, saveVehicle } from "@/services/customers";
 import { BadgeCard, PhotoPicker } from "./badge-card";
+import { PairingQr } from "./pairing-qr";
 import { maskDigits, maskEmail, maskPhone, maskPlate } from "@/lib/masks";
 
 /**
@@ -98,6 +99,8 @@ function StaffDialog({ member, onClose }: { member: WorkshopMembership | null; o
   const [stamped, setStamped] = useState(false);
   const [pin, setPin] = useState("");
   const [pinTouched, setPinTouched] = useState(false);
+  // Depois de salvar (ou ao tocar em "Conectar celular"): mostra o QR do celular da pessoa (decisão 76).
+  const [qrFor, setQrFor] = useState<ID | null>(null);
   const isSelf = member?.userId === user.id;
   const groups = [...new Set(PERMISSIONS.map((p) => p.group))];
   const grantable = (key: PermissionKey) => !!member?.permissions.includes(key) || mine.permissions.includes(key);
@@ -107,11 +110,14 @@ function StaffDialog({ member, onClose }: { member: WorkshopMembership | null; o
     if (!member) {
       // Funcionário novo já sai com PIN próprio: nada de PIN padrão conhecido por todos.
       if (!/^\d{4}$/.test(pin)) { setPinTouched(true); return; }
+      let created: ID | null = null;
       const r = act((db, ctx) => {
         const m = addMember(db, ctx, { name, email, role, phone, photo });
         setMemberPin(db, ctx, m.id, pin);
+        created = m.id;
       });
-      if (r.ok) stampThenClose(setStamped, onClose);
+      // Carimbo no crachá e, em seguida, o QR para já conectar o celular da pessoa.
+      if (r.ok) { setStamped(true); window.setTimeout(() => setQrFor(created), motionReduced() ? 900 : 1600); }
       return;
     }
     const r = act((db, ctx) => {
@@ -122,6 +128,21 @@ function StaffDialog({ member, onClose }: { member: WorkshopMembership | null; o
     if (r.ok) onClose();
   };
 
+  if (qrFor) {
+    return (
+      <Dialog
+        title={member ? `Conectar o celular de ${name.split(" ")[0]}` : "Cadastro concluído"}
+        subtitle={member ? "Mostre este QR para a pessoa." : `Agora conecte o celular de ${name.split(" ")[0]}. Se preferir, faça isso depois pela ficha.`}
+        size="lg"
+        className="pair-dialog"
+        onClose={onClose}
+        footer={<>{member && <Button onClick={() => setQrFor(null)}>Voltar para a ficha</Button>}<Button variant="primary" onClick={onClose}>{member ? "Fechar" : "Pronto"}</Button></>}
+      >
+        <PairingQr key={qrFor} input={{ kind: "person", membershipId: qrFor }} who={name.split(" ")[0]} />
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog
       title={member ? target?.name ?? "Funcionário" : "Novo funcionário"}
@@ -129,7 +150,10 @@ function StaffDialog({ member, onClose }: { member: WorkshopMembership | null; o
       size="lg"
       className="badge-dialog"
       onClose={onClose}
-      footer={<><Button onClick={onClose}>Cancelar</Button><Button variant="primary" disabled={!online || stamped} onClick={save}>{member ? "Salvar alterações" : "Salvar cadastro"}</Button></>}
+      footer={<>
+        {member?.active && <Button className="mr-auto" icon={<DeviceMobileCamera size={18} weight="duotone" aria-hidden />} onClick={() => setQrFor(member.id)}>Conectar celular</Button>}
+        <Button onClick={onClose}>Cancelar</Button><Button variant="primary" disabled={!online || stamped} onClick={save}>{member ? "Salvar alterações" : "Salvar cadastro"}</Button>
+      </>}
     >
       <div className="badge-layout">
         <BadgeCard kind="staff" name={name} phone={phone} roleLabel={ROLE_LABELS[role]} photo={photo} stamped={stamped} />
@@ -198,6 +222,7 @@ export function PeoplePage() {
   const [tab, setTab] = useState<Tab>(tabs[0] ?? "customers");
   const [search, setSearch] = useState(initialQuery);
   const [open, setOpen] = useState<{ kind: Tab; id: ID | "new" } | null>(null);
+  const [deviceQr, setDeviceQr] = useState(false);
 
   const q = search.trim().toLocaleLowerCase("pt-BR");
   const digits = q.replace(/\D/g, "");
@@ -234,7 +259,10 @@ export function PeoplePage() {
       <PageHeader
         title="Pessoas"
         description="Clientes, funcionários e carros da oficina. Clique numa pessoa para abrir a ficha."
-        actions={canNew && tab !== "vehicles" && <Button variant="primary" className="rounded-full" icon={<Plus size={18} weight="bold" aria-hidden />} disabled={!online} onClick={() => setOpen({ kind: tab, id: "new" })}>{newLabel}</Button>}
+        actions={<>
+          {tab === "staff" && canStaff && <Button className="rounded-full" icon={<DeviceTablet size={18} weight="duotone" aria-hidden />} onClick={() => setDeviceQr(true)}>Conectar aparelho da oficina</Button>}
+          {canNew && tab !== "vehicles" && <Button variant="primary" className="rounded-full" icon={<Plus size={18} weight="bold" aria-hidden />} disabled={!online} onClick={() => setOpen({ kind: tab, id: "new" })}>{newLabel}</Button>}
+        </>}
       />
       <div className="svc-toolbar">
         <label className="svc-search">
@@ -344,6 +372,11 @@ export function PeoplePage() {
 
       {open?.kind === "customers" && open.id === "new" && <NewCustomerDialog onClose={() => setOpen(null)} />}
       {open?.kind === "customers" && open.id !== "new" && (() => { const c = view.customers.find((x) => x.id === open.id); return c ? <CustomerDialog key={c.id} customer={c} onClose={() => setOpen(null)} /> : null; })()}
+      {deviceQr && (
+        <Dialog title="Conectar o aparelho da oficina" subtitle="Para o celular ou tablet do balcão, que várias pessoas usam." size="lg" className="pair-dialog" onClose={() => setDeviceQr(false)} footer={<Button variant="primary" onClick={() => setDeviceQr(false)}>Fechar</Button>}>
+          <PairingQr input={{ kind: "device" }} who="" />
+        </Dialog>
+      )}
       {open?.kind === "staff" && (open.id === "new" ? <StaffDialog member={null} onClose={() => setOpen(null)} /> : (() => { const m = view.memberships.find((x) => x.id === open.id); return m ? <StaffDialog key={m.id} member={m} onClose={() => setOpen(null)} /> : null; })())}
       {open?.kind === "vehicles" && open.id !== "new" && (() => { const v = view.vehicles.find((x) => x.id === open.id); return v ? <VehicleDialog key={v.id} vehicle={v} onClose={() => setOpen(null)} /> : null; })()}
     </div>

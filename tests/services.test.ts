@@ -353,3 +353,32 @@ describe("conectar o aparelho (decisões 74–75)", () => {
     expect(() => setMemberPin(db, { workshopId: DEMO_WORKSHOP_ID, userId: "u-juliana", now: new Date() }, ownerM.id, "0000")).toThrow(/proprietário/);
   });
 });
+
+describe("QR para conectar o celular (decisão 76)", () => {
+  it("gera e lê QR pessoal e do aparelho; vence em 10 minutos", async () => {
+    const { createPairing, readPairing, PAIRING_TTL } = await import("@/services/pairing");
+    const db = buildSeed();
+    const now = new Date();
+    const ctx = { workshopId: DEMO_WORKSHOP_ID, userId: DEMO_OWNER_ID, now };
+    const juliana = db.memberships.find((m) => m.userId === "u-juliana")!;
+    const { code } = createPairing(db, ctx, { kind: "person", membershipId: juliana.id });
+    expect(readPairing(db, code, now)).toEqual({ kind: "person", workshopId: DEMO_WORKSHOP_ID, userId: "u-juliana" });
+    expect(() => readPairing(db, code, new Date(now.getTime() + PAIRING_TTL + 1))).toThrow(/venceu/);
+    const dev = createPairing(db, ctx, { kind: "device" });
+    expect(readPairing(db, dev.code, now)).toEqual({ kind: "device", workshopId: DEMO_WORKSHOP_ID });
+    expect(() => readPairing(db, "https://outro.site", now)).toThrow(/não é da GAVYO/);
+  });
+  it("mecânico não gera QR; quem não é dono não gera QR do dono; sem acesso não conecta", async () => {
+    const { createPairing, readPairing } = await import("@/services/pairing");
+    const db = buildSeed();
+    const now = new Date();
+    const owner = db.memberships.find((m) => m.userId === DEMO_OWNER_ID)!;
+    expect(() => createPairing(db, { workshopId: DEMO_WORKSHOP_ID, userId: "u-raimundo", now }, { kind: "device" })).toThrow();
+    const ju = db.memberships.find((m) => m.userId === "u-juliana")!;
+    ju.permissions.push("staff.manage");
+    expect(() => createPairing(db, { workshopId: DEMO_WORKSHOP_ID, userId: "u-juliana", now }, { kind: "person", membershipId: owner.id })).toThrow(/proprietário/);
+    const { code } = createPairing(db, { workshopId: DEMO_WORKSHOP_ID, userId: DEMO_OWNER_ID, now }, { kind: "person", membershipId: ju.id });
+    ju.active = false;
+    expect(() => readPairing(db, code, now)).toThrow(/sem acesso/);
+  });
+});

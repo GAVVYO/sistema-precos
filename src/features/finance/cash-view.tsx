@@ -174,7 +174,7 @@ function Calendar({ kind, month, from, to, day, total, onPick, onMonth }: {
               key={d}
               type="button"
               className="cash-day"
-              style={{ "--a": v ? 0.2 + 0.45 * (v / max) : 0, "--i": i } as React.CSSProperties}
+              style={{ "--a": v ? 0.12 + 0.3 * (v / max) : 0, "--i": i } as React.CSSProperties}
               data-out={out || undefined}
               data-has={v ? true : undefined}
               aria-pressed={d === day}

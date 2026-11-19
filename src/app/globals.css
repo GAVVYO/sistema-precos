@@ -2460,23 +2460,29 @@ html[data-motion="reduce"] :is(.fr-box, .fr-row, .fr-bar > span) { animation: no
 .cash { display: grid; gap: 16px; }
 .cash-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 8px; border-radius: 34px; background: color-mix(in srgb, var(--text) 5%, transparent); }
 @media (max-width: 760px) { .cash-tabs { grid-template-columns: minmax(0, 1fr); border-radius: 28px; } }
-.cash-tab { --c: #15803d; --soft: #dcfce7; display: flex; align-items: center; gap: 14px; min-width: 0; padding: 16px 18px; border-radius: 28px; text-align: left; color: var(--muted); transition: background-color 200ms, box-shadow 260ms cubic-bezier(.16, 1, .3, 1), transform 120ms cubic-bezier(.23, 1, .32, 1); }
-.cash-tab[data-kind="expense"] { --c: #c2410c; --soft: #ffedd5; }
+.cash-tab { --c: #0f766e; --soft: #ccfbf1; display: flex; align-items: center; gap: 14px; min-width: 0; padding: 16px 18px; border-radius: 28px; text-align: left; color: var(--muted); transition: background-color 200ms, box-shadow 260ms cubic-bezier(.16, 1, .3, 1), transform 120ms cubic-bezier(.23, 1, .32, 1); }
+.cash-tab[data-kind="expense"] { --c: #6d28d9; --soft: #ede9fe; }
 .cash-tab[data-kind="receivable"] { --c: #b45309; --soft: #fef3c7; }
 .cash-tab:hover { background: rgb(255 255 255 / 55%); }
 .cash-tab:active { transform: scale(.985); }
 .cash-tab[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: 0 2px 4px rgb(23 32 51 / 6%), 0 14px 30px -14px rgb(23 32 51 / 30%); }
 .cash-tab:focus-visible, .cash-day:focus-visible, .cash-bar:focus-visible, .cash-cal-nav:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 2px; }
-/* Ícones (decisão 83, escolha do usuário): traço grosso escuro em quadrado cinza arredondado. */
-.cash-tab-icon { display: grid; flex: none; place-items: center; width: 50px; height: 50px; border-radius: 15px; background: #eef1f5; color: var(--text); font-size: 26px; }
-.cash-tab[aria-selected="true"] .cash-tab-icon { background: #e6eaf0; }
+/* Ícones (decisão 84): só o desenho, na cor da área; no hover ele mostra o que significa
+   (a seta entra, a seta sai, o relógio balança). */
+.cash-tab-icon { display: grid; flex: none; place-items: center; width: 40px; height: 40px; color: var(--c); font-size: 34px; }
+.cash-tab:hover .cash-tab-icon svg, .cash-tab:focus-visible .cash-tab-icon svg { animation: cash-in 620ms cubic-bezier(.34, 1.56, .64, 1); }
+.cash-tab[data-kind="expense"]:hover .cash-tab-icon svg, .cash-tab[data-kind="expense"]:focus-visible .cash-tab-icon svg { animation-name: cash-out; }
+.cash-tab[data-kind="receivable"]:hover .cash-tab-icon svg, .cash-tab[data-kind="receivable"]:focus-visible .cash-tab-icon svg { animation: cash-tick 700ms ease-in-out; }
+@keyframes cash-in { 0% { transform: none; } 35% { transform: translateY(5px) scale(.94); } 65% { transform: translateY(-2px); } 100% { transform: none; } }
+@keyframes cash-out { 0% { transform: none; } 35% { transform: translateY(-5px) scale(.94); } 65% { transform: translateY(2px); } 100% { transform: none; } }
+@keyframes cash-tick { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-14deg); } 45% { transform: rotate(10deg); } 70% { transform: rotate(-5deg); } }
 .cash-tab-text { display: grid; min-width: 0; }
 .cash-tab-text small { font-size: .9375rem; font-weight: 700; }
 .cash-tab-value { overflow: hidden; font-size: 1.625rem; font-weight: 800; letter-spacing: -.02em; color: var(--text); text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .cash-tab-count { display: grid; flex: none; place-items: center; min-width: 32px; height: 32px; margin-left: auto; padding: 0 8px; border-radius: 999px; background: var(--c); font-size: .9375rem; font-weight: 800; color: #fff; }
 .cash-tab:not([aria-selected="true"]) .cash-tab-count { background: color-mix(in srgb, var(--c) 75%, #fff); }
 .cash-say { margin: 2px 4px 4px; font-size: 1.25rem; color: var(--muted); }
-.cash-say strong { font-weight: 800; color: var(--success); }
+.cash-say strong { font-weight: 800; color: #0f766e; }
 .cash-say strong[data-tone="down"] { color: var(--danger); }
 .cash-two { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; }
 @media (max-width: 1000px) { .cash-two { grid-template-columns: minmax(0, 1fr); } }
@@ -2493,8 +2499,8 @@ html[data-motion="reduce"] :is(.fr-box, .fr-row, .fr-bar > span) { animation: no
 .cash-cal-nav { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 999px; color: var(--text); }
 .cash-cal-nav:hover:not(:disabled) { background: var(--bg); }
 .cash-cal-nav:disabled { opacity: .3; }
-.cash-cal { --hue: #22c55e; --ink: #0b3a1e; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
-.cash-cal[data-kind="expense"] { --hue: #fb923c; --ink: #4a1a05; }
+.cash-cal { --hue: #14b8a6; --ink: #042f2b; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.cash-cal[data-kind="expense"] { --hue: #a78bfa; --ink: #2e1065; }
 .cash-cal-wd { padding-bottom: 2px; font-size: .8125rem; font-weight: 700; color: var(--muted); text-align: center; }
 .cash-day { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; height: 74px; padding: 8px 10px; border-radius: 18px; background: color-mix(in srgb, var(--hue) calc(var(--a) * 100%), #f4f6f9); text-align: left; transition: transform 140ms cubic-bezier(.23, 1, .32, 1), box-shadow 160ms; animation: cash-pop 320ms calc(var(--i, 0) * 12ms) cubic-bezier(.16, 1, .3, 1) both; }
 @keyframes cash-pop { from { opacity: 0; transform: scale(.92); } }
@@ -2513,13 +2519,16 @@ html[data-motion="reduce"] :is(.fr-box, .fr-row, .fr-bar > span) { animation: no
 .cash-row-main small { font-size: .875rem; color: var(--muted); }
 .cash-link { font-weight: 700; color: var(--primary); }
 .cash-link:hover { text-decoration: underline; }
-.cash-cat { display: grid; flex: none; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: #eef1f5; color: var(--text); font-size: 24px; }
+.cash-cat { display: grid; flex: none; place-items: center; width: 40px; height: 40px; color: #6d28d9; font-size: 30px; }
+.cash-cat[data-kind="income"] { color: #0f766e; }
+.cash-row:hover .cash-cat svg { animation: cash-hop 520ms cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes cash-hop { 0% { transform: none; } 40% { transform: translateY(-4px) rotate(-8deg) scale(1.08); } 100% { transform: none; } }
 .cash-amt { flex: none; font-size: 1.0625rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-.cash-amt.is-in { color: #15803d; } .cash-amt.is-out { color: #c2410c; } .cash-amt.is-due { color: #b45309; }
+.cash-amt.is-in { color: #0f766e; } .cash-amt.is-out { color: #6d28d9; } .cash-amt.is-due { color: #b45309; }
 .cash-week { display: grid; gap: 10px; margin-top: 6px; padding: 16px; border-radius: 22px; background: var(--bg); }
 .cash-week-title { font-size: .9375rem; color: var(--text); }
-.cash-week-bars { --hue: #22c55e; --strong: #15803d; display: flex; align-items: flex-end; gap: 8px; height: 112px; }
-.cash-week-bars[data-kind="expense"] { --hue: #fdba74; --strong: #ea580c; }
+.cash-week-bars { --hue: #2dd4bf; --strong: #0f766e; display: flex; align-items: flex-end; gap: 8px; height: 112px; }
+.cash-week-bars[data-kind="expense"] { --hue: #c4b5fd; --strong: #6d28d9; }
 .cash-bar { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%; min-width: 0; }
 .cash-bar-fill { width: 100%; max-width: 36px; height: calc(var(--h) * 82px); border-radius: 999px; background: color-mix(in srgb, var(--hue) 70%, #fff); transform-origin: bottom; animation: cash-grow 520ms calc(var(--i, 0) * 50ms + 120ms) cubic-bezier(.16, 1, .3, 1) both; }
 .cash-bar:not([data-has]) .cash-bar-fill { background: #e2e8f0; }
@@ -2527,5 +2536,5 @@ html[data-motion="reduce"] :is(.fr-box, .fr-row, .fr-bar > span) { animation: no
 .cash-bar small { font-size: .8125rem; color: var(--muted); }
 .cash-bar:disabled { opacity: .4; }
 @keyframes cash-grow { from { transform: scaleY(0); } }
-@media (prefers-reduced-motion: reduce) { .cash-card, .cash-day, .cash-row, .cash-bar-fill { animation: none; } }
-html[data-motion="reduce"] :is(.cash-card, .cash-day, .cash-row, .cash-bar-fill) { animation: none; }
+@media (prefers-reduced-motion: reduce) { .cash-card, .cash-day, .cash-row, .cash-bar-fill, .cash-tab-icon svg, .cash-cat svg { animation: none !important; } }
+html[data-motion="reduce"] :is(.cash-card, .cash-day, .cash-row, .cash-bar-fill, .cash-tab-icon svg, .cash-cat svg) { animation: none !important; }

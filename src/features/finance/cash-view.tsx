@@ -156,7 +156,7 @@ function Calendar({ kind, month, from, to, day, total, onPick, onMonth }: {
     <section className="cash-card" aria-labelledby="cash-cal-title">
       <div className="cash-cal-head">
         <h2 id="cash-cal-title" className="cash-h2">Dias em que {word} dinheiro</h2>
-        <span className="cash-cal-legend">{kind === "income" ? "Mais verde" : "Mais laranja"} = {word} mais</span>
+        <span className="cash-cal-legend">Cor mais forte = {word} mais</span>
       </div>
       <div className="cash-cal-month">
         <button type="button" className="cash-cal-nav" aria-label="Mês anterior" disabled={prev < startOfMonth(from)} onClick={() => onMonth(prev)}><CaretLeft size={18} weight="bold" aria-hidden /></button>

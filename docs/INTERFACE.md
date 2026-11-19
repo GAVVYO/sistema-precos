@@ -194,8 +194,8 @@ Balões em sequência ("1 de 5") que escurecem a tela, recortam o elemento e apo
 
 Barra amarela: trocar **Oficina** (a cor nova varre a tela a partir da logo — animação 4b) e **Entrar como** (cargo). **Opções da demonstração**: simular queda de conexão e restaurar os dados iniciais.
 
-## Desempenho (decisão 77)
+## Financeiro › Resultados (decisão 79)
 
-Quem fez, o que a oficina mais faz, clientes que voltam e clientes sumidos (com "Chamar" no WhatsApp). O dinheiro do caixa fica no Financeiro. "Mandar para o contador" baixa um Excel com uma aba por lista; as tabelas completas ficam recolhidas no fim.
+O Financeiro tem as abas **Caixa** e **Resultados**. Em Resultados: resumo de carros entregues e média por carro, "Mandar para o contador" e quatro quadros (mecânicos, o que mais vende, clientes para chamar de volta com WhatsApp, clientes que mais voltam). As listas completas ficam recolhidas no fim. A antiga tela Desempenho/Relatórios saiu do menu.
 
-![Desempenho](imagens/interface/desempenho.png)
+![Financeiro › Resultados](imagens/interface/financeiro-resultados.png)

@@ -1,13 +1,6 @@
-import type { Metadata } from "next";
-import { ModuleGuard } from "@/components/layout/app-shell";
-import { PerformancePage } from "@/features/reports/performance-page";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Desempenho" };
-
+/** A antiga tela de Relatórios/Desempenho virou a aba Resultados do Financeiro (decisão 79). */
 export default function Page() {
-  return (
-    <ModuleGuard module="reports">
-      <PerformancePage />
-    </ModuleGuard>
-  );
+  redirect("/financeiro");
 }

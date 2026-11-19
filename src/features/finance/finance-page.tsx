@@ -20,6 +20,7 @@ import { vehicleLabel } from "@/features/orders/shared";
 import { addDays, formatBRL, formatDate, formatOrderNumber, formatPlate, inRange, parseBRL, startOfWeek, todayISO } from "@/lib/format";
 import { createExpense, createIncome, financeSummary, listReceivables, settleIncome } from "@/services/finance";
 import { maskMoney } from "@/lib/masks";
+import { FinanceResults } from "./finance-results";
 
 /** Par de cores validado para daltonismo; independe da cor da oficina. */
 const SERIES = { received: "#2563EB", expenses: "#D97706" };
@@ -184,6 +185,8 @@ export function FinancePage() {
   const { view, can, online, customerOf, vehicleOf, openOrder } = useApp();
   const [period, setPeriod] = usePeriod("month");
   const [tab, setTab] = useState<"income" | "expense" | "receivable">("income");
+  // Caixa (entradas e saídas) ou Resultados (antiga tela Desempenho, decisão 79).
+  const [area, setArea] = useState<"cash" | "results">("cash");
   const [dialog, setDialog] = useState<null | "income" | "expense">(null);
   const [payOrder, setPayOrder] = useState<string | null>(null);
   const [settle, setSettle] = useState<FinancialTransaction | null>(null);
@@ -211,6 +214,13 @@ export function FinancePage() {
         }
       />
 
+      <div role="tablist" aria-label="Parte do Financeiro" className="fin-areas">
+        <button type="button" role="tab" id="fin-tab-cash" aria-selected={area === "cash"} aria-controls="fin-area" onClick={() => setArea("cash")}>Caixa</button>
+        <button type="button" role="tab" id="fin-tab-results" aria-selected={area === "results"} aria-controls="fin-area" onClick={() => setArea("results")}>Resultados</button>
+      </div>
+
+      <div id="fin-area" role="tabpanel" aria-labelledby={area === "cash" ? "fin-tab-cash" : "fin-tab-results"}>
+      {area === "results" ? <FinanceResults period={period} /> : <>
       <div className="mb-4 grid grid-cols-4 gap-3">
         <Stat label="Receitas recebidas" value={summary.receivedCents} format={formatBRL} tone="success" hint="Entradas de caixa no período" />
         <Stat label="Despesas pagas" value={summary.expensesCents} format={formatBRL} tone="danger" hint="Saídas de caixa no período" />
@@ -339,6 +349,8 @@ export function FinancePage() {
             </div>
           ))}
       </Card>
+      </>}
+      </div>
 
       {dialog && <TransactionDialog kind={dialog} onClose={() => setDialog(null)} />}
       {payOrder && <PaymentDialog orderId={payOrder} onClose={() => setPayOrder(null)} />}

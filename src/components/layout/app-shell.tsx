@@ -32,7 +32,7 @@ import { partSituation } from "@/services/stock";
 export function useVisibleModules(): ModuleInfo[] {
   const { settings, can } = useApp();
   return MODULES.filter(
-    (m) => settings.activeModules.includes(m.key) && (m.anyOf.length === 0 || m.anyOf.some(can)),
+    (m) => !m.hidden && settings.activeModules.includes(m.key) && (m.anyOf.length === 0 || m.anyOf.some(can)),
   );
 }
 

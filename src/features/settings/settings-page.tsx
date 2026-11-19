@@ -106,7 +106,7 @@ function WorkshopSettingsForm() {
       <Card className="self-start">
         <CardHeader title="Módulos ativos" subtitle="Módulos desativados somem do menu de todos os usuários desta oficina." />
         <ul className="divide-y divide-line">
-          {MODULES.map((m) => (
+          {MODULES.filter((m) => !m.hidden).map((m) => (
             <li key={m.key}>
               <label className="flex items-center gap-3 px-4 py-2.5 text-sm">
                 <input

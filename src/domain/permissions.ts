@@ -28,8 +28,8 @@ export const PERMISSIONS: PermissionInfo[] = [
   { key: "finance.expense", label: "Registrar despesas", group: "Financeiro" },
   { key: "schedule.manage", label: "Gerenciar agenda", group: "Agenda e clientes" },
   { key: "customers.view", label: "Consultar clientes e veículos", group: "Agenda e clientes" },
-  { key: "reports.view", label: "Ver o desempenho da oficina", group: "Desempenho" },
-  { key: "reports.export", label: "Baixar planilhas (contador)", group: "Desempenho" },
+  { key: "reports.view", label: "Ver resultados (mecânicos, clientes, listas)", group: "Financeiro" },
+  { key: "reports.export", label: "Baixar planilhas (contador)", group: "Financeiro" },
   { key: "staff.manage", label: "Gerenciar funcionários", group: "Administração" },
   { key: "settings.manage", label: "Alterar configurações", group: "Administração" },
 ];
@@ -70,6 +70,8 @@ export interface ModuleInfo {
   anyOf: PermissionKey[];
   /** Módulos essenciais não podem ser desativados pela oficina. */
   required?: boolean;
+  /** Fora do menu e das Configurações (continua aceito nos dados salvos). */
+  hidden?: boolean;
 }
 
 export const MODULES: ModuleInfo[] = [
@@ -79,7 +81,8 @@ export const MODULES: ModuleInfo[] = [
   { key: "finance", label: "Financeiro", href: "/financeiro", anyOf: ["finance.view"] },
   { key: "schedule", label: "Agenda", href: "/agenda", anyOf: ["schedule.manage"] },
   { key: "customers", label: "Pessoas", href: "/clientes", anyOf: ["customers.view", "staff.manage"] },
-  { key: "reports", label: "Desempenho", href: "/relatorios", anyOf: ["reports.view"] },
+  // Virou a aba Resultados do Financeiro (decisão 79).
+  { key: "reports", label: "Resultados", href: "/financeiro", anyOf: ["reports.view"], hidden: true },
   {
     key: "settings",
     label: "Configurações",

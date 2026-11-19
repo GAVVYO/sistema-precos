@@ -14,7 +14,6 @@ export const GO_KEYS: Record<string, string> = {
   "/financeiro": "F",
   "/agenda": "A",
   "/clientes": "C",
-  "/relatorios": "R",
   "/configuracoes": "S",
 };
 

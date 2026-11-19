@@ -3,7 +3,7 @@
 import { FileSpreadsheet, FileText, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
-import { PeriodPicker, usePeriod } from "@/components/ui/period";
+import { type Period, PeriodPicker, usePeriod } from "@/components/ui/period";
 import { Button, Card, CardHeader, EmptyState, Input, Select } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { MOVEMENT_TYPE_LABELS, ORDER_STATUS_LABELS } from "@/domain/labels";
@@ -19,13 +19,15 @@ const OPTIONS: Partial<Record<ReportKind, { label: string; all: string; items: [
 
 const PREVIEW_LIMIT = 200;
 
-/** Listas completas com filtros e exportação (ficam dentro do Desempenho, em "Listas e planilhas"). */
-export function ReportTables() {
+/** Listas completas com filtros e exportação (Financeiro › Resultados, em "Listas completas e planilhas"). */
+export function ReportTables({ period: fixed }: { period?: Period } = {}) {
   const { view, can, settings, mechanics } = useApp();
   // Somente relatórios que o usuário pode consultar.
   const available = REPORTS.filter((r) => can(r.permission));
   const [kind, setKind] = useState<ReportKind | null>(available[0]?.kind ?? null);
-  const [period, setPeriod] = usePeriod("30");
+  const [own, setPeriod] = usePeriod("30");
+  // Dentro do Financeiro, usa o período escolhido no alto da página (um seletor só).
+  const period = fixed ?? own;
   const [option, setOption] = useState("");
   const [mechanicId, setMechanicId] = useState("");
   const [text, setText] = useState("");
@@ -91,7 +93,7 @@ export function ReportTables() {
             }
           />
           <div className="flex flex-wrap items-center gap-2 border-b border-line p-3">
-            {info.usesPeriod && <PeriodPicker value={period} onChange={setPeriod} />}
+            {info.usesPeriod && !fixed && <PeriodPicker value={period} onChange={setPeriod} />}
             {opt && (
               <Select className="w-52" aria-label={opt.label} value={option} onChange={(e) => setOption(e.target.value)}>
                 <option value="">{opt.all}</option>

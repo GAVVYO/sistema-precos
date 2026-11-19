@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, ChatCircleText, FileArrowDown, Medal, UserMinus, Wrench } from "@phosphor-icons/react";
+import { ArrowDownRight, ArrowUpRight, ChatCircleText, FileArrowDown, Medal, Wrench } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { MoreDetails } from "@/components/ui/choice";
 import { CountUp } from "@/components/ui/count-up";
 import { PersonAvatar } from "@/components/ui/person-avatar";
-import { Button, PageHeader } from "@/components/ui/primitives";
+import { Button } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import type { Cents, ISODate } from "@/domain/types";
 import { exportWorkbookXlsx } from "@/lib/export";
@@ -27,7 +27,7 @@ type Preset = "month" | "last_month" | "90";
 const PRESETS: { value: Preset; label: string }[] = [
   { value: "month", label: "Este mês" },
   { value: "last_month", label: "Mês passado" },
-  { value: "90", label: "Últimos 3 meses" },
+  { value: "90", label: "3 meses" },
 ];
 
 function range(p: Preset): { from: ISODate; to: ISODate } {
@@ -45,9 +45,7 @@ export function PerformancePage() {
   const [busy, setBusy] = useState(false);
   const { from, to } = range(preset);
   const p = buildPerformance(view, from, to);
-  const top = Math.max(1, ...p.mechanics.map((m) => m.totalCents));
-  const topService = Math.max(1, ...p.services.map((s) => s.count));
-  const periodLabel = preset === "month" ? `em ${monthName(from)}` : preset === "last_month" ? `em ${monthName(from)}` : "nos últimos 3 meses";
+  const topCount = Math.max(1, ...p.mechanics.map((m) => m.count));
 
   const sendToAccountant = async () => {
     setBusy(true);
@@ -66,126 +64,113 @@ export function PerformancePage() {
   const callBack = (name: string, phone: string) =>
     buildWhatsAppUrl(phone, `Olá, ${name.split(" ")[0]}! Aqui é da ${settings.displayName}. Faz um tempo que não vemos seu carro por aqui. Que tal uma revisão? Temos horário esta semana.`);
 
+  const when = preset === "90" ? "Nos últimos 3 meses" : `Em ${monthName(from).split(" ")[0]}`;
+  const diff = p.count - p.previous.count;
+
   return (
     <div className="module-page module-performance">
-      <PageHeader
-        title="Desempenho"
-        description="Quem fez, o que a oficina mais faz e quais clientes chamar de volta. O dinheiro do caixa fica no Financeiro."
-        actions={can("reports.export") && <Button variant="primary" className="rounded-full" icon={<FileArrowDown size={18} weight="duotone" aria-hidden />} loading={busy} onClick={sendToAccountant}>Mandar para o contador</Button>}
-      />
+      <header className="pf-head">
+        <div>
+          <h1 className="pf-h1">Desempenho</h1>
+          <div role="group" aria-label="Período" className="pf-periods">
+            {PRESETS.map((x) => (
+              <button key={x.value} type="button" aria-pressed={x.value === preset} onClick={() => setPreset(x.value)}>{x.label}</button>
+            ))}
+          </div>
+        </div>
+        {can("reports.export") && (
+          <Button className="rounded-full" icon={<FileArrowDown size={18} weight="duotone" aria-hidden />} loading={busy} onClick={sendToAccountant}>Mandar para o contador</Button>
+        )}
+      </header>
 
-      <div role="group" aria-label="Período" className="perf-periods">
-        {PRESETS.map((x) => (
-          <button key={x.value} type="button" aria-pressed={x.value === preset} onClick={() => setPreset(x.value)}>{x.label}</button>
-        ))}
-        <span className="perf-range">{formatDate(from)} a {formatDate(to)}</span>
-      </div>
+      {/* Uma frase no lugar de três cartões de número: lê-se como o dono contaria o mês. */}
+      <section key={`h-${preset}`} className="pf-hero" aria-label="Resumo do período">
+        {p.count === 0 ? (
+          <p className="pf-sentence">{when} nenhum carro foi entregue ainda.</p>
+        ) : (
+          <>
+            <p className="pf-sentence">
+              {when} a oficina entregou <strong><CountUp value={p.count} /> {p.count === 1 ? "carro" : "carros"}</strong> e os serviços somaram <strong><CountUp value={p.totalCents} format={(n) => formatBRL(n as Cents)} /></strong>.
+            </p>
+            <p className="pf-sub">
+              Em média, {formatBRL(p.avgCents)} por carro.
+              {p.previous.count > 0 && diff !== 0 && (
+                <span className="pf-delta" data-tone={diff > 0 ? "up" : "down"}>
+                  {diff > 0 ? <ArrowUpRight size={16} weight="bold" aria-hidden /> : <ArrowDownRight size={16} weight="bold" aria-hidden />}
+                  {Math.abs(diff)} {Math.abs(diff) === 1 ? "carro" : "carros"} a {diff > 0 ? "mais" : "menos"} que no período anterior
+                </span>
+              )}
+            </p>
+          </>
+        )}
+      </section>
 
-      <div key={preset} className="perf-stats">
-        <Stat label="Serviços prontos" value={p.count} prev={p.previous.count} />
-        <Stat label="Valor dos serviços" value={p.totalCents} prev={p.previous.totalCents} money />
-        <Stat label="Valor médio por serviço" value={p.avgCents} prev={p.previous.avgCents} money />
-      </div>
-
-      <div key={`g-${preset}`} className="perf-grid">
-        <section className="perf-card" aria-labelledby="perf-mech">
-          <h2 id="perf-mech" className="perf-title"><Wrench size={22} weight="duotone" aria-hidden /> Quem fez</h2>
-          {p.mechanics.length === 0 ? <p className="perf-empty">Nenhum serviço pronto {periodLabel}.</p> : (
-            <ul className="perf-list">
+      <div key={`g-${preset}`} className="pf-two">
+        <section aria-labelledby="pf-mech">
+          <h2 id="pf-mech" className="pf-h2"><Wrench size={22} weight="duotone" aria-hidden /> Quem entregou</h2>
+          {p.mechanics.length === 0 ? <p className="pf-empty">Ninguém entregou carro neste período.</p> : (
+            <ul className="pf-board">
               {p.mechanics.map((m, i) => (
-                <li key={m.userId ?? "none"} className="perf-row" style={{ "--i": i } as React.CSSProperties}>
-                  <PersonAvatar name={m.name} size={40} />
-                  <div className="perf-row-main">
-                    <div className="perf-row-line"><strong>{m.name.split(" ").slice(0, 2).join(" ")}</strong><span className="perf-money">{formatBRL(m.totalCents)}</span></div>
-                    <div className="perf-bar" aria-hidden><span style={{ "--w": m.totalCents / top } as React.CSSProperties} /></div>
-                    <p className="perf-row-sub">{m.count} {m.count === 1 ? "serviço" : "serviços"} · mão de obra {formatBRL(m.laborCents)}</p>
+                <li key={m.userId ?? "none"} style={{ "--i": i } as React.CSSProperties}>
+                  <PersonAvatar name={m.name} size={48} />
+                  <div className="pf-board-main">
+                    <span className="pf-board-name">{m.name.split(" ")[0]}</span>
+                    <span className="pf-bar" aria-hidden><span style={{ "--w": m.count / topCount } as React.CSSProperties} /></span>
                   </div>
+                  <span className="pf-board-num"><span><strong>{m.count}</strong> {m.count === 1 ? "carro" : "carros"}</span><small>{formatBRL(m.totalCents)}</small></span>
                 </li>
               ))}
             </ul>
           )}
         </section>
 
-        <section className="perf-card" aria-labelledby="perf-svc">
-          <h2 id="perf-svc" className="perf-title"><Medal size={22} weight="duotone" aria-hidden /> O que a oficina mais faz</h2>
-          {p.services.length === 0 ? <p className="perf-empty">Nenhum serviço pronto {periodLabel}.</p> : (
-            <ol className="perf-list">
+        <section aria-labelledby="pf-svc">
+          <h2 id="pf-svc" className="pf-h2"><Medal size={22} weight="duotone" aria-hidden /> O que mais sai</h2>
+          {p.services.length === 0 ? <p className="pf-empty">Nenhum serviço neste período.</p> : (
+            <ol className="pf-rank">
               {p.services.map((s, i) => (
-                <li key={s.label} className="perf-row" style={{ "--i": i } as React.CSSProperties}>
-                  <span className="perf-rank" aria-hidden>{i + 1}</span>
-                  <div className="perf-row-main">
-                    <div className="perf-row-line"><strong>{s.label}</strong><span className="perf-count">{s.count}×</span></div>
-                    <div className="perf-bar is-soft" aria-hidden><span style={{ "--w": s.count / topService } as React.CSSProperties} /></div>
-                    <p className="perf-row-sub">Média de {formatBRL(s.avgCents)} cada · total {formatBRL(s.totalCents)}</p>
-                  </div>
+                <li key={s.label} style={{ "--i": i } as React.CSSProperties} title={`Média de ${formatBRL(s.avgCents)} cada`}>
+                  <span className="pf-rank-n" aria-hidden>{i + 1}</span>
+                  <span className="pf-rank-label">{s.label}</span>
+                  <span className="pf-rank-count">{s.count}×</span>
                 </li>
               ))}
             </ol>
           )}
         </section>
-
-        <section className="perf-card" aria-labelledby="perf-loyal">
-          <h2 id="perf-loyal" className="perf-title"><ArrowUpRight size={22} weight="duotone" aria-hidden /> Clientes que mais voltam</h2>
-          <p className="perf-hint">Nos últimos 12 meses.</p>
-          {p.loyal.length === 0 ? <p className="perf-empty">Ninguém voltou mais de uma vez ainda.</p> : (
-            <ul className="perf-list">
-              {p.loyal.map((c, i) => (
-                <li key={c.customerId} className="perf-row" style={{ "--i": i } as React.CSSProperties}>
-                  <PersonAvatar name={c.name} size={40} />
-                  <div className="perf-row-main">
-                    <div className="perf-row-line"><strong>{c.name}</strong><span className="perf-count">{c.visits} vezes</span></div>
-                    <p className="perf-row-sub">Gastou {formatBRL(c.totalCents)} · última vez em {formatDate(c.lastDate)}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="perf-card" aria-labelledby="perf-gone">
-          <h2 id="perf-gone" className="perf-title"><UserMinus size={22} weight="duotone" aria-hidden /> Clientes sumidos</h2>
-          <p className="perf-hint">Não aparecem há mais de 6 meses. Uma mensagem pode trazer de volta.</p>
-          {p.gone.length === 0 ? <p className="perf-empty">Nenhum cliente sumido. Ótimo sinal.</p> : (
-            <ul className="perf-list">
-              {p.gone.map((c, i) => {
-                const url = callBack(c.name, c.phone);
-                return (
-                  <li key={c.customerId} className="perf-row" style={{ "--i": i } as React.CSSProperties}>
-                    <PersonAvatar name={c.name} size={40} />
-                    <div className="perf-row-main">
-                      <strong>{c.name}</strong>
-                      <p className="perf-row-sub">Última vez há {monthsSince(c.lastDate)} meses ({formatDate(c.lastDate)})</p>
-                    </div>
-                    {url && <a className="perf-call" href={url} target="_blank" rel="noreferrer" aria-label={`Chamar ${c.name} no WhatsApp`}><ChatCircleText size={20} weight="duotone" aria-hidden /> Chamar</a>}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
       </div>
 
-      <MoreDetails summary="Listas completas e planilhas (serviços, dinheiro, peças, histórico)">
+      <section className="pf-back" aria-labelledby="pf-gone">
+        <div className="pf-back-head">
+          <h2 id="pf-gone" className="pf-h2"><ChatCircleText size={22} weight="duotone" aria-hidden /> Chamar de volta</h2>
+          <p className="pf-hint">{p.gone.length ? `${p.gone.length} ${p.gone.length === 1 ? "cliente não aparece" : "clientes não aparecem"} há mais de 6 meses. Uma mensagem pode trazer o carro de volta.` : "Nenhum cliente sumido há mais de 6 meses. Ótimo sinal."}</p>
+        </div>
+        {!!p.gone.length && (
+          <ul className="pf-gone">
+            {p.gone.map((c, i) => {
+              const url = callBack(c.name, c.phone);
+              return (
+                <li key={c.customerId} style={{ "--i": i } as React.CSSProperties}>
+                  <PersonAvatar name={c.name} size={44} />
+                  <span className="pf-gone-text"><strong>{c.name.split(" ").slice(0, 2).join(" ")}</strong><small>há {monthsSince(c.lastDate)} meses</small></span>
+                  {url && <a className="pf-call" href={url} target="_blank" rel="noreferrer" aria-label={`Chamar ${c.name} no WhatsApp`}><ChatCircleText size={20} weight="fill" aria-hidden /> Chamar</a>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {!!p.loyal.length && (
+          <p className="pf-loyal">
+            <span className="pf-loyal-label">Clientes fiéis:</span>
+            {p.loyal.map((c) => <span key={c.customerId} className="pf-loyal-item" title={`${c.visits} vezes no ano · ${formatBRL(c.totalCents)}`}>{c.name.split(" ")[0]} <b>{c.visits}×</b></span>)}
+          </p>
+        )}
+      </section>
+
+      <MoreDetails summary="Listas completas e planilhas">
         <ReportTables />
       </MoreDetails>
     </div>
   );
 }
 
-function Stat({ label, value, prev, money }: { label: string; value: number; prev: number; money?: boolean }) {
-  const diff = value - prev;
-  const pct = prev ? Math.round((diff / prev) * 100) : null;
-  const fmt = (n: number) => (money ? formatBRL(n as Cents) : n.toLocaleString("pt-BR"));
-  return (
-    <div className="perf-stat">
-      <p className="perf-stat-label">{label}</p>
-      <p className="perf-stat-value"><CountUp value={value} format={fmt} /></p>
-      <p className="perf-stat-delta" data-tone={!prev ? undefined : diff > 0 ? "up" : diff < 0 ? "down" : undefined}>
-        {!prev ? "Sem comparação com o período anterior" : diff === 0 ? "Igual ao período anterior" : (
-          // Porcentagem só quando faz sentido; com pouca base, a diferença em número ("17 a mais").
-          <>{diff > 0 ? <ArrowUpRight size={16} weight="bold" aria-hidden /> : <ArrowDownRight size={16} weight="bold" aria-hidden />} {pct !== null && Math.abs(pct) <= 200 ? `${Math.abs(pct)}%` : fmt(Math.abs(diff))} {diff > 0 ? "a mais" : "a menos"} que no período anterior</>
-        )}
-      </p>
-    </div>
-  );
-}

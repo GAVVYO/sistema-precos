@@ -13,6 +13,8 @@ import type { ModuleInfo } from "@/domain/permissions";
 
 /** Rótulos curtos para caber na ilha; o nome completo fica no título e no "Mais". */
 const SHORT: Partial<Record<string, string>> = { customers: "Pessoas" };
+/** Na barra do celular, nomes longos ficam curtos (o nome inteiro segue no title e no leitor de tela). */
+const TINY: Partial<Record<string, string>> = { reports: "Números" };
 /** Quantas abas cabem com o nome escrito: celular 4, tablet 6, notebook/desktop todas. O resto vai para "Mais". */
 const WIDTHS = ["(max-width: 767px)", "(max-width: 1099px)"];
 const visibleFor = () => (typeof window === "undefined" ? 6 : window.matchMedia(WIDTHS[0]).matches ? 4 : window.matchMedia(WIDTHS[1]).matches ? 6 : 8);
@@ -47,7 +49,7 @@ export function PersonalNavigation({ modules, preferenceKey }: { modules: Module
         const active = activeOf(item.href);
         const Icon = NAV_ICONS[item.key];
         const label = SHORT[item.key] ?? item.label;
-        return <div key={item.key} className={cx("personal-nav-item", active && "is-active")}><Link href={item.href} data-tour={`nav-${item.key}`} aria-current={active ? "page" : undefined} title={label !== item.label ? item.label : undefined}><span className="personal-nav-icon"><Icon size={18} aria-hidden /></span><span className="personal-nav-label">{label}</span></Link></div>;
+        return <div key={item.key} className={cx("personal-nav-item", active && "is-active")}><Link href={item.href} data-tour={`nav-${item.key}`} aria-current={active ? "page" : undefined} title={label !== item.label ? item.label : undefined}><span className="personal-nav-icon"><Icon size={18} aria-hidden /></span><span className="personal-nav-label">{TINY[item.key] ? <><span className="nav-full">{label}</span><span className="nav-tiny" aria-hidden>{TINY[item.key]}</span></> : label}</span></Link></div>;
       })}
       {more.length > 0 && (
         <div className="personal-nav-item personal-nav-more">

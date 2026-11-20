@@ -219,3 +219,9 @@ Abas Todas · Está acabando · Acabou, busca e tipos em botões; peças em cart
 Foto da peça (decisão 89): no cadastro ou direto na ficha ("Tirar foto"); aparece no cartão.
 
 ![Estoque com foto da peça](imagens/interface/estoque-foto.png)
+
+## Agenda no Dia (decisão 90)
+
+Abre no Dia: setas, faixa da semana e cada horário como cartão numa linha do tempo, com Confirmar e Chegou: abrir serviço.
+
+![Agenda no Dia](imagens/interface/agenda-dia.png)

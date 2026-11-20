@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { Pager, usePager } from "@/components/ui/pager";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
-import { Badge, Button, Card, cx, EmptyState, Field, Input, PageHeader, Segmented, Textarea, Tone } from "@/components/ui/primitives";
+import { Badge, Button, Card, cx, EmptyState, Field, Input, PageHeader, Textarea, Tone } from "@/components/ui/primitives";
 import { APPOINTMENT_STATUS_LABELS } from "@/domain/labels";
 import type { Appointment, AppointmentStatus, ISODate } from "@/domain/types";
 import {
@@ -17,6 +17,7 @@ import {
 import { ChoiceGroup, DayPicker, MoreDetails, TimePicker } from "@/components/ui/choice";
 import { createAppointment, setAppointmentStatus, updateAppointment } from "@/services/appointments";
 import { maskPhone, maskPlate } from "@/lib/masks";
+import { MiniPlate } from "@/features/dashboard/yard";
 
 const STATUS_TONE: Record<AppointmentStatus, Tone> = { scheduled: "info", confirmed: "success", attended: "neutral", cancelled: "danger" };
 const CHIP: Record<AppointmentStatus, string> = {
@@ -177,7 +178,8 @@ export function SchedulePage() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
   const params = useSearchParams();
   const today = todayISO();
-  const [mode, setMode] = useState<View>("week");
+  // Abre no Dia (auditoria leiga G6): lista como o Hoje; semana e mês continuam como opção.
+  const [mode, setMode] = useState<View>("day");
   const [cursor, setCursor] = useState<ISODate>(today);
   const [open, setOpen] = useState<Appointment | "new" | null>(params.has("novo") ? "new" : null);
   const [newDate, setNewDate] = useState<ISODate>(today);
@@ -196,7 +198,6 @@ export function SchedulePage() {
   const title =
     mode === "day" ? `${weekdayName(cursor)}, ${formatDate(cursor)}` : mode === "week" ? `${formatDate(weekStart)} a ${formatDate(addDays(weekStart, 6))}` : mode === "month" ? monthName(cursor) : "Próximos atendimentos";
   const openNew = (d: ISODate) => { setNewDate(d < today ? today : d); setOpen("new"); };
-  const dayList = byDate(cursor);
 
   return (
     <DndContext sensors={sensors} onDragStart={({ active }) => setDragging(view.appointments.find(a => a.id === active.id) ?? null)} onDragCancel={() => setDragging(null)} onDragEnd={({ active, over }) => {
@@ -209,45 +210,26 @@ export function SchedulePage() {
     <div className="module-page module-schedule">
       <PageHeader
         title="Agenda"
-        description="Clique no agendamento para confirmar ou, quando o cliente chegar, abrir o serviço. Para mudar dia e horário, use o botão de calendário do cartão (ou arraste)."
+        description="Quem vem em cada dia. Quando o cliente chegar, toque em Chegou: abrir serviço."
         actions={<Button variant="primary" icon={<CalendarPlus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNew(mode === "list" ? today : cursor)}>Novo agendamento</Button>}
       />
       <div className="mb-3 flex flex-wrap items-center gap-3">
-        <Segmented label="Visualização" value={mode} onChange={setMode} options={[{ value: "day", label: "Dia" }, { value: "week", label: "Semana" }, { value: "month", label: "Mês" }, { value: "list", label: "Próximos" }]} />
-        {mode !== "list" && (
+        <div role="tablist" aria-label="Ver a agenda por" className="fin-areas !mb-0">
+          {([["day", "Dia"], ["week", "Semana"], ["month", "Mês"], ["list", "Próximos"]] as const).map(([v, l]) => (
+            <button key={v} type="button" role="tab" aria-selected={mode === v} onClick={() => setMode(v)}>{l}</button>
+          ))}
+        </div>
+        {mode !== "list" && mode !== "day" && (
           <div className="flex items-center gap-1">
             <Button size="sm" aria-label="Anterior" onClick={() => move(-1)}><ChevronLeft className="size-4" aria-hidden /></Button>
             <Button size="sm" onClick={() => setCursor(today)}>Hoje</Button>
             <Button size="sm" aria-label="Próximo" onClick={() => move(1)}><ChevronRight className="size-4" aria-hidden /></Button>
           </div>
         )}
-        <h2 className="text-sm font-semibold first-letter:uppercase">{title}</h2>
+        {mode !== "day" && <h2 className="text-sm font-semibold first-letter:uppercase">{title}</h2>}
       </div>
 
-      {mode === "day" && (
-        <Card>
-          {dayList.length === 0 ? (
-            <EmptyState icon={<CalendarDays className="size-8" aria-hidden />} title="Nenhum agendamento neste dia" description="Quando um cliente ligar para marcar, registre aqui." action={<Button disabled={!online} onClick={() => openNew(cursor)}>Novo agendamento</Button>} />
-          ) : (
-            <table className="data-table">
-              <thead><tr><th>Horário</th><th>Cliente</th><th>Telefone</th><th>Veículo</th><th>Serviço</th><th>Mecânico</th><th>Situação</th></tr></thead>
-              <tbody>
-                {dayList.map((a) => (
-                  <tr key={a.id} className="cursor-pointer" onClick={() => setOpen(a)}>
-                    <td className="font-semibold tabular-nums">{a.time}</td>
-                    <td><button type="button" className="font-medium text-primary hover:underline">{a.customerName}</button></td>
-                    <td>{formatPhone(a.phone)}</td>
-                    <td>{a.brand} {a.model}{a.plate ? ` · ${formatPlate(a.plate)}` : ""}</td>
-                    <td>{a.service}</td>
-                    <td>{userOf(a.mechanicId)?.name ?? <span className="text-muted">A definir</span>}</td>
-                    <td><Badge tone={STATUS_TONE[a.status]}>{APPOINTMENT_STATUS_LABELS[a.status]}</Badge></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Card>
-      )}
+      {mode === "day" && <DayView day={cursor} today={today} onPick={setCursor} onOpen={setOpen} onNew={() => openNew(cursor)} />}
 
       {mode === "week" && (
         <div className="schedule-week grid grid-cols-7 gap-3">
@@ -342,3 +324,86 @@ export function SchedulePage() {
     </DndContext>
   );
 }
+
+/**
+ * Agenda no Dia (decisão 90): faixa da semana para pular de dia, setas de dia
+ * anterior e próximo e, abaixo, cada horário como cartão numa linha do tempo
+ * (como o Pátio), com a próxima ação: Confirmar ou Chegou: abrir serviço.
+ */
+function DayView({ day, today, onPick, onOpen, onNew }: { day: ISODate; today: ISODate; onPick: (d: ISODate) => void; onOpen: (a: Appointment) => void; onNew: () => void }) {
+  const { view, online, can, userOf, act, openNewOrder } = useApp();
+  const week = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(day), i));
+  const count = (d: ISODate) => view.appointments.filter((a) => a.date === d && a.status !== "cancelled").length;
+  const list = view.appointments.filter((a) => a.date === day).sort((a, b) => a.time.localeCompare(b.time));
+  const rel = day === today ? "Hoje" : day === addDays(today, 1) ? "Amanhã" : day === addDays(today, -1) ? "Ontem" : null;
+  const title = `${weekdayName(day).replace(/^./, (c) => c.toUpperCase())}, ${Number(day.slice(8))} de ${monthName(day).split(" ")[0]}`;
+  const active = list.filter((a) => a.status !== "cancelled");
+
+  return (
+    <div className="ag">
+      <div className="ag-nav">
+        <button type="button" className="ag-arrow" aria-label="Dia anterior" onClick={() => onPick(addDays(day, -1))}><ChevronLeft aria-hidden /></button>
+        <div className="ag-title">
+          <h2>{rel ? <>{rel}<span>{title}</span></> : title}</h2>
+          {day !== today && <button type="button" className="cash-link" onClick={() => onPick(today)}>Voltar para hoje</button>}
+        </div>
+        <button type="button" className="ag-arrow" aria-label="Próximo dia" onClick={() => onPick(addDays(day, 1))}><ChevronRight aria-hidden /></button>
+      </div>
+
+      <div className="ag-week" role="group" aria-label="Dias da semana">
+        {week.map((d) => {
+          const n = count(d);
+          return (
+            <button key={d} type="button" className="ag-day" aria-pressed={d === day} data-today={d === today || undefined} onClick={() => onPick(d)}>
+              <small>{weekdayName(d, true)}</small>
+              <strong>{Number(d.slice(8))}</strong>
+              <span className="ag-dots" aria-hidden>{Array.from({ length: Math.min(n, 4) }, (_, i) => <i key={i} />)}</span>
+              <span className="sr-only">{n ? `${n} ${n === 1 ? "cliente" : "clientes"}` : "livre"}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="ag-say">{active.length === 0 ? "Ninguém marcado neste dia." : `${active.length} ${active.length === 1 ? "cliente marcado" : "clientes marcados"}.`}</p>
+
+      {list.length === 0 ? (
+        <div className="ag-empty">
+          <CalendarDays aria-hidden />
+          <p>Quando um cliente ligar para marcar, registre aqui.</p>
+          {can("schedule.manage") && <Button variant="primary" disabled={!online} onClick={onNew}>Marcar cliente neste dia</Button>}
+        </div>
+      ) : (
+        <ol key={day} className="ag-rail">
+          {list.map((a, i) => {
+            const open = a.status === "scheduled" || a.status === "confirmed";
+            return (
+              <li key={a.id} className="ag-item" data-status={a.status} style={{ "--i": i } as React.CSSProperties}>
+                <span className="ag-time">{a.time}</span>
+                <div className="ag-card">
+                  <button type="button" className="ag-open" onClick={() => onOpen(a)}>
+                    <span className="ag-main">
+                      <b>{a.customerName}</b>
+                      <small>{[`${a.brand} ${a.model}`.trim(), a.service].filter(Boolean).join(" · ")}</small>
+                      <small>{userOf(a.mechanicId) ? `Com ${userOf(a.mechanicId)!.name.split(" ")[0]}` : "Mecânico a definir"} · {formatPhone(a.phone)}</small>
+                    </span>
+                    {a.plate && <MiniPlate plate={a.plate} />}
+                  </button>
+                  <div className="ag-actions">
+                    <Badge tone={STATUS_TONE[a.status]}>{APPOINTMENT_STATUS_LABELS[a.status]}</Badge>
+                    {a.status === "scheduled" && can("schedule.manage") && (
+                      <Button size="sm" disabled={!online} onClick={() => act((db, ctx) => setAppointmentStatus(db, ctx, a.id, "confirmed"), `${a.customerName.split(" ")[0]} confirmado.`)}>Confirmar</Button>
+                    )}
+                    {open && day <= today && can("os.create") && (
+                      <Button size="sm" variant="primary" disabled={!online} onClick={() => openNewOrder({ appointmentId: a.id, customerName: a.customerName, phone: a.phone, plate: a.plate, brand: a.brand, model: a.model, description: a.service, mechanicId: a.mechanicId })}>Chegou: abrir serviço</Button>
+                    )}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </div>
+  );
+}
+

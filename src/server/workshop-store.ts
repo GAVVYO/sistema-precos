@@ -5,6 +5,9 @@ import { type CommandBatch, replayCommands } from "@/services/commands";
 import { DomainError, membershipOf } from "@/services/core";
 import { transaction, withConnection } from "./db";
 import { hashSecret, isHashed } from "./secrets";
+import { type Changes, emptyDatabase, type Kind, KINDS, keyOf, type Row } from "@/services/sync";
+
+export { emptyDatabase, type Changes };
 
 /**
  * Dados de uma oficina no servidor (decisão 96).
@@ -14,33 +17,8 @@ import { hashSecret, isHashed } from "./secrets";
  * a versão. A tela recebe as mudanças e a versão nova.
  */
 
-/** Listas guardadas em `records`, uma linha por item. */
-export const KINDS = [
-  "workshops", "settings", "memberships", "customers", "vehicles", "orders", "orderItems", "orderEvents",
-  "orderPhotos", "parts", "stockMovements", "appointments", "transactions", "payments",
-] as const;
-type Kind = (typeof KINDS)[number];
-type Row = { id: ID; workshopId?: ID };
-
-/** Chave de cada registro (as configurações são uma por oficina e não têm id). */
-const keyOf = (kind: Kind | "users", item: Row): ID => (kind === "settings" ? item.workshopId! : item.id);
-
 /** Contador do nº do serviço: guardado como um registro a mais. */
 const COUNTER = "counter";
-
-export interface Changes {
-  upserts: Partial<Record<Kind | "users", Row[]>>;
-  deletes: Partial<Record<Kind, ID[]>>;
-  orderCounter?: number;
-}
-
-export function emptyDatabase(): Database {
-  return {
-    version: 1, workshops: [], settings: [], users: [], memberships: [], customers: [], vehicles: [], orders: [],
-    orderItems: [], orderEvents: [], orderPhotos: [], parts: [], stockMovements: [], appointments: [],
-    transactions: [], payments: [], orderCounters: {},
-  };
-}
 
 async function load(c: PoolConnection, workshopId: ID): Promise<Database> {
   const db = emptyDatabase();

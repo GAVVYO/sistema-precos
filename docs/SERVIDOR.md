@@ -13,7 +13,7 @@ Decisões 95 e 96. O mesmo projeto Next.js serve as telas e a API; os dados fica
 
 | Rota | O que faz |
 |---|---|
-| `POST /api/conectar` | Dono conecta o aparelho (e-mail, senha) |
+| `POST /api/conectar` | Dono conecta o aparelho (e-mail, senha) e já entra |
 | `GET /api/pessoas` | "Quem está entrando?" (nome, função, foto) |
 | `POST /api/entrar` | Pessoa entra com o PIN |
 | `POST /api/sair` | Sai (aparelho continua conectado) |
@@ -42,3 +42,7 @@ Com `"demo": true` (e só `ownerEmail`, `ownerPassword`, `ownerPin`), cria a Ofi
 ## Testes
 
 `TEST_DATABASE_URL=mysql://… npx vitest run tests/server.test.ts` — **apaga as tabelas** do banco de teste. Cobre: senha e bloqueio, PIN, sessão presa ao aparelho, PIN gravado só como resumo, uma oficina não lê nem mexe na outra, duas baixas simultâneas da última peça (só uma passa).
+
+## Ligar o site no servidor
+
+`NEXT_PUBLIC_APP_MODE=production` **na hora do build** (é lida pelo navegador). Sem ela, o site é a demonstração no navegador. A tela usa `src/app-state/store.ts`, que escolhe entre `demoStore` e `serverStore` (decisão 97).

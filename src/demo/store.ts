@@ -6,6 +6,7 @@
  * A sessão aqui é apenas um seletor de usuário fictício — NÃO é autenticação.
  */
 import type { Database, ID } from "@/domain/types";
+import { bindCommands, type Commands } from "@/services/commands";
 import { Ctx, DomainError, membershipOf } from "@/services/core";
 import { demoHash } from "@/services/auth";
 import { buildSeed, DEMO_OWNER_ID, DEMO_OWNER_PASSWORD, DEMO_WORKSHOP_ID } from "./seed";
@@ -145,6 +146,11 @@ export const demoStore = {
     const result = fn(draft, { ...s.session, now: new Date() });
     set({ ...s, db: draft, lastSyncAt: new Date().toISOString() });
     return result;
+  },
+
+  /** Ações com nome (mesma forma do servidor). */
+  run<T>(fn: (c: Commands) => T): T {
+    return this.mutate((db, ctx) => fn(bindCommands(db, ctx)));
   },
 
   /** Simula queda e retorno da conexão. Ao voltar, passa por "reconectando". */

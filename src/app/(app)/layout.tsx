@@ -5,9 +5,7 @@ import { useEffect } from "react";
 import { AppProvider, useDemoState } from "@/app-state/app-context";
 import { AccessibilityProvider } from "@/components/accessibility/accessibility-provider";
 import { AppShell } from "@/components/layout/app-shell";
-import { BackendUnavailable } from "@/components/layout/backend-unavailable";
 import { Skeleton } from "@/components/ui/primitives";
-import { APP_MODE } from "@/config/env";
 import { GlobalDialogs } from "@/features/orders/global-dialogs";
 import { membershipOf } from "@/services/core";
 
@@ -18,10 +16,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const valid = !!state && !!session && !!membershipOf(state.db, session);
 
   useEffect(() => {
-    if (APP_MODE === "demo" && state && !valid) router.replace("/login");
+    if (state && !valid) router.replace("/login");
   }, [state, valid, router]);
-
-  if (APP_MODE === "production") return <BackendUnavailable />;
 
   if (!state || !valid || !session) {
     return (

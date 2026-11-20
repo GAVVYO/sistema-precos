@@ -3,6 +3,8 @@
 import { ArrowLeft, Buildings, Eye, EyeSlash } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { useDemoState } from "@/app-state/app-context";
+import { api, errorText } from "@/app-state/server-store";
+import { SERVER_MODE } from "@/app-state/store";
 import { Field, Input } from "@/components/ui/primitives";
 import { DEMO_OWNER_PASSWORD } from "@/demo/seed";
 import type { ID } from "@/domain/types";
@@ -26,7 +28,9 @@ export function ConnectDevice({ wide, canCancel, onCancel, onConnected }: {
   onCancel: () => void;
   onConnected: (workshopId: ID, userId: ID) => void;
 }) {
-  const db = useDemoState()?.db;
+  const demoState = useDemoState();
+  const db = SERVER_MODE ? null : demoState?.db;
+  const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -46,7 +50,7 @@ export function ConnectDevice({ wide, canCancel, onCancel, onConnected }: {
     return () => clearInterval(t);
   }, [lockUntil, now]);
 
-  if (!db) return null;
+  if (!db && !SERVER_MODE) return null;
   const lockedFor = lockUntil > now ? Math.ceil((lockUntil - now) / 1000) : 0;
   const T = wide ? "login-form-title" : "login-title";
   const S = wide ? "login-form-sub" : "login-sub";
@@ -57,8 +61,21 @@ export function ConnectDevice({ wide, canCancel, onCancel, onConnected }: {
   };
 
   const submit = () => {
-    if (lockedFor) return;
+    if (lockedFor || busy) return;
     setError(null);
+    if (SERVER_MODE) {
+      // Servidor: confere e-mail e senha lá (com bloqueio por tentativas) e já entra como dono.
+      setBusy(true);
+      api("/api/conectar", { email, password })
+        .then(async (r) => {
+          if (r.ok) { const d = (await r.json()) as { workshopId: ID; userId: ID }; onConnected(d.workshopId, d.userId); return; }
+          setBusy(false);
+          fail(r.status === 400 ? "email" : "password", await errorText(r));
+        })
+        .catch(() => { setBusy(false); fail("form", "Sem internet. Confira a conexão e tente de novo."); });
+      return;
+    }
+    if (!db) return;
     try {
       const r = checkEmail(db, email);
       if (r.kind === "unknown") return fail("email", "Não achamos esse e-mail. Confira se digitou certo.");
@@ -77,7 +94,7 @@ export function ConnectDevice({ wide, canCancel, onCancel, onConnected }: {
     }
   };
 
-  if (owner) {
+  if (owner && db) {
     return (
       <div className="connect">
         <h1 className={T}>Qual oficina usa este {wide ? "computador" : "aparelho"}?</h1>
@@ -115,11 +132,12 @@ export function ConnectDevice({ wide, canCancel, onCancel, onConnected }: {
           )}
         </Field>
       </div>
-      <button type="submit" className="connect-cta" disabled={!email || !password || !!lockedFor}>
-        {lockedFor ? `Espere ${lockedFor} s` : "Entrar"}
+      <button type="submit" className="connect-cta" disabled={!email || !password || !!lockedFor || busy}>
+        {lockedFor ? `Espere ${lockedFor} s` : busy ? "Entrando…" : "Entrar"}
       </button>
+      {error?.field === "form" && <p className="login-msg" role="alert">{error.text}</p>}
       <p className="connect-help">Esqueceu a senha? Fale com a GAVYO.</p>
-      <p className="login-demo">Demonstração: <strong>carlos@oficinamodelo.demo</strong> ou <strong>marcos@castelao.demo</strong>, senha <strong>{DEMO_OWNER_PASSWORD}</strong>.</p>
+      {!SERVER_MODE && <p className="login-demo">Demonstração: <strong>carlos@oficinamodelo.demo</strong> ou <strong>marcos@castelao.demo</strong>, senha <strong>{DEMO_OWNER_PASSWORD}</strong>.</p>}
     </form>
   );
 }

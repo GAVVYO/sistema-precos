@@ -3,7 +3,7 @@
 import { ArrowClockwise, DeviceMobileCamera } from "@phosphor-icons/react";
 import QRCode from "qrcode";
 import { useCallback, useEffect, useState } from "react";
-import { demoStore } from "@/demo/store";
+import { store } from "@/app-state/store";
 import { createPairing, type PairingInput } from "@/services/pairing";
 import { DomainError } from "@/services/core";
 
@@ -21,8 +21,9 @@ export function PairingQr({ input, who }: { input: PairingInput; who: string }) 
     // Tudo dentro da promessa: os estados só mudam quando o QR fica pronto (ou falha).
     Promise.resolve()
       .then(() => {
-        const s = demoStore.getState();
-        if (!s.session) throw new DomainError("forbidden", "Entre de novo para gerar o QR.");
+        // O app do celular ainda não fala com o servidor (etapa E9): o QR segue o formato da demonstração.
+        const s = store.getState();
+        if (!s?.session) throw new DomainError("forbidden", "Entre de novo para gerar o QR.");
         const { code, expiresAt } = createPairing(s.db, { ...s.session, now: new Date() }, input);
         return QRCode.toDataURL(code, { margin: 1, width: 560, errorCorrectionLevel: "M", color: { dark: "#0d2a78", light: "#ffffff" } }).then((src) => ({ src, expiresAt }));
       })

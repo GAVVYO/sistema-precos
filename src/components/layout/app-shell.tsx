@@ -19,6 +19,7 @@ import { TrayDock, TrayProvider } from "./tray";
 import { PipProvider } from "./pip";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { toast } from "@/components/ui/toast";
+import { SERVER_MODE, store } from "@/app-state/store";
 import { demoStore } from "@/demo/store";
 import { ModuleInfo, MODULES, ROLE_LABELS } from "@/domain/permissions";
 import type { ModuleKey } from "@/domain/types";
@@ -362,7 +363,7 @@ function Header() {
                   className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50"
                   onClick={() => {
                     close();
-                    demoStore.logout();
+                    store.logout();
                     router.replace("/login");
                   }}
                 >
@@ -418,8 +419,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [settings.primaryColor, settings.secondaryColor, preferences.contrast]);
 
   useEffect(() => {
-    const on = () => demoStore.setOnline(true);
-    const off = () => demoStore.setOnline(false);
+    const on = () => store.setOnline(true);
+    const off = () => store.setOnline(false);
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
     return () => {
@@ -441,7 +442,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <a href="#conteudo" className="skip-link">
         Pular para o conteúdo
       </a>
-      <DemoBar />
+      {!SERVER_MODE && <DemoBar />}
       <Header />
       <ConnectionBanner />
       <GlobalShortcuts />

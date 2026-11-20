@@ -47,7 +47,7 @@ async function memberships(c: PoolConnection, workshopId: ID): Promise<WorkshopM
 }
 
 /** Passo 1: o dono conecta o aparelho. Devolve a ficha do aparelho. */
-export async function connectDevice(rawEmail: string, password: string): Promise<{ token: string; workshopId: ID; workshopName: string }> {
+export async function connectDevice(rawEmail: string, password: string): Promise<{ token: string; workshopId: ID; workshopName: string; userId: ID }> {
   const parsed = emailSchema.safeParse(rawEmail);
   if (!parsed.success || typeof password !== "string" || !password) throw new DomainError("validation", "Digite o e-mail e a senha.");
   const email = parsed.data;
@@ -77,7 +77,7 @@ export async function connectDevice(rawEmail: string, password: string): Promise
     const token = newToken();
     await c.query("INSERT INTO devices (token_hash, workshop_id, connected_by) VALUES (?, ?, ?)", [tokenHash(token), ws.workshop_id, user.id]);
     const [names] = await c.query<RowDataPacket[]>("SELECT data FROM records WHERE workshop_id = ? AND kind = 'workshops'", [ws.workshop_id]);
-    return { token, workshopId: ws.workshop_id, workshopName: names[0] ? JSON.parse(names[0].data).name : "" };
+    return { token, workshopId: ws.workshop_id, workshopName: names[0] ? JSON.parse(names[0].data).name : "", userId: user.id as ID };
   });
 }
 
@@ -138,13 +138,22 @@ export async function pinLogin(device: DeviceInfo, userId: ID, pin: string): Pro
       throw new DomainError("forbidden", "PIN errado. Tente de novo.");
     }
     await c.query("DELETE FROM attempts WHERE k = ?", [key]);
-    const token = newToken();
-    const expiresAt = new Date(Date.now() + SESSION_HOURS * 3_600_000);
-    await c.query("INSERT INTO sessions (token_hash, device_hash, workshop_id, user_id, expires_at) VALUES (?, ?, ?, ?, ?)", [
-      tokenHash(token), device.hash, device.workshopId, userId, expiresAt.toISOString().slice(0, 19).replace("T", " "),
-    ]);
-    return { token, expiresAt };
+    return openSession(c, device, userId);
   });
+}
+
+async function openSession(c: PoolConnection, device: DeviceInfo, userId: ID): Promise<{ token: string; expiresAt: Date }> {
+  const token = newToken();
+  const expiresAt = new Date(Date.now() + SESSION_HOURS * 3_600_000);
+  await c.query("INSERT INTO sessions (token_hash, device_hash, workshop_id, user_id, expires_at) VALUES (?, ?, ?, ?, ?)", [
+    tokenHash(token), device.hash, device.workshopId, userId, expiresAt.toISOString().slice(0, 19).replace("T", " "),
+  ]);
+  return { token, expiresAt };
+}
+
+/** O dono acabou de provar a senha: já entra, sem pedir o PIN (igual à demonstração). */
+export async function ownerSession(deviceToken: string, workshopId: ID, userId: ID): Promise<{ token: string }> {
+  return withConnection((c) => openSession(c, { hash: tokenHash(deviceToken), workshopId }, userId));
 }
 
 /** Quem está usando: precisa do aparelho conectado E da sessão dele, ainda válida. */

@@ -6,9 +6,11 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { useDemoState } from "@/app-state/app-context";
 import { PersonAvatar } from "@/components/ui/person-avatar";
 import { Skeleton } from "@/components/ui/primitives";
+import { SERVER_MODE, store } from "@/app-state/store";
+import { api, errorText, serverStore } from "@/app-state/server-store";
 import { demoStore } from "@/demo/store";
 import { ROLE_LABELS } from "@/domain/permissions";
-import type { ID } from "@/domain/types";
+import type { ID, Role } from "@/domain/types";
 import { usePref } from "@/lib/prefs";
 import { motionReduced } from "@/lib/view-transition";
 import { playSwoop } from "@/components/ui/swoop";
@@ -41,10 +43,27 @@ function Logo({ flap }: { flap: boolean }) {
   );
 }
 
+/** Servidor: o aparelho está conectado a qual oficina, e quem pode entrar (só nome, função e foto). */
+interface DeviceInfo { connected: boolean; workshopId?: ID; workshopName?: string; people?: { userId: ID; name: string; role: Role; photo?: string }[] }
+
+function useDeviceInfo(): [DeviceInfo | null, () => void] {
+  const [info, setInfo] = useState<DeviceInfo | null>(null);
+  const load = useCallback(() => {
+    api("/api/pessoas")
+      .then((r) => (r.ok ? r.json() : { connected: false }))
+      .then((d: DeviceInfo) => setInfo(d))
+      .catch(() => setInfo({ connected: false }));
+  }, []);
+  useEffect(() => { if (SERVER_MODE) load(); }, [load]);
+  return [info, load];
+}
+
 export function PinLogin() {
   const state = useDemoState();
   const router = useRouter();
-  const db = state?.db;
+  const db = SERVER_MODE ? undefined : state?.db;
+  const [device, reloadDevice] = useDeviceInfo();
+  const [serverMsg, setServerMsg] = useState("");
   const [deviceWs, setDeviceWs] = usePref<string>("device-workshop", "");
   const [choosingWs, setChoosingWs] = useState(false);
   // Acabou de conectar: a tela de conexão fica até o rasante cobrir (sem piscar a lista de pessoas).
@@ -64,12 +83,13 @@ export function PinLogin() {
   const [clock, setClock] = useState(() => new Date());
 
   // Aparelho sem oficina conectada: só o dono conecta, com e-mail (decisão 74).
-  const connected = !!db?.workshops.some((w) => w.id === deviceWs);
-  const workshopId = connected ? deviceWs : "";
-  const settings = db?.settings.find((s) => s.workshopId === workshopId);
-  const members = (db?.memberships.filter((m) => m.workshopId === workshopId && m.active) ?? [])
-    .map((m) => ({ m, u: db!.users.find((x) => x.id === m.userId)! }))
-    .sort((a, b) => a.u.name.localeCompare(b.u.name, "pt-BR"));
+  const connected = SERVER_MODE ? !!device?.connected : !!db?.workshops.some((w) => w.id === deviceWs);
+  const workshopId = connected ? (SERVER_MODE ? device!.workshopId! : deviceWs) : "";
+  const settings = SERVER_MODE ? { displayName: device?.workshopName ?? "" } : db?.settings.find((s) => s.workshopId === workshopId);
+  const members = (SERVER_MODE
+    ? (device?.people ?? []).map((p) => ({ m: { id: p.userId, role: p.role }, u: { id: p.userId, name: p.name, photo: p.photo } }))
+    : (db?.memberships.filter((m) => m.workshopId === workshopId && m.active) ?? []).map((m) => ({ m, u: db!.users.find((x) => x.id === m.userId)! }))
+  ).sort((a, b) => a.u.name.localeCompare(b.u.name, "pt-BR"));
   const userId: ID | null = chosen !== undefined ? chosen : members.some((x) => x.u.id === lastUser) ? lastUser : null;
   const person = members.find((x) => x.u.id === userId);
   const connecting = !connected || choosingWs || joining;
@@ -83,19 +103,43 @@ export function PinLogin() {
   }, [lockedFor]);
 
   // Abrir a tela de entrada encerra quem estava dentro: ninguém volta ao sistema sem PIN.
-  useEffect(() => { if (demoStore.getState().session) demoStore.logout(); }, []);
+  useEffect(() => {
+    if (SERVER_MODE) store.logout();
+    else if (demoStore.getState().session) demoStore.logout();
+  }, []);
 
   const enter = useCallback((ws: ID, uid: ID) => {
     setOk(true);
     // Celular: a águia bate as asas (~0,5 s) e dá o rasante. Computador: a águia do
     // painel decola para o alto e o rasante volta de lá logo em seguida.
+    const wait = motionReduced() ? 0 : wide ? 180 : 450;
+    if (SERVER_MODE) {
+      // A sessão já foi aberta pelo servidor: carrega a oficina e entra pelo rasante.
+      void serverStore.reload().then(() => window.setTimeout(() => playSwoop(() => router.replace("/inicio")), wait));
+      return;
+    }
     window.setTimeout(() => playSwoop(() => {
       try { demoStore.login(ws, uid); router.replace("/inicio"); }
       catch { setOk(false); setJoining(false); setUserId(null); setPin(""); }
-    }), motionReduced() ? 0 : wide ? 180 : 450);
+    }), wait);
   }, [router, wide]);
 
   const submit = useCallback((value: string) => {
+    if (SERVER_MODE) {
+      if (!userId) return;
+      setServerMsg("Conferindo…");
+      api("/api/entrar", { userId, pin: value })
+        .then(async (r) => {
+          if (r.ok) { setServerMsg(""); setLastUser(userId); enter(workshopId, userId); return; }
+          const msg = await errorText(r);
+          setServerMsg(msg);
+          setShake((x) => x + 1);
+          window.setTimeout(() => setPin(""), 380);
+          if (/não está conectado/.test(msg)) reloadDevice();
+        })
+        .catch(() => { setServerMsg("Sem internet. Confira a conexão e tente de novo."); setPin(""); });
+      return;
+    }
     if (!db || !userId) return;
     if (verifyPin(db, workshopId, userId, value)) {
       setTries((t) => { const rest = { ...t }; delete rest[userId]; return rest; });
@@ -108,7 +152,7 @@ export function PinLogin() {
     setNow(Date.now());
     setShake((x) => x + 1);
     window.setTimeout(() => setPin(""), 380);
-  }, [db, enter, setLastUser, setTries, tries, userId, workshopId]);
+  }, [db, enter, reloadDevice, setLastUser, setTries, tries, userId, workshopId]);
 
   const press = useCallback((d: string) => {
     if (ok || lockedFor) return;
@@ -152,12 +196,12 @@ export function PinLogin() {
     if (v.length === 4) window.setTimeout(() => submit(v), 120);
   };
 
-  if (!db) {
+  if (SERVER_MODE ? !device : !db) {
     return <main className="login-screen"><div className="login-card" aria-busy="true"><Skeleton className="h-10" /><Skeleton className="h-40" /></div></main>;
   }
 
   const left = MAX_TRIES - (person ? tries[person.u.id]?.n ?? 0 : 0);
-  const message = lockedFor ? `Muitas tentativas. Espere ${lockedFor} segundos.` : shake && !ok && person ? (left === 1 ? "PIN errado. Falta 1 tentativa." : `PIN errado. Faltam ${left} tentativas.`) : ok ? "Entrando…" : " ";
+  const message = SERVER_MODE ? (ok ? "Entrando…" : serverMsg || " ") : lockedFor ? `Muitas tentativas. Espere ${lockedFor} segundos.` : shake && !ok && person ? (left === 1 ? "PIN errado. Falta 1 tentativa." : `PIN errado. Faltam ${left} tentativas.`) : ok ? "Entrando…" : " ";
 
   if (wide) {
     const hour = clock.getHours();
@@ -184,7 +228,7 @@ export function PinLogin() {
                 wide={true}
                 canCancel={connected && !joining}
                 onCancel={() => setChoosingWs(false)}
-                onConnected={(ws, uid) => { setJoining(true); setDeviceWs(ws); setLastUser(uid); setTries({}); enter(ws, uid); }}
+                onConnected={(ws, uid) => { setJoining(true); setDeviceWs(ws); setLastUser(uid); setTries({}); if (SERVER_MODE) reloadDevice(); enter(ws, uid); }}
               />
             ) : (
               <>
@@ -227,7 +271,7 @@ export function PinLogin() {
               </>
             )}
           </div>
-          {!connecting && <p className="login-demo">Demonstração: dados fictícios, só neste navegador. PIN de todos: <strong>{DEMO_PIN}</strong>.</p>}
+          {!connecting && !SERVER_MODE && <p className="login-demo">Demonstração: dados fictícios, só neste navegador. PIN de todos: <strong>{DEMO_PIN}</strong>.</p>}
         </section>
       </main>
     );
@@ -244,7 +288,7 @@ export function PinLogin() {
                 wide={false}
                 canCancel={connected && !joining}
                 onCancel={() => setChoosingWs(false)}
-                onConnected={(ws, uid) => { setJoining(true); setDeviceWs(ws); setLastUser(uid); setTries({}); enter(ws, uid); }}
+                onConnected={(ws, uid) => { setJoining(true); setDeviceWs(ws); setLastUser(uid); setTries({}); if (SERVER_MODE) reloadDevice(); enter(ws, uid); }}
               />
           ) : !person ? (
             <>
@@ -288,7 +332,7 @@ export function PinLogin() {
           )}
         </section>
 
-        {!connecting && <p className="login-demo">Demonstração: dados fictícios, só neste navegador. PIN de todos: <strong>{DEMO_PIN}</strong>.</p>}
+        {!connecting && !SERVER_MODE && <p className="login-demo">Demonstração: dados fictícios, só neste navegador. PIN de todos: <strong>{DEMO_PIN}</strong>.</p>}
       </div>
     </main>
   );

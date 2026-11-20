@@ -4,19 +4,20 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { withTransition } from "@/lib/view-transition";
 import { ORDER_CLOSED_EVENT } from "@/lib/born";
 import { toast } from "@/components/ui/toast";
-import { Connection, demoStore, DemoState } from "@/demo/store";
+import type { Connection, DemoState } from "@/demo/store";
+import { store } from "./store";
 import type {
   Customer, Database, ID, Part, PermissionKey, User, Vehicle, WorkshopMembership, WorkshopSettings,
 } from "@/domain/types";
-import { bindCommands, type Commands } from "@/services/commands";
+import type { Commands } from "@/services/commands";
 import { can as canDo, DomainError, scopeTo, WorkshopView } from "@/services/core";
 
-/** Estado bruto da demonstração (null durante a renderização no servidor). */
+/** Estado bruto (demonstração ou servidor; null enquanto carrega). */
 export function useDemoState(): DemoState | null {
   return useSyncExternalStore(
-    demoStore.subscribe,
-    () => demoStore.getState(),
-    () => demoStore.getServerState(),
+    store.subscribe,
+    () => store.getState(),
+    () => store.getServerState(),
   );
 }
 
@@ -108,7 +109,7 @@ export function AppProvider({ state, children }: { state: DemoState; children: R
 
   const act = useCallback(<T,>(fn: (c: Commands) => T, successMessage?: string): ActResult<T> => {
     try {
-      const value = demoStore.mutate((db, ctx) => fn(bindCommands(db, ctx)));
+      const value = store.run(fn);
       if (successMessage) toast("success", successMessage);
       return { ok: true, value };
     } catch (e) {

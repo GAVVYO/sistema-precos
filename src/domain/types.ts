@@ -243,6 +243,21 @@ export interface FinancialTransaction {
 }
 
 /** Conjunto completo de tabelas — equivalente ao banco MySQL futuro. */
+/** Momento da foto do carro (decisão 87). */
+export type PhotoStage = "arrival" | "during" | "done";
+
+/** Foto do carro num serviço: como chegou, durante o conserto ou pronto. */
+export interface OrderPhoto {
+  id: ID;
+  workshopId: ID;
+  orderId: ID;
+  stage: PhotoStage;
+  /** Demonstração: JPEG reduzido em data URL. Fase 2: arquivo no servidor. */
+  dataUrl: string;
+  takenAt: ISODateTime;
+  userId: ID;
+}
+
 export interface Database {
   version: number;
   workshops: Workshop[];
@@ -254,6 +269,8 @@ export interface Database {
   orders: ServiceOrder[];
   orderItems: ServiceOrderItem[];
   orderEvents: ServiceOrderEvent[];
+  /** Fotos dos carros (decisão 87). Dados antigos sem este campo recebem []. */
+  orderPhotos: OrderPhoto[];
   parts: Part[];
   stockMovements: StockMovement[];
   appointments: Appointment[];

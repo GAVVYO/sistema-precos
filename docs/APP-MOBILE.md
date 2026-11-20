@@ -271,3 +271,11 @@ feitas sem internet só se for decidido antes (por padrão: bloquear como no sit
 - Cartão: placa, cliente, o que fazer, carro · com quem · desde quando, e **um botão da próxima ação** (toque; aviso com Desfazer).
 - **Mecânico:** só os carros dele, "Comecei" / "Ficou pronto". **Recepção:** resumo (na oficina, para receber) e **"Chegou carro"** fixo embaixo. **Dono:** o mesmo, mais **"Entrou hoje"**.
 - Animações: cartões entram em cascata curta e se reorganizam quando mudam de seção (240 ms); o botão "Chegou carro" sobe ao abrir.
+
+## Fotos do carro (decisão 87)
+
+![Fotos do carro no app](imagens/app/fotos-do-carro.png)
+
+- Atalho de câmera em cada cartão do Pátio (tira na etapa atual), seção "Fotos do carro" na ficha (Tirar foto · Escolher da galeria) e passo opcional depois do "Chegou carro".
+- `expo-image-picker` (câmera/galeria) + `expo-image-manipulator` (reduz para 1024 px JPEG). Permissões com texto em português no `app.json`.
+

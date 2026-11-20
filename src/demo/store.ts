@@ -56,6 +56,8 @@ function load(): DemoState {
     if (raw) {
       const saved = JSON.parse(raw) as Partial<DemoState>;
       if (saved.db?.version === 1 && Array.isArray(saved.db.workshops)) {
+        // Dados salvos antes da decisão 87 não têm fotos.
+        saved.db.orderPhotos ??= [];
         // Dados salvos antes da decisão 75: donos sem senha recebem a senha da demonstração.
         const owners = new Set(saved.db.memberships.filter((m) => m.role === "owner").map((m) => m.userId));
         saved.db.users.forEach((u) => { if (owners.has(u.id) && !u.passwordHash) u.passwordHash = demoHash(DEMO_OWNER_PASSWORD); });

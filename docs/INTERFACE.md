@@ -203,3 +203,10 @@ O Financeiro tem as abas **Caixa** e **Resultados**. Em Resultados: resumo de ca
 **Caixa (decisões 80–81):** três abas grandes (Entrou · Saiu · Falta receber), a frase com o que sobrou, o calendário do mês pintado pelo valor de cada dia e, ao tocar num dia, o que aconteceu nele e a semana em barras. Falta receber lista quem deve, com Receber.
 
 ![Financeiro › Caixa](imagens/interface/financeiro-caixa.png)
+
+## Fotos do carro (decisão 87)
+
+Na ficha do serviço: abas Chegou · Durante · Pronto, "Tirar foto" e visualizador com mudar o momento e apagar. No app: o mesmo, mais o atalho de câmera no cartão do Pátio e o passo de fotos depois do "Chegou carro".
+
+![Fotos do carro no site](imagens/interface/fotos-do-carro.png)
+

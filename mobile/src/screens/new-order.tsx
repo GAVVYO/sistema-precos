@@ -5,10 +5,12 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { ID } from "@core/domain/types";
+import type { ID, ServiceOrder } from "@core/domain/types";
 import { formatPhone, normalizePlate } from "@core/lib/format";
 import { maskPhone, maskPlate } from "@core/lib/masks";
 import { createOrder } from "@core/services/orders";
+import { photosOf } from "@core/services/photos";
+import { OrderPhotos } from "@/components/order-photos";
 import { Avatar } from "@/components/avatar";
 import { PillButton } from "@/components/pill-button";
 import { Plate } from "@/components/plate";
@@ -41,6 +43,8 @@ export function NewOrder() {
   const [mechanicId, setMechanicId] = useState<ID | "">("");
   const [error, setError] = useState("");
   const [dir, setDir] = useState<1 | -1>(1);
+  // Depois de abrir: passo opcional "Fotos da chegada" (decisão 87).
+  const [created, setCreated] = useState<ServiceOrder | null>(null);
 
   const norm = normalizePlate(plate);
   const found = norm ? view.vehicles.find((v) => v.plate === norm) : undefined;
@@ -59,8 +63,9 @@ export function NewOrder() {
     go(order[i + 1]);
   };
   const save = () => {
+    let made: ServiceOrder | null = null;
     const r = act((d, c) => {
-      createOrder(d, c, {
+      made = createOrder(d, c, {
         customer: owner ? { id: owner.id } : { name, phone },
         vehicle: found ? { id: found.id } : { plate: norm!, brand, model, year: null, mileage: null },
         description: work,
@@ -72,8 +77,27 @@ export function NewOrder() {
     });
     if (!r.ok) return setError(r.message);
     if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    router.back();
+    setDir(1);
+    setCreated(made);
   };
+
+  if (created) {
+    const live = view.orders.find((o) => o.id === created.id) ?? created;
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <ScrollView contentContainerStyle={[styles.page, { paddingBottom: space.xxl }]}>
+          <Animated.View entering={stepForward} style={styles.stepBody}>
+            <Text style={type.heading}>Serviço aberto!</Text>
+            <Text style={type.body}>Quer fotografar como o carro chegou? Riscos e amassados registrados protegem a oficina.</Text>
+            <OrderPhotos order={live} />
+          </Animated.View>
+        </ScrollView>
+        <View style={[styles.footer, { paddingBottom: insets.bottom + space.sm }]}>
+          <View style={{ flex: 1 }}><PillButton full label={photosOf(view, live.id).length ? "Pronto" : "Pular fotos"} variant={photosOf(view, live.id).length ? "primary" : "secondary"} onPress={() => router.back()} /></View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === "ios" ? "padding" : undefined}>

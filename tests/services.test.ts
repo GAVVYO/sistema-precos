@@ -382,3 +382,25 @@ describe("QR para conectar o celular (decisão 76)", () => {
     expect(() => readPairing(db, code, now)).toThrow(/sem acesso/);
   });
 });
+
+describe("fotos do carro (decisão 87)", () => {
+  const jpg = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==";
+  it("todos da oficina tiram; quem tirou ou quem edita apaga; isolamento e limites", async () => {
+    const { addOrderPhoto, deleteOrderPhoto, moveOrderPhoto, photosOf, stageForStatus } = await import("@/services/photos");
+    const db = buildSeed();
+    const now = new Date();
+    const order = db.orders.find((o) => o.workshopId === DEMO_WORKSHOP_ID && !o.cancelledAt)!;
+    const mech = { workshopId: DEMO_WORKSHOP_ID, userId: "u-raimundo", now };
+    const p = addOrderPhoto(db, mech, order.id, { stage: stageForStatus(order.status), dataUrl: jpg });
+    expect(photosOf(db, order.id)).toHaveLength(1);
+    expect(() => addOrderPhoto(db, mech, order.id, { stage: "arrival", dataUrl: "data:text/html;base64,AAAA" })).toThrow();
+    // Outra oficina não acha o serviço.
+    expect(() => addOrderPhoto(db, { workshopId: SECOND_WORKSHOP_ID, userId: "u-marcos", now }, order.id, { stage: "arrival", dataUrl: jpg })).toThrow();
+    // Outro mecânico (sem editar serviço) não apaga a foto do colega; o dono apaga.
+    expect(() => deleteOrderPhoto(db, { workshopId: DEMO_WORKSHOP_ID, userId: "u-wesley", now }, p.id)).toThrow();
+    moveOrderPhoto(db, mech, p.id, "done");
+    expect(photosOf(db, order.id)[0].stage).toBe("done");
+    deleteOrderPhoto(db, { workshopId: DEMO_WORKSHOP_ID, userId: DEMO_OWNER_ID, now }, p.id);
+    expect(photosOf(db, order.id)).toHaveLength(0);
+  });
+});

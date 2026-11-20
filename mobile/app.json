@@ -46,6 +46,14 @@
         {
           "faceIDPermission": "A GAVYO usa o Face ID para abrir o app sem digitar o PIN."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "A GAVYO usa a câmera para fotografar o carro no serviço (como chegou, durante e pronto).",
+          "photosPermission": "A GAVYO usa suas fotos para anexar imagens do carro ao serviço.",
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {

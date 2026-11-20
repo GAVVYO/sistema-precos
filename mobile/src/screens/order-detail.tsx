@@ -11,6 +11,7 @@ import { ORDER_STATUS_LABELS } from "@core/domain/labels";
 import { Avatar } from "@/components/avatar";
 import { Chip } from "@/components/chip";
 import { PillButton } from "@/components/pill-button";
+import { OrderPhotos } from "@/components/order-photos";
 import { Plate } from "@/components/plate";
 import { sinceShop, vehicleLabel } from "@/data/helpers";
 import { useApp } from "@/data/store";
@@ -103,6 +104,8 @@ export function OrderDetail({ id }: { id: ID }) {
             <Text style={[styles.pay, paid && { color: colors.success }]}>{paid ? "Pago." : order.status === "done" ? "Pronto, falta receber." : "Ainda não foi pago."}</Text>
           </View>
         )}
+
+        <OrderPhotos order={order} />
 
         {showMoney && customer && (
           <View style={styles.actions}>

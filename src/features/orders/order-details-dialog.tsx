@@ -1,5 +1,6 @@
 "use client";
 
+import { OrderPhotos } from "./order-photos";
 import { Check, CurrencyCircleDollar, FilePdf, Gauge, HourglassMedium, Money, NoteBlank, PencilSimple, Phone, Plus, Prohibit, Receipt, SealCheck, WhatsappLogo, Wrench } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
@@ -251,6 +252,8 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
                 </ul>
               )}
             </section>
+
+            <OrderPhotos order={order} />
 
             <details className="more-details osd-history">
               <summary>O que aconteceu ({events.length})</summary>

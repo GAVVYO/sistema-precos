@@ -33,6 +33,7 @@ export function emptyDatabase(): Database {
     orders: [],
     orderItems: [],
     orderEvents: [],
+    orderPhotos: [],
     parts: [],
     stockMovements: [],
     appointments: [],

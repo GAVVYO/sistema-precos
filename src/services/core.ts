@@ -93,6 +93,7 @@ export function scopeTo(db: Database, workshopId: ID) {
     orders: own(db.orders),
     orderItems: own(db.orderItems),
     orderEvents: own(db.orderEvents),
+    orderPhotos: own(db.orderPhotos ?? []),
     parts: own(db.parts),
     stockMovements: own(db.stockMovements),
     appointments: own(db.appointments),

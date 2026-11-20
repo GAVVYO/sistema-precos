@@ -1,4 +1,31 @@
-# Publicar a demonstração na Hostinger
+# Publicar na Hostinger
+
+## Servidor (atual, desde 20/11 — decisão 100)
+
+O **demo.gavyo.me** roda o sistema com servidor: app Node.js na Hostinger + banco MySQL `u371477998_auto` (os bancos do gavyo.me não são tocados). As oficinas são criadas em **demo.gavyo.me/gavyo**.
+
+**Por que montar antes de enviar:** no build da Hostinger o Turbopack não consegue abrir o processo auxiliar que monta o CSS (falha "node process exited before we could connect"). Então o site é montado fora, no formato **standalone**, e a Hostinger só instala e liga.
+
+1. Montar (numa cópia limpa do repositório, sem `mobile/`, `docs/`, `tests/`):
+
+```bash
+npm ci
+```
+
+```bash
+npm run build:servidor
+```
+
+2. Compactar a pasta inteira **sem** `node_modules/` da raiz e sem `.next/cache` (o `.next/standalone/node_modules` vai junto).
+3. Enviar o zip para o `public_html` de demo.gavyo.me (Gerenciador de arquivos ou API de upload).
+4. Montar como Node.js: Node 22, tipo **Next.js**, comando de build **`build:pronto`** (só confere se o servidor montado veio no pacote), saída `.next`.
+5. Variáveis do app (painel › Node.js › Variáveis): `DATABASE_URL`, `GAVYO_ADMIN_KEY`, `NEXT_PUBLIC_APP_MODE=production`. Ver [SERVIDOR.md](SERVIDOR.md). As fotos ficam em `~/gavyo-arquivos` (fora do `public_html`; uma publicação nova não apaga).
+
+As tabelas são criadas sozinhas no primeiro acesso.
+
+---
+
+## Demonstração estática (antiga, Fase 1)
 
 A demonstração (Fase 1) **não usa servidor**: é HTML, CSS e JavaScript, e os dados ficam no navegador de cada pessoa. Por isso funciona em **qualquer plano da Hostinger**, inclusive a hospedagem compartilhada, sem Node.js e sem banco.
 

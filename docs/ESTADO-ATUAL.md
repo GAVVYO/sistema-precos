@@ -37,6 +37,7 @@
 | (18/11) | App mobile **E0**: base em `mobile/` (Expo SDK 58), regras do site compartilhadas, tema e componentes base (decisão 67) |
 | (18/11) | App: **primeira versão navegável das telas** (Hoje/pátio, Serviços em abas, ficha, Receber, Novo serviço passo a passo, Pessoas, Conta, Seus carros do mecânico) com dados de demonstração em memória — para discutir a direção visual |
 | `8d79503` (20/11) | Plano "terminar o site": Estoque em cartões com foto da peça, Agenda no Dia, Configurações simples, uma busca em Serviços, passada final (axe limpo em 7 telas × 7 situações), Hoje do Financeiro (decisões 87–94) — **republicado em demo.gavyo.me em 20/11** e conferido no ar |
+| `73b2cf0`… (20/11) | **Servidor (Fase 2)** — ações com nome, MySQL, entrada com e-mail/senha e PIN, Área da GAVYO, fotos como arquivo (decisões 95–100) — **publicado em demo.gavyo.me** com banco próprio |
 
 ### Validação vigente
 

@@ -16,7 +16,8 @@ function guard(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   return handle(req, async () => {
-    guard(req);
+    // Sem a chave não é erro: a tela só pede a chave.
+    if (!isAdmin(req.cookies.get(ADMIN_COOKIE)?.value, req.headers.get("authorization"))) return NextResponse.json({ locked: true });
     return NextResponse.json({ workshops: await listWorkshops() });
   });
 }

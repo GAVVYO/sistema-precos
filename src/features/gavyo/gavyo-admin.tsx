@@ -185,7 +185,9 @@ export function GavyoAdmin() {
     if (!r) { toast("error", "Sem internet."); return []; }
     if (r.status === 403) { setLocked(true); setRows(null); return []; }
     if (!r.ok) { toast("error", await errorText(r)); return []; }
-    const list = ((await r.json()) as { workshops: Row[] }).workshops;
+    const data = (await r.json()) as { workshops?: Row[]; locked?: boolean };
+    if (data.locked || !data.workshops) { setLocked(true); setRows(null); return []; }
+    const list = data.workshops;
     setLocked(false);
     setRows(list);
     return list;

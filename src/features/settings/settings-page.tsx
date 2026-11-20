@@ -2,10 +2,11 @@
 
 import { ImageUp, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
-import { IdentificationBadge } from "@phosphor-icons/react";
+import { Check, IdentificationBadge, Palette } from "@phosphor-icons/react";
+import { NAV_ICONS } from "@/components/layout/personal-navigation";
 import Link from "next/link";
 import { useApp } from "@/app-state/app-context";
-import { Button, Card, CardHeader, Field, Input, PageHeader } from "@/components/ui/primitives";
+import { Button, Field, Input, PageHeader } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { contrastOn } from "@/lib/theme";
@@ -16,21 +17,39 @@ import { updateSettings } from "@/services/admin";
 import { maskPhone } from "@/lib/masks";
 
 const DEFAULT_COLORS = { primary: "#2563EB", secondary: "#172033" };
-const PRIMARY_PRESETS = ["#2563EB", "#0F766E", "#B45309", "#BE123C", "#6D28D9", "#15803D"];
+const PRIMARY_PRESETS: [string, string][] = [["#2563EB", "Azul"], ["#0F766E", "Verde-azulado"], ["#15803D", "Verde"], ["#B45309", "Laranja"], ["#BE123C", "Vermelho"], ["#6D28D9", "Roxo"]];
+const MENU_PRESETS: [string, string][] = [["#172033", "Azul-marinho"], ["#0F172A", "Quase preto"], ["#1F2937", "Grafite"], ["#3B0764", "Roxo escuro"], ["#052E16", "Verde escuro"], ["#7C2D12", "Marrom"]];
+/** O que cada item do menu faz, em uma frase (decisão 91). */
+const MODULE_HINT: Partial<Record<ModuleKey, string>> = {
+  dashboard: "Os carros na oficina e quem chega hoje",
+  orders: "Abrir serviço, mudar etapa e receber",
+  stock: "Peças e quanto tem de cada uma",
+  finance: "Quanto entrou, saiu e quem está devendo",
+  schedule: "Clientes marcados por dia",
+  customers: "Clientes, carros e funcionários",
+  settings: "Esta tela",
+};
 
-function ColorField({ label, value, onChange, presets }: { label: string; value: string; onChange: (v: string) => void; presets?: string[] }) {
+/** Cores em bolinhas para tocar, sem código de cor; "Outra cor" fica guardada. */
+function ColorPick({ label, hint, value, onChange, presets }: { label: string; hint: string; value: string; onChange: (v: string) => void; presets: [string, string][] }) {
+  const custom = !presets.some(([c]) => c.toUpperCase() === value.toUpperCase());
   return (
-    <Field label={label}>
-      {(p) => (
-        <div className="flex flex-wrap items-center gap-2">
-          <input {...p} type="color" value={value} onChange={(e) => onChange(e.target.value.toUpperCase())} className="h-9 w-12 cursor-pointer rounded-md border border-line bg-surface p-1" />
-          <span className="font-mono text-xs text-muted">{value}</span>
-          {presets?.map((c) => (
-            <button key={c} type="button" aria-label={`Usar a cor ${c}`} aria-pressed={c === value} onClick={() => onChange(c)} className="size-11 shrink-0 rounded-full border-2 border-white ring-1 ring-line aria-pressed:ring-2 aria-pressed:ring-ink" style={{ background: c }} />
-          ))}
-        </div>
-      )}
-    </Field>
+    <fieldset className="cfg-colors">
+      <legend>{label}</legend>
+      <p className="cfg-hint">{hint}</p>
+      <div className="cfg-swatches">
+        {presets.map(([c, name]) => (
+          <button key={c} type="button" aria-label={name} aria-pressed={c.toUpperCase() === value.toUpperCase()} onClick={() => onChange(c)} style={{ background: c }}>
+            {c.toUpperCase() === value.toUpperCase() && <Check size={20} weight="bold" color={contrastOn(c)} aria-hidden />}
+          </button>
+        ))}
+        <label className="cfg-other" data-on={custom || undefined}>
+          <span style={{ background: custom ? value : undefined }} aria-hidden><Palette size={20} weight="bold" color={custom ? contrastOn(value) : undefined} /></span>
+          Outra cor
+          <input type="color" className="sr-only" value={value} onChange={(e) => onChange(e.target.value.toUpperCase())} />
+        </label>
+      </div>
+    </fieldset>
   );
 }
 
@@ -47,86 +66,91 @@ function WorkshopSettingsForm() {
   const onFile = (file: File | undefined) => {
     if (!file) return;
     if (!/^image\/(png|jpeg)$/.test(file.type)) return toast("error", "Use uma imagem PNG ou JPG.");
-    if (file.size > 250_000) return toast("error", "Imagem muito grande. Use um logotipo de até 250 KB.");
+    if (file.size > 250_000) return toast("error", "Imagem muito grande. Use um logo de até 250 KB.");
     const reader = new FileReader();
     reader.onload = () => setLogo(reader.result as string);
-    reader.onerror = () => toast("error", "Não foi possível ler a imagem.");
+    reader.onerror = () => toast("error", "Não deu para ler a imagem.");
     reader.readAsDataURL(file);
   };
 
   const save = () =>
     act(
       (db, ctx) => updateSettings(db, ctx, { displayName, phone, logoDataUrl: logo, primaryColor: primary, secondaryColor: secondary, activeModules: modules }),
-      "Configurações salvas. A identidade visual já foi aplicada.",
+      "Salvo. As cores e o menu já mudaram.",
     );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Card>
-        <CardHeader title="Identidade da oficina" subtitle="Aparece no cabeçalho, nos PDFs e nas mensagens de WhatsApp." />
-        <div className="space-y-4 p-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
-            <Field label="Nome da oficina" className="sm:col-span-3">{(p) => <Input {...p} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />}</Field>
-            <Field label="Telefone" optional className="sm:col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="tel" />}</Field>
+    <div className="cfg">
+      <section className="cash-card cfg-block" aria-labelledby="cfg-shop">
+        <h2 id="cfg-shop" className="cash-h2">Sua oficina</h2>
+        <p className="cfg-hint">Aparece no topo do sistema, nos PDFs e nas mensagens de WhatsApp.</p>
+        <div className="cfg-shop">
+          <div className="cfg-logo">
+            {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo} alt="Logo da oficina" />
+            ) : (
+              <BrandMark className="size-12" />
+            )}
           </div>
-          <div>
-            <p className="mb-1 text-xs font-medium">Logotipo</p>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex size-14 items-center justify-center rounded-md border border-line bg-slate-50">
-                {logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logo} alt="Logotipo atual" className="max-h-full max-w-full object-contain" />
-                ) : (
-                  <BrandMark className="size-9" />
-                )}
-              </div>
-              <input ref={fileRef} type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ""; }} />
-              <Button icon={<ImageUp className="size-4" aria-hidden />} onClick={() => fileRef.current?.click()}>Enviar imagem</Button>
-              {logo && <Button variant="ghost" icon={<Trash2 className="size-4" aria-hidden />} onClick={() => setLogo(null)}>Remover</Button>}
-              <span className="text-xs text-muted">PNG ou JPG, até 250 KB.</span>
-            </div>
+          <div className="cfg-logo-actions">
+            <span className="text-sm font-semibold">Logo da oficina</span>
+            <input ref={fileRef} type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ""; }} />
+            <span className="flex flex-wrap gap-2">
+              <Button icon={<ImageUp className="size-4" aria-hidden />} onClick={() => fileRef.current?.click()}>{logo ? "Trocar logo" : "Pôr logo"}</Button>
+              {logo && <Button variant="ghost" icon={<Trash2 className="size-4" aria-hidden />} onClick={() => setLogo(null)}>Tirar logo</Button>}
+            </span>
           </div>
-          <ColorField label="Cor principal (botões, destaques e links)" value={primary} onChange={setPrimary} presets={PRIMARY_PRESETS} />
-          <ColorField label="Cor secundária (aba ativa e avatar)" value={secondary} onChange={setSecondary} />
-          <div className="overflow-hidden rounded-md border border-line" aria-label="Pré-visualização">
-            <div className="flex items-center gap-2 px-4 py-4 text-sm font-semibold" style={{ background: secondary, color: contrastOn(secondary) }}>
-              <span className="truncate">{displayName}</span>
-              <span className="ml-auto opacity-80">Pré-visualização</span>
-            </div>
-            <div className="flex gap-4 border-b border-line bg-white px-4 py-3 text-xs font-semibold"><span style={{ color: primary }}>Hoje</span><span>Serviços</span><span>Estoque</span></div>
-            <div className="flex items-center gap-3 bg-bg px-3 py-3">
-              <span className="rounded-md px-3 py-1.5 text-xs font-semibold" style={{ background: primary, color: contrastOn(primary) }}>Novo serviço</span>
-              <span className="text-xs font-semibold text-ink">Serviços da oficina</span>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => { setPrimary(DEFAULT_COLORS.primary); setSecondary(DEFAULT_COLORS.secondary); }}>Restaurar cores padrão do GAVYO Auto</Button>
         </div>
-      </Card>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+          <Field label="Nome da oficina" className="sm:col-span-3">{(p) => <Input {...p} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />}</Field>
+          <Field label="Telefone" optional className="sm:col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="tel" />}</Field>
+        </div>
+      </section>
 
-      <Card className="self-start">
-        <CardHeader title="Módulos ativos" subtitle="Módulos desativados somem do menu de todos os usuários desta oficina." />
-        <ul className="divide-y divide-line">
-          {MODULES.filter((m) => !m.hidden).map((m) => (
-            <li key={m.key}>
-              <label className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                <input
-                  type="checkbox"
-                  className="size-4 accent-(--primary)"
-                  checked={m.required || modules.includes(m.key)}
-                  disabled={m.required}
-                  onChange={(e) => setModules(e.target.checked ? [...modules, m.key] : modules.filter((k) => k !== m.key))}
-                />
-                <span className="font-medium">{m.label}</span>
-                {m.required && <span className="text-xs text-muted">sempre ativo</span>}
-              </label>
-            </li>
-          ))}
+      <section className="cash-card cfg-block" aria-labelledby="cfg-colors">
+        <h2 id="cfg-colors" className="cash-h2">Cores</h2>
+        <ColorPick label="Cor dos botões" hint="Botões principais e destaques." value={primary} onChange={setPrimary} presets={PRIMARY_PRESETS} />
+        <ColorPick label="Cor do menu" hint="Item escolhido do menu e as iniciais das pessoas." value={secondary} onChange={setSecondary} presets={MENU_PRESETS} />
+        <div className="cfg-preview" aria-label="Como vai ficar">
+          <span className="cfg-preview-label">Como vai ficar</span>
+          <div className="cfg-preview-bar">
+            <span className="cfg-preview-tab" style={{ background: secondary, color: contrastOn(secondary) }}>Hoje</span>
+            <span>Serviços</span><span>Estoque</span>
+            <span className="cfg-preview-btn" style={{ background: primary, color: contrastOn(primary) }}>+ Novo serviço</span>
+          </div>
+        </div>
+        <button type="button" className="cash-link justify-self-start" onClick={() => { setPrimary(DEFAULT_COLORS.primary); setSecondary(DEFAULT_COLORS.secondary); }}>Voltar às cores da GAVYO</button>
+      </section>
+
+      <section className="cash-card cfg-block" aria-labelledby="cfg-menu">
+        <h2 id="cfg-menu" className="cash-h2">O que aparece no menu</h2>
+        <p className="cfg-hint">Desligue o que a oficina não usa. Some do menu de todo mundo daqui.</p>
+        <ul className="cfg-mods">
+          {MODULES.filter((m) => !m.hidden).map((m) => {
+            const Icon = NAV_ICONS[m.key as keyof typeof NAV_ICONS];
+            const on = m.required || modules.includes(m.key);
+            return (
+              <li key={m.key}>
+                <label className="cfg-mod" data-on={on || undefined}>
+                  <span className="cfg-mod-icon" aria-hidden>{Icon && <Icon />}</span>
+                  <span className="cfg-mod-text"><b>{m.label}</b><small>{MODULE_HINT[m.key] ?? ""}</small></span>
+                  {m.required ? <span className="cfg-always">Sempre aparece</span> : (
+                    <span className="cfg-switch">
+                      <input type="checkbox" role="switch" checked={on} onChange={(e) => setModules(e.target.checked ? [...modules, m.key] : modules.filter((k) => k !== m.key))} aria-label={`Mostrar ${m.label} no menu`} />
+                      <span aria-hidden />
+                    </span>
+                  )}
+                </label>
+              </li>
+            );
+          })}
         </ul>
-      </Card>
+      </section>
 
-      <div className="flex flex-wrap items-center gap-3 lg:col-span-2">
-        <Button variant="primary" disabled={!online} onClick={save}>Salvar configurações</Button>
-        <span className="text-xs text-muted">As alterações valem apenas para esta oficina.</span>
+      <div className="cfg-save">
+        <Button variant="primary" disabled={!online} onClick={save}>Salvar</Button>
+        <span className="text-sm text-muted">Vale para todos desta oficina.</span>
       </div>
     </div>
   );
@@ -137,7 +161,7 @@ export function SettingsPage() {
   // Funcionários e permissões foram para Pessoas (decisão 62).
   return (
     <div className="module-page module-settings">
-      <PageHeader title="Configurações" description={`Personalização e acessos de ${settings.displayName}.`} />
+      <PageHeader title="Configurações" description={`Nome, logo, cores e menu de ${settings.displayName}.`} />
       {can("staff.manage") && (
         <Link href="/clientes" className="rail-line mb-4">
           <IdentificationBadge size={22} weight="duotone" aria-hidden />

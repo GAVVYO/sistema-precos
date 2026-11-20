@@ -225,3 +225,9 @@ Foto da peça (decisão 89): no cadastro ou direto na ficha ("Tirar foto"); apar
 Abre no Dia: setas, faixa da semana e cada horário como cartão numa linha do tempo, com Confirmar e Chegou: abrir serviço.
 
 ![Agenda no Dia](imagens/interface/agenda-dia.png)
+
+## Configurações (decisão 91)
+
+Sua oficina (logo, nome, telefone), Cores em bolinhas com nome e prévia, e O que aparece no menu com chaves de ligar e desligar.
+
+![Configurações](imagens/interface/configuracoes.png)

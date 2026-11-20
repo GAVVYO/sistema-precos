@@ -9,7 +9,9 @@
     "lint": "eslint src tests",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build:hostinger": "STATIC_EXPORT=1 next build && node scripts/hostinger-extras.mjs"
+    "build:hostinger": "STATIC_EXPORT=1 next build && node scripts/hostinger-extras.mjs",
+    "build:servidor": "NEXT_PUBLIC_APP_MODE=production next build",
+    "build:pronto": "node -e \"require('fs').existsSync('.next/BUILD_ID')||(console.error('Falta a pasta .next: monte com npm run build:servidor antes de enviar.'),process.exit(1))\""
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

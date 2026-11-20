@@ -5,6 +5,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import mysql from "mysql2/promise";
+import { adminLogin, isAdmin, listWorkshops, resetOwnerPassword, setWorkshopActive } from "@/server/admin";
 import { connectDevice, deviceOf, peopleOf, pinLogin, sessionOf } from "@/server/auth";
 import { closePool } from "@/server/db";
 import { createDemoWorkshop, createWorkshop } from "@/server/provision";
@@ -132,5 +133,24 @@ describe.skipIf(!URL)("servidor com MySQL", () => {
     const state = (await readState(workshopId, owner.userId))!;
     expect(state.db.orders.length).toBeGreaterThan(5);
     expect(state.db.users.every((u) => !("passwordHash" in u) || u.passwordHash === undefined)).toBe(true);
+  });
+
+  it("área da GAVYO: chave, lista, troca de senha e desativar", async () => {
+    process.env.GAVYO_ADMIN_KEY = "chave-de-teste-com-mais-de-24-letras";
+    await expectCode(adminLogin("errada"), "forbidden");
+    const { cookie } = await adminLogin("chave-de-teste-com-mais-de-24-letras");
+    expect(isAdmin(cookie, null)).toBe(true);
+    expect(isAdmin(cookie.replace(/.$/, "x"), null)).toBe(false);
+    const list = await listWorkshops();
+    expect(list.find((w) => w.id === B.workshopId)?.owner?.email).toBe("beto@b.com");
+    await resetOwnerPassword(B.workshopId, "senha-nova-beto");
+    await expectCode(connectDevice("beto@b.com", "senha-forte-b"), "forbidden");
+    const dev = await connectDevice("beto@b.com", "senha-nova-beto");
+    const s = await pinLogin((await deviceOf(dev.token))!, B.ownerId, "2222");
+    await setWorkshopActive(B.workshopId, false);
+    expect(await sessionOf(dev.token, s.token)).toBeNull();
+    await expectCode(connectDevice("beto@b.com", "senha-nova-beto"), "forbidden");
+    await setWorkshopActive(B.workshopId, true);
+    await expect(connectDevice("beto@b.com", "senha-nova-beto")).resolves.toBeTruthy();
   });
 });

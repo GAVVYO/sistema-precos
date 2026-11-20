@@ -1,24 +1,29 @@
-import { timingSafeEqual } from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
+import { ADMIN_COOKIE, isAdmin, listWorkshops } from "@/server/admin";
 import { DomainError } from "@/services/core";
 import { body, handle } from "@/server/http";
 import { createDemoWorkshop, createWorkshop, type NewWorkshopInput } from "@/server/provision";
 
 /**
- * Uso interno da GAVYO: cria uma oficina e o primeiro dono (decisão 74).
- * Protegido pela chave GAVYO_ADMIN_KEY do servidor (pelo menos 24 caracteres),
- * enviada em `Authorization: Bearer …`. Sem a chave configurada, a rota não existe.
+ * Uso interno da GAVYO (decisões 74 e 98): lista e cria oficinas.
+ * Aceita o cookie da tela da GAVYO ou `Authorization: Bearer <GAVYO_ADMIN_KEY>`.
  */
-function authorized(req: NextRequest): boolean {
-  const key = process.env.GAVYO_ADMIN_KEY ?? "";
-  const got = (req.headers.get("authorization") ?? "").replace(/^Bearer /, "");
-  if (key.length < 24 || got.length !== key.length) return false;
-  return timingSafeEqual(Buffer.from(got), Buffer.from(key));
+function guard(req: NextRequest) {
+  if (!isAdmin(req.cookies.get(ADMIN_COOKIE)?.value, req.headers.get("authorization"))) {
+    throw new DomainError("forbidden", "Entre com a chave da GAVYO.");
+  }
+}
+
+export async function GET(req: NextRequest) {
+  return handle(req, async () => {
+    guard(req);
+    return NextResponse.json({ workshops: await listWorkshops() });
+  });
 }
 
 export async function POST(req: NextRequest) {
   return handle(req, async () => {
-    if (!authorized(req)) return NextResponse.json({ error: "Não encontrado." }, { status: 404 });
+    guard(req);
     const input = await body<NewWorkshopInput & { demo?: boolean }>(req);
     if (input.demo) {
       if (typeof input.ownerEmail !== "string" || typeof input.ownerPassword !== "string") throw new DomainError("validation", "Informe e-mail e senha.");

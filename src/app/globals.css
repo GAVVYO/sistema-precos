@@ -2759,3 +2759,52 @@ html[data-motion="reduce"] .ag-item { animation: none !important; }
 .topbar-badge[data-count]::after { content: attr(data-count); }
 .topbar-avatar[data-initials]::before { content: attr(data-initials); }
 .cash-say strong[data-tone="out"] { color: var(--primary); }
+
+/* ---------- Área da GAVYO (decisão 98) ---------- */
+.gv-page { min-height: 100dvh; background: var(--bg); padding: 40px 24px 64px; }
+.gv-head { max-width: 920px; margin: 0 auto 24px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.gv-eyebrow { font-size: 13px; font-weight: 600; color: var(--primary); letter-spacing: .02em; }
+.gv-head h1 { font-size: 32px; font-weight: 700; color: var(--text); line-height: 1.15; }
+.gv-sub { color: var(--muted); margin-top: 4px; }
+.gv-head-actions { display: flex; gap: 8px; align-items: center; }
+.gv-list { max-width: 920px; margin: 0 auto; display: grid; gap: 12px; list-style: none; padding: 0; }
+.gv-row { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 16px 20px; animation: gv-in .35s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 40ms); }
+.gv-row[data-off] { opacity: .7; }
+.gv-row[data-off] .gv-row-name { color: var(--muted); }
+.gv-row[data-fresh] { border-color: var(--success); box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 18%, transparent); }
+.gv-row-name { font-weight: 700; font-size: 17px; color: var(--text); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.gv-row-owner { color: var(--text); font-size: 14px; margin-top: 2px; overflow-wrap: anywhere; }
+.gv-row-use { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.gv-row-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.gv-tag { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--muted) 15%, transparent); color: var(--muted); }
+.gv-empty { max-width: 920px; margin: 0 auto; background: var(--surface); border: 1px dashed var(--border); border-radius: 20px; padding: 40px 24px; text-align: center; display: grid; gap: 16px; justify-items: center; color: var(--muted); }
+.gv-key { max-width: 400px; margin: 10vh auto 0; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px; display: grid; gap: 14px; }
+.gv-key h1 { font-size: 24px; font-weight: 700; color: var(--text); }
+.gv-key p { color: var(--muted); }
+.gv-key-icon { color: var(--primary); }
+.gv-form { display: grid; gap: 20px; }
+.gv-form fieldset { display: grid; gap: 12px; border: 0; padding: 0; margin: 0; }
+.gv-form legend { font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.gv-two { display: grid; grid-template-columns: 1fr 9rem; gap: 12px; }
+.gv-pass { position: relative; }
+.gv-pass input { padding-right: 44px; font-variant-numeric: tabular-nums; }
+.gv-icon { position: absolute; right: 4px; top: 50%; translate: 0 -50%; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; color: var(--muted); }
+.gv-icon:hover { background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }
+.gv-icon:hover svg { rotate: 180deg; transition: rotate .35s ease; }
+.gv-error { color: var(--danger); font-size: 14px; }
+.gv-cred { display: grid; gap: 10px; background: color-mix(in srgb, var(--primary) 6%, var(--surface)); border-radius: 16px; padding: 16px; }
+.gv-cred div { display: grid; grid-template-columns: 6rem 1fr; gap: 8px; align-items: baseline; }
+.gv-cred dt { color: var(--muted); font-size: 14px; }
+.gv-cred dd { color: var(--text); font-weight: 600; overflow-wrap: anywhere; }
+.gv-secret { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 18px; letter-spacing: .04em; }
+.gv-cred-actions { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; margin-top: 14px; }
+.gv-wa { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; border-radius: 8px; background: #0b6e38; color: #fff; font-weight: 600; font-size: 14px; }
+.gv-wa:hover { background: #095c2f; }
+@keyframes gv-in { from { opacity: 0; translate: 0 8px; } }
+@media (max-width: 640px) {
+  .gv-page { padding: 24px 16px 48px; }
+  .gv-row { grid-template-columns: auto 1fr; }
+  .gv-row-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .gv-two { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .gv-row { animation: none; } .gv-icon:hover svg { rotate: none; } }

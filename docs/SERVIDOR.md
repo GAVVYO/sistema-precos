@@ -20,7 +20,9 @@ Decisões 95 e 96. O mesmo projeto Next.js serve as telas e a API; os dados fica
 | `POST /api/desconectar` | Desconecta o aparelho |
 | `GET /api/estado?v=` | Dados da oficina (204 se a versão não mudou) |
 | `POST /api/acoes` | Lote de ações com nome |
-| `POST /api/gavyo/oficinas` | Uso interno: cria oficina + dono (chave `GAVYO_ADMIN_KEY`) |
+| `POST /api/gavyo/entrar` | Área da GAVYO: entra com a chave (cookie 8 h) |
+| `GET/POST /api/gavyo/oficinas` | Lista / cria oficina + dono (cookie da área ou `Bearer GAVYO_ADMIN_KEY`) |
+| `POST /api/gavyo/oficinas/:id` | Trocar senha do dono / ativar ou desativar |
 
 ## Variáveis do servidor (nunca no código)
 
@@ -30,6 +32,8 @@ Decisões 95 e 96. O mesmo projeto Next.js serve as telas e a API; os dados fica
 As tabelas são criadas sozinhas no primeiro acesso (`src/server/schema.ts`).
 
 ## Criar uma oficina
+
+Pelo navegador: **`/gavyo`**, com a chave da GAVYO (decisão 98). Ou por comando:
 
 ```bash
 curl -X POST https://SEU-SITE/api/gavyo/oficinas -H "content-type: application/json" -H "x-gavyo: 1" \

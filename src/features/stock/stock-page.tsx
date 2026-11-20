@@ -1,29 +1,20 @@
 "use client";
 
 import { ChoiceGroup, MoreDetails } from "@/components/ui/choice";
-import { ArrowLeftRight, Boxes, ClipboardCheck, History, Inbox, PackageMinus, PackagePlus, Pencil, Plus, Search, SearchX } from "lucide-react";
+import { ArrowLeftRight, Boxes, ClipboardCheck, PackageMinus, PackagePlus, Pencil, Plus, SearchX } from "lucide-react";
+import { MagnifyingGlass, Package, Prohibit, Warning } from "@phosphor-icons/react";
 import { useState } from "react";
 import { initialQuery } from "@/lib/query";
 import { useApp } from "@/app-state/app-context";
 import { Pager, usePager } from "@/components/ui/pager";
 import { Dialog } from "@/components/ui/dialog";
-import { MoreMenu } from "@/components/ui/more-menu";
-import { useTray } from "@/components/layout/tray";
-import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Select, Stat, Tabs, Textarea } from "@/components/ui/primitives";
+import { Button, EmptyState, Field, Input, PageHeader, Select, Textarea } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
-import { SortHeader, TableSort } from "@/components/ui/sort-header";
 import { MOVEMENT_TYPE_LABELS, PART_CATEGORIES } from "@/domain/labels";
 import type { Part } from "@/domain/types";
 import { centsToInput, formatBRL, formatDateTime, formatOrderNumber, parseBRL } from "@/lib/format";
 import { createPart, moveStock, partSituation, updatePart } from "@/services/stock";
 import { maskMoney } from "@/lib/masks";
-
-function SituationBadge({ part }: { part: Part }) {
-  const s = partSituation(part);
-  if (s === "out") return <Badge tone="danger">Sem estoque</Badge>;
-  if (s === "low") return <Badge tone="warning">Estoque baixo</Badge>;
-  return <Badge tone="success">Normal</Badge>;
-}
 
 function PartDialog({ part, onClose }: { part: Part | null; onClose: () => void }) {
   const { act, online, view } = useApp();
@@ -91,9 +82,9 @@ function PartDialog({ part, onClose }: { part: Part | null; onClose: () => void 
 
 type MoveType = "in" | "out" | "adjust";
 
-function MoveDialog({ part, onClose }: { part: Part; onClose: () => void }) {
+function MoveDialog({ part, initial = "in", onClose }: { part: Part; initial?: MoveType; onClose: () => void }) {
   const { act, online } = useApp();
-  const [type, setType] = useState<MoveType>("in");
+  const [type, setType] = useState<MoveType>(initial);
   const [quantity, setQuantity] = useState("");
   const [reason, setReason] = useState("");
   const qty = Number(quantity);
@@ -102,8 +93,8 @@ function MoveDialog({ part, onClose }: { part: Part; onClose: () => void }) {
 
   return (
     <Dialog
-      title={`Entrada / Saída: ${part.name}`}
-      subtitle={`${part.code} · tem agora: ${part.quantity}`}
+      title={part.name}
+      subtitle={`Tem agora: ${part.quantity} ${part.quantity === 1 ? "unidade" : "unidades"}`}
       size="sm"
       onClose={onClose}
       footer={
@@ -129,8 +120,8 @@ function MoveDialog({ part, onClose }: { part: Part; onClose: () => void }) {
           onChange={setType}
           columns={3}
           options={[
-            { value: "in", label: "Chegou peça", hint: "Comprei / repus", icon: <PackagePlus /> },
-            { value: "out", label: "Saiu peça", hint: "Quebrou / perdeu", icon: <PackageMinus /> },
+            { value: "in", label: "Chegou mais", hint: "Comprei / repus", icon: <PackagePlus /> },
+            { value: "out", label: "Saiu", hint: "Quebrou / perdeu", icon: <PackageMinus /> },
             { value: "adjust", label: "Contei", hint: "Acertar o número", icon: <ClipboardCheck /> },
           ]}
         />
@@ -149,164 +140,182 @@ function MoveDialog({ part, onClose }: { part: Part; onClose: () => void }) {
   );
 }
 
+type Sit = "all" | "low" | "out";
+const SIT_WORD = { ok: "Tem", low: "Está acabando", out: "Acabou" } as const;
+const DEFAULT_REASONS = new Set(["Peça chegou", "Peça saiu", "Contagem do estoque"]);
+
+/**
+ * Estoque (decisão 88, auditoria leiga G2–G4): três abas grandes como no Caixa,
+ * uma busca, tipos em botões e peças em cartões ("Filtro de óleo · 21 unidades ·
+ * Tem"). Tocar na peça abre a ficha com "Chegou mais / Saiu / Contei".
+ * O histórico vira "O que aconteceu", em lista.
+ */
 export function StockPage() {
   const { view, can, online, userOf, partOf, openOrder } = useApp();
-  const [tab, setTab] = useState<"parts" | "moves">("parts");
+  const [area, setArea] = useState<"parts" | "moves">("parts");
+  const [sit, setSit] = useState<Sit>("all");
   const [search, setSearch] = useState(initialQuery);
   const [category, setCategory] = useState("");
-  const [situation, setSituation] = useState("");
-  const [sort, setSort] = useState<TableSort<"name" | "quantity" | "priceCents">>({ key: "name", desc: false });
   const [movePart, setMovePart] = useState("");
   const [editing, setEditing] = useState<Part | null | "new">(null);
-  const [moving, setMoving] = useState<Part | null>(null);
+  const [moving, setMoving] = useState<{ part: Part; type: MoveType } | null>(null);
+  const [openPart, setOpenPart] = useState<string | null>(null);
   const canMove = can("stock.move");
-  const tray = useTray();
 
   const low = view.parts.filter((p) => partSituation(p) === "low").length;
   const out = view.parts.filter((p) => partSituation(p) === "out").length;
   const q = search.trim().toLowerCase();
   const parts = view.parts
-    .filter((p) => (!q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)) && (!category || p.category === category) && (!situation || partSituation(p) === situation))
-    .sort((a, b) => (sort.desc ? -1 : 1) * (sort.key === "name" ? a.name.localeCompare(b.name, "pt-BR") : a[sort.key] - b[sort.key]));
-  const partsPager = usePager(parts, 20);
+    .filter((p) => (!q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)) && (!category || p.category === category) && (sit === "all" || partSituation(p) === sit))
+    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  const partsPager = usePager(parts, 24, `${sit}|${category}|${q}`);
   const moves = view.stockMovements.filter((m) => !movePart || m.partId === movePart).sort((a, b) => b.at.localeCompare(a.at));
-  const movesPager = usePager(moves, 25);
+  const movesPager = usePager(moves, 25, movePart);
   const categories = [...new Set(view.parts.map((p) => p.category))].sort();
-  const filtered = !!q || !!category || !!situation;
+  const sheet = openPart ? view.parts.find((p) => p.id === openPart) : undefined;
 
   return (
     <div className="module-page module-stock">
       <PageHeader
         title="Estoque"
-        description="Peças da oficina, quanto tem de cada uma e o que entrou e saiu."
+        description="Quanto tem de cada peça e o que entrou e saiu."
         actions={canMove && <Button variant="primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => setEditing("new")}>Nova peça</Button>}
       />
-      <div className="mb-4 grid grid-cols-3 gap-3">
-        <Stat label="Peças cadastradas" value={view.parts.length} />
-        <Stat label="Estoque baixo" value={low} tone={low ? "warning" : "neutral"} hint="Na quantidade mínima ou abaixo" />
-        <Stat label="Sem estoque" value={out} tone={out ? "danger" : "neutral"} />
+
+      <div role="tablist" aria-label="Parte do estoque" className="fin-areas">
+        <button type="button" role="tab" aria-selected={area === "parts"} onClick={() => setArea("parts")}>Peças</button>
+        <button type="button" role="tab" aria-selected={area === "moves"} onClick={() => setArea("moves")}>O que aconteceu</button>
       </div>
 
-      <Card>
-        <div className="px-3 pt-1">
-          <Tabs label="Visões do estoque" value={tab} onChange={setTab} tabs={[{ value: "parts", label: "Peças", count: view.parts.length }, { value: "moves", label: "Histórico de peças", count: view.stockMovements.length }]} />
-        </div>
+      {area === "parts" ? (
+        <div className="stk">
+          <div role="tablist" aria-label="Situação das peças" className="cash-tabs">
+            <SitTab k="all" on={sit === "all"} onSelect={setSit} icon={<Package weight="bold" />} label="Todas" count={view.parts.length} />
+            <SitTab k="low" on={sit === "low"} onSelect={setSit} icon={<Warning weight="bold" />} label="Está acabando" count={low} />
+            <SitTab k="out" on={sit === "out"} onSelect={setSit} icon={<Prohibit weight="bold" />} label="Acabou" count={out} />
+          </div>
 
-        {tab === "parts" ? (
-          <>
-            <div className="flex flex-wrap items-center gap-2 border-b border-line p-3">
-              <div className="relative w-72">
-                <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-slate-400" aria-hidden />
-                <Input className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou código" aria-label="Buscar peças" />
-              </div>
-              <Select className="w-48" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Categoria">
-                <option value="">Todas as categorias</option>
-                {categories.map((c) => <option key={c}>{c}</option>)}
-              </Select>
-              <Select className="w-48" value={situation} onChange={(e) => setSituation(e.target.value)} aria-label="Situação">
-                <option value="">Todas as situações</option>
-                <option value="ok">Normal</option>
-                <option value="low">Estoque baixo</option>
-                <option value="out">Sem estoque</option>
-              </Select>
+          <div className="stk-tools">
+            <label className="svc-search stk-search">
+              <MagnifyingGlass size={20} aria-hidden />
+              <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome ou código da peça" aria-label="Procurar peça" />
+            </label>
+            <div className="stk-cats" role="group" aria-label="Tipo de peça">
+              <button type="button" aria-pressed={!category} onClick={() => setCategory("")}>Todos os tipos</button>
+              {categories.map((c) => <button key={c} type="button" aria-pressed={category === c} onClick={() => setCategory(category === c ? "" : c)}>{c}</button>)}
             </div>
-            {view.parts.length === 0 ? (
-              <EmptyState icon={<Boxes className="size-8" aria-hidden />} title="Nenhuma peça cadastrada" description="Cadastre as peças que a oficina usa para controlar o estoque e lançá-las nos serviços." action={canMove ? <Button variant="primary" disabled={!online} onClick={() => setEditing("new")}>Nova peça</Button> : undefined} />
-            ) : parts.length === 0 ? (
-              <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhuma peça encontrada" description={filtered ? "Confira o nome ou o código da peça, ou mude os filtros." : undefined} />
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="data-table">
-                  <thead>
-                    <tr><SortHeader field="name" sort={sort} onSort={setSort}>Peça / código</SortHeader><th>Categoria</th><SortHeader field="quantity" sort={sort} onSort={setSort} numeric>Disponível</SortHeader><th className="num">Custo unit.</th><SortHeader field="priceCents" sort={sort} onSort={setSort} numeric>Venda</SortHeader><th>Situação</th><th className="text-right"><span className="sr-only">Ações</span></th></tr>
-                  </thead>
-                  <tbody>
-                    {partsPager.items.map((p) => (
-                      <tr key={p.id}>
-                        <td><span className="block font-semibold">{p.name}</span><span className="text-xs text-muted">{p.code}</span></td>
-                        <td>{p.category}</td>
-                        <td className="num"><strong className="block">{p.quantity}</strong><span className="text-xs text-muted">mín. {p.minQuantity}</span></td>
-                        <td className="num">{formatBRL(p.costCents)}</td>
-                        <td className="num">{formatBRL(p.priceCents)}</td>
-                        <td><SituationBadge part={p} /></td>
-                        <td>
-                          {/* Uma ação principal visível; as demais no "⋯" (referência: Stripe e Shopify Admin). */}
-                          <div className="flex items-center justify-end gap-1">
-                            {canMove ? (
-                              <>
-                                <MoreMenu
-                                  label={`Mais ações de ${p.name}`}
-                                  items={[
-                                    { label: "Ver histórico da peça", icon: <History className="size-4" />, onSelect: () => { setMovePart(p.id); setTab("moves"); } },
-                                    { label: "Editar peça", icon: <Pencil className="size-4" />, disabled: !online, onSelect: () => setEditing(p) },
-                                    { label: "Guardar na bandeja", icon: <Inbox className="size-4" />, onSelect: () => tray.add([{ type: "part", id: p.id }]) },
-                                  ]}
-                                />
-                                <Button size="sm" icon={<ArrowLeftRight className="size-3.5" aria-hidden />} disabled={!online} onClick={() => setMoving(p)} aria-label={`Entrada ou saída de ${p.name}`}>Entrada / Saída</Button>
-                              </>
-                            ) : (
-                              <Button size="sm" icon={<History className="size-3.5" aria-hidden />} onClick={() => { setMovePart(p.id); setTab("moves"); }}>Histórico</Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          </div>
+
+          {view.parts.length === 0 ? (
+            <EmptyState icon={<Boxes className="size-8" aria-hidden />} title="Nenhuma peça cadastrada" description="Cadastre as peças que a oficina usa para saber quanto tem e lançar nos serviços." action={canMove ? <Button variant="primary" disabled={!online} onClick={() => setEditing("new")}>Nova peça</Button> : undefined} />
+          ) : parts.length === 0 ? (
+            <EmptyState icon={<SearchX className="size-8" aria-hidden />} title={sit === "out" ? "Nenhuma peça acabou" : sit === "low" ? "Nenhuma peça acabando" : "Nenhuma peça encontrada"} description={q || category ? "Confira o nome ou troque o tipo de peça." : "Ótimo sinal."} />
+          ) : (
+            <>
+              <ul className="stk-grid">
+                {partsPager.items.map((p, i) => {
+                  const s = partSituation(p);
+                  return (
+                    <li key={p.id} style={{ "--i": i } as React.CSSProperties}>
+                      <button type="button" className="stk-card" data-sit={s} onClick={() => setOpenPart(p.id)}>
+                        <span className="stk-cat">{p.category}</span>
+                        <span className="stk-name">{p.name}</span>
+                        <span className="stk-qty"><strong>{p.quantity}</strong> {p.quantity === 1 ? "unidade" : "unidades"}</span>
+                        <span className="stk-level" aria-hidden><span style={{ "--w": Math.min(1, p.quantity / Math.max(1, p.minQuantity * 3)) } as React.CSSProperties} /></span>
+                        <span className="stk-sit">{SIT_WORD[s]}{s !== "ok" && <small> · avisa com {p.minQuantity}</small>}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
               <Pager pager={partsPager} label="peças" noun="peças" />
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="flex items-center gap-2 border-b border-line p-3">
-              <Select className="w-80" value={movePart} onChange={(e) => setMovePart(e.target.value)} aria-label="Filtrar por peça">
-                <option value="">Todas as peças</option>
-                {[...view.parts].sort((a, b) => a.name.localeCompare(b.name)).map((p) => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}
-              </Select>
-              <span className="text-xs text-muted">{moves.length} {moves.length === 1 ? "registro" : "registros"}</span>
-            </div>
-            {moves.length === 0 ? (
-              <EmptyState icon={<ArrowLeftRight className="size-8" aria-hidden />} title="Nada registrado ainda" description="Quando chegar ou sair peça, clique em Entrada / Saída na lista de peças. Peças lançadas nos serviços também aparecem aqui." />
-            ) : (
-              <div className="max-h-[calc(100vh-330px)] overflow-auto">
-                <table className="data-table">
-                  <thead className="sticky top-0">
-                    <tr><th>Data</th><th>Peça</th><th>Tipo</th><th className="num">Quantidade</th><th className="num">Ficou com</th><th>Motivo</th><th>Responsável</th></tr>
-                  </thead>
-                  <tbody>
-                    {movesPager.items.map((m) => {
-                      const order = m.orderId ? view.orders.find((o) => o.id === m.orderId) : null;
-                      return (
-                        <tr key={m.id}>
-                          <td className="whitespace-nowrap">{formatDateTime(m.at)}</td>
-                          <td>{partOf(m.partId)?.name}</td>
-                          <td><Badge tone={m.type === "order_out" ? "info" : m.type === "return" ? "success" : "neutral"}>{MOVEMENT_TYPE_LABELS[m.type]}</Badge></td>
-                          <td className={`num font-semibold ${m.delta > 0 ? "text-success" : "text-danger"}`}>{m.delta > 0 ? `+${m.delta}` : m.delta}</td>
-                          <td className="num">{m.balanceAfter}</td>
-                          <td>
-                            {m.reason}
-                            {order && can("os.view") && (
-                              <button type="button" className="ml-1.5 text-xs font-semibold text-primary hover:underline" onClick={() => openOrder(order.id)}>
-                                ver {formatOrderNumber(order.number)}
-                              </button>
-                            )}
-                          </td>
-                          <td>{userOf(m.userId)?.name.split(" ").slice(0, 2).join(" ")}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              <Pager pager={movesPager} label="histórico de peças" noun="movimentos" />
-              </div>
-            )}
-          </>
-        )}
-      </Card>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="stk">
+          <div className="stk-tools">
+            <Select className="w-80" value={movePart} onChange={(e) => setMovePart(e.target.value)} aria-label="Ver só uma peça">
+              <option value="">Todas as peças</option>
+              {[...view.parts].sort((a, b) => a.name.localeCompare(b.name)).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </Select>
+          </div>
+          {moves.length === 0 ? (
+            <EmptyState icon={<ArrowLeftRight className="size-8" aria-hidden />} title="Nada aconteceu ainda" description="Quando chegar ou sair peça, aparece aqui. Peças usadas nos serviços também." />
+          ) : (
+            <section className="cash-card">
+              <ul className="cash-list">
+                {movesPager.items.map((m, i) => {
+                  const order = m.orderId ? view.orders.find((o) => o.id === m.orderId) : null;
+                  return (
+                    <li key={m.id} className="cash-row" style={{ "--i": i } as React.CSSProperties}>
+                      <span className="stk-delta" data-up={m.delta > 0 || undefined}>{m.delta > 0 ? `+${m.delta}` : m.delta}</span>
+                      <span className="cash-row-main">
+                        <b>{partOf(m.partId)?.name}</b>
+                        <small>
+                          {MOVEMENT_TYPE_LABELS[m.type]}
+                          {/* Motivo só quando acrescenta algo (não repete "Peça chegou" nem o nº do serviço). */}
+                          {m.reason && !order && !DEFAULT_REASONS.has(m.reason) ? ` · ${m.reason}` : ""}
+                          {order && can("os.view") && <> · <button type="button" className="cash-link" onClick={() => openOrder(order.id)}>{formatOrderNumber(order.number)}</button></>}
+                          {` · ficou com ${m.balanceAfter} · ${formatDateTime(m.at)} · ${userOf(m.userId)?.name.split(" ")[0] ?? ""}`}
+                        </small>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <Pager pager={movesPager} label="o que aconteceu" noun="registros" />
+            </section>
+          )}
+        </div>
+      )}
 
+      {sheet && (
+        <Dialog title={sheet.name} subtitle={`${sheet.category} · código ${sheet.code}`} size="md" onClose={() => setOpenPart(null)}
+          footer={<>
+            {canMove && <Button className="mr-auto" icon={<Pencil className="size-4" aria-hidden />} disabled={!online} onClick={() => { setOpenPart(null); setEditing(sheet); }}>Editar peça</Button>}
+            <Button onClick={() => setOpenPart(null)}>Fechar</Button>
+          </>}
+        >
+          <div className="stk-sheet">
+            <div className="stk-sheet-qty" data-sit={partSituation(sheet)}>
+              <strong>{sheet.quantity}</strong><span>{sheet.quantity === 1 ? "unidade" : "unidades"} · {SIT_WORD[partSituation(sheet)]}</span>
+            </div>
+            {canMove && (
+              <div className="stk-moves">
+                <button type="button" disabled={!online} onClick={() => setMoving({ part: sheet, type: "in" })}><PackagePlus aria-hidden /> Chegou mais</button>
+                <button type="button" disabled={!online || sheet.quantity === 0} onClick={() => setMoving({ part: sheet, type: "out" })}><PackageMinus aria-hidden /> Saiu</button>
+                <button type="button" disabled={!online} onClick={() => setMoving({ part: sheet, type: "adjust" })}><ClipboardCheck aria-hidden /> Contei</button>
+              </div>
+            )}
+            <dl className="stk-facts">
+              <div><dt>Quanto paguei</dt><dd>{formatBRL(sheet.costCents)}</dd></div>
+              <div><dt>Quanto cobro</dt><dd>{formatBRL(sheet.priceCents)}</dd></div>
+              <div><dt>Me avise quando tiver</dt><dd>{sheet.minQuantity} ou menos</dd></div>
+            </dl>
+            <div>
+              <h3 className="stk-h">O que aconteceu</h3>
+              <ul className="stk-mini">
+                {view.stockMovements.filter((m) => m.partId === sheet.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 5).map((m) => (
+                  <li key={m.id}><span className="stk-delta" data-up={m.delta > 0 || undefined}>{m.delta > 0 ? `+${m.delta}` : m.delta}</span><span>{MOVEMENT_TYPE_LABELS[m.type]} · {formatDateTime(m.at)}</span><span>ficou com {m.balanceAfter}</span></li>
+                ))}
+              </ul>
+              <button type="button" className="cash-link" onClick={() => { setMovePart(sheet.id); setArea("moves"); setOpenPart(null); }}>Ver tudo desta peça</button>
+            </div>
+          </div>
+        </Dialog>
+      )}
       {editing && <PartDialog part={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
-      {moving && <MoveDialog part={view.parts.find((p) => p.id === moving.id) ?? moving} onClose={() => setMoving(null)} />}
+      {moving && <MoveDialog part={view.parts.find((p) => p.id === moving.part.id) ?? moving.part} initial={moving.type} onClose={() => setMoving(null)} />}
     </div>
+  );
+}
+
+function SitTab({ k, on, onSelect, icon, label, count }: { k: Sit; on: boolean; onSelect: (k: Sit) => void; icon: React.ReactNode; label: string; count: number }) {
+  return (
+    <button type="button" role="tab" aria-selected={on} className="cash-tab" data-kind={k === "all" ? "stock" : k === "low" ? "receivable" : "out"} onClick={() => onSelect(k)}>
+      <span className="cash-tab-icon" aria-hidden>{icon}</span>
+      <span className="cash-tab-text"><small>{label}</small><span className="cash-tab-value">{count} {count === 1 ? "peça" : "peças"}</span></span>
+    </button>
   );
 }

@@ -2578,3 +2578,68 @@ html[data-motion="reduce"] :is(.cash-card, .cash-day, .cash-row, .cash-bar-fill,
 @media (max-width: 640px) { .ph-view { padding: 64px 12px 200px; } .ph-bar { bottom: 96px; border-radius: 22px; } .ph-nav { top: auto; bottom: 150px; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .ph-grid li, .ph-grid li[data-fresh], .ph-big, .ph-add:hover svg { animation: none; } .ph-thumb img { transition: none; } }
 html[data-motion="reduce"] :is(.ph-grid li, .ph-big, .ph-add svg) { animation: none !important; }
+
+/* Estoque (decisão 88): abas grandes como o Caixa, peças em cartões e ficha com botões grandes. */
+.cash-tab[data-kind="stock"] { --c: var(--primary); --soft: var(--color-primary-soft); }
+.cash-tab[data-kind="out"] { --c: var(--danger); --soft: var(--color-danger-soft, #fdecec); }
+.cash-tab[data-kind="stock"]:hover .cash-tab-icon svg { animation: cash-in 620ms cubic-bezier(.34, 1.56, .64, 1); }
+.cash-tab[data-kind="out"]:hover .cash-tab-icon svg { animation: cash-tick 700ms ease-in-out; }
+.stk { display: grid; gap: 16px; }
+.stk-tools { display: grid; gap: 12px; }
+.stk-search { max-width: 520px; }
+.stk-cats { display: flex; flex-wrap: wrap; gap: 8px; }
+.stk-cats button { min-height: 40px; padding: 0 16px; border: 1.5px solid var(--border); border-radius: 999px; background: var(--surface); font-size: .9375rem; font-weight: 650; color: var(--text); transition: background-color 140ms, border-color 140ms, color 140ms; }
+.stk-cats button:hover { border-color: color-mix(in srgb, var(--primary) 45%, transparent); }
+.stk-cats button[aria-pressed="true"] { border-color: var(--text); background: var(--text); color: #fff; }
+.stk-cats button:focus-visible, .stk-card:focus-visible, .stk-moves button:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 2px; }
+.stk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
+.stk-grid li { animation: login-rise 340ms calc(min(var(--i, 0), 12) * 30ms) cubic-bezier(.16, 1, .3, 1) both; }
+.stk-card { --c: var(--success); display: grid; gap: 6px; width: 100%; height: 100%; padding: 18px 20px; border: 1px solid rgb(23 32 51 / 7%); border-radius: 24px; background: var(--surface); text-align: left; box-shadow: 0 1px 2px rgb(23 32 51 / 5%); transition: transform 160ms cubic-bezier(.23, 1, .32, 1), box-shadow 200ms; }
+.stk-card[data-sit="low"] { --c: var(--warning); }
+.stk-card[data-sit="out"] { --c: var(--danger); }
+.stk-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px -16px rgb(23 32 51 / 35%); }
+.stk-card:active { transform: scale(.985); }
+.stk-cat { font-size: .8125rem; font-weight: 700; letter-spacing: .02em; color: var(--muted); }
+.stk-name { font-size: 1.125rem; font-weight: 800; line-height: 1.25; color: var(--text); }
+.stk-qty { margin-top: 4px; font-size: 1rem; color: var(--muted); }
+.stk-qty strong { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; color: var(--text); font-variant-numeric: tabular-nums; }
+.stk-level { display: block; height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--text) 6%, transparent); overflow: hidden; }
+.stk-level > span { display: block; height: 100%; border-radius: inherit; background: var(--c); transform-origin: left; transform: scaleX(max(.04, var(--w))); animation: fr-grow 700ms 200ms cubic-bezier(.16, 1, .3, 1) both; }
+.stk-sit { font-size: .9375rem; font-weight: 800; color: var(--c); }
+.stk-sit small { font-weight: 600; color: var(--muted); }
+.stk-delta { display: grid; flex: none; place-items: center; min-width: 52px; height: 36px; padding: 0 10px; border-radius: 999px; background: var(--color-danger-soft, #fdecec); font-weight: 800; color: var(--danger); font-variant-numeric: tabular-nums; }
+.stk-delta[data-up] { background: var(--color-success-soft); color: var(--success); }
+.stk-after { display: grid; flex: none; justify-items: end; font-size: .875rem; color: var(--muted); }
+.stk-after b { color: var(--text); }
+.stk-after small { font-size: .8125rem; }
+.stk-sheet { display: grid; gap: 18px; }
+.stk-sheet-qty { --c: var(--success); display: flex; align-items: baseline; gap: 10px; }
+.stk-sheet-qty[data-sit="low"] { --c: var(--warning); } .stk-sheet-qty[data-sit="out"] { --c: var(--danger); }
+.stk-sheet-qty strong { font-size: 3rem; font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--text); }
+.stk-sheet-qty span { font-size: 1.0625rem; font-weight: 700; color: var(--c); }
+.stk-moves { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.stk-moves button { display: grid; justify-items: center; gap: 6px; padding: 16px 8px; border: 1.5px solid var(--border); border-radius: 20px; background: var(--surface); font-weight: 800; color: var(--text); transition: background-color 140ms, border-color 140ms, transform 120ms cubic-bezier(.23, 1, .32, 1); }
+.stk-moves button svg { width: 28px; height: 28px; color: var(--primary); }
+.stk-moves button:hover:not(:disabled) { border-color: var(--primary); background: var(--color-primary-soft); }
+.stk-moves button:active:not(:disabled) { transform: scale(.97); }
+.stk-moves button:disabled { opacity: .4; }
+.stk-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.stk-facts div { padding: 12px 14px; border-radius: 16px; background: var(--bg); }
+.stk-facts dt { font-size: .8125rem; font-weight: 700; color: var(--muted); }
+.stk-facts dd { margin: 2px 0 0; font-size: 1.0625rem; font-weight: 800; color: var(--text); }
+@media (max-width: 520px) { .stk-facts { grid-template-columns: minmax(0, 1fr); } .stk-moves { gap: 8px; } .stk-moves button { padding: 12px 4px; font-size: .875rem; } }
+/* Celular: as três situações lado a lado e compactas (ícone em cima). */
+@media (max-width: 760px) {
+  .stk .cash-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 5px; border-radius: 24px; }
+  .stk .cash-tab { flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 10px 12px; border-radius: 19px; }
+  .stk .cash-tab-icon { width: 28px; height: 28px; font-size: 24px; }
+  .stk .cash-tab-text small { font-size: .8125rem; line-height: 1.15; }
+  .stk .cash-tab-value { font-size: 1.125rem; }
+}
+.stk-h { margin: 0 0 6px; font-size: 1rem; font-weight: 800; }
+.stk-mini { display: grid; gap: 6px; margin: 0 0 8px; padding: 0; list-style: none; }
+.stk-mini li { display: flex; align-items: center; gap: 10px; font-size: .9375rem; color: var(--muted); }
+.stk-mini li span:nth-child(2) { flex: 1; }
+.stk-mini .stk-delta { min-width: 44px; height: 28px; font-size: .875rem; }
+@media (prefers-reduced-motion: reduce) { .stk-grid li, .stk-level > span { animation: none; } .stk-card { transition: none; } }
+html[data-motion="reduce"] :is(.stk-grid li, .stk-level > span) { animation: none !important; }

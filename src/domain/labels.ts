@@ -23,11 +23,11 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
 export const PAYMENT_METHODS: PaymentMethod[] = ["cash", "pix", "card", "transfer"];
 
 export const MOVEMENT_TYPE_LABELS: Record<StockMovementType, string> = {
-  in: "Entrada",
-  out: "Saída manual",
-  adjust: "Ajuste",
-  order_out: "Saída por serviço",
-  return: "Estorno / devolução",
+  in: "Chegou",
+  out: "Saiu",
+  adjust: "Contei",
+  order_out: "Usada em serviço",
+  return: "Voltou ao estoque",
 };
 
 export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {

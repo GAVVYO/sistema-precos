@@ -210,3 +210,8 @@ Na ficha do serviço: abas Chegou · Durante · Pronto, "Tirar foto" e visualiza
 
 ![Fotos do carro no site](imagens/interface/fotos-do-carro.png)
 
+## Estoque (decisão 88)
+
+Abas Todas · Está acabando · Acabou, busca e tipos em botões; peças em cartões ("21 unidades · Tem"); a ficha da peça tem Chegou mais / Saiu / Contei. "O que aconteceu" lista as entradas e saídas.
+
+![Estoque](imagens/interface/estoque.png)

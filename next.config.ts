@@ -13,9 +13,15 @@ import type { NextConfig } from "next";
  * que o Apache serve sem regras extras. Na fase 2 (backend) voltará a precisar de Node.
  */
 const staticExport = process.env.STATIC_EXPORT === "1";
+/**
+ * Servidor (decisão 100): a Hostinger roda o `server.js` do formato standalone.
+ * O build:servidor copia `public` e `.next/static` para dentro dele.
+ */
+const standalone = process.env.STANDALONE === "1";
 
 const nextConfig: NextConfig = {
   ...(staticExport ? { output: "export" as const, trailingSlash: true, images: { unoptimized: true } } : {}),
+  ...(standalone ? { output: "standalone" as const } : {}),
   turbopack: {
     rules: {
       "*.css": {

@@ -140,7 +140,8 @@ function WidgetFrame({ widget, editing, onNudge, onHide }: { widget: Widget; edi
   const t = widget.title;
   return (
     <section aria-label={editing ? `Bloco ${t}` : undefined} className={cx("widget-frame", editing && "is-editing")}>
-      <div className="widget-content" inert={editing}>{widget.render()}</div>
+      {/* Quadro que rola: alcançável pelo teclado (Tab) e com nome. */}
+      <div className="widget-content" inert={editing} tabIndex={editing ? undefined : 0} role="region" aria-label={t}>{widget.render()}</div>
       {editing && (
         <div className="widget-toolbar widget-nodrag" role="group" aria-label={`Organizar ${t}`}>
           <span className="widget-toolbar-title"><Move className="size-4" aria-hidden />{t}</span>

@@ -114,7 +114,7 @@ function DemoBar() {
   };
 
   return (
-    <div className="demo-bar no-print flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-amber-200 bg-amber-50 px-6 py-1.5 text-xs text-amber-900">
+    <aside aria-label="Ambiente de demonstração" className="demo-bar no-print flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-amber-200 bg-amber-50 px-6 py-1.5 text-xs text-amber-900">
       <span className="flex items-center gap-1.5 font-semibold">
         <FlaskConical className="size-3.5" aria-hidden />
         Ambiente de demonstração — dados fictícios
@@ -186,7 +186,7 @@ function DemoBar() {
           }}
         />
       )}
-    </div>
+    </aside>
   );
 }
 
@@ -215,12 +215,13 @@ function Notifications() {
 
   return (
     <Menu
-      label={`Avisos (${items.length})`}
+      label={items.length ? `Avisos, ${items.length} ${items.length === 1 ? "novo" : "novos"}` : "Avisos"}
       buttonClassName="topbar-icon topbar-labeled"
       button={
         <>
           <span className="relative inline-flex"><Bell className="size-5" aria-hidden />
-          {items.length > 0 && <span className="topbar-badge" aria-hidden>{items.length}</span>}</span>
+          {/* O número vem do CSS (data-count): o nome lido começa por "Avisos", igual ao texto visível. */}
+          {items.length > 0 && <span className="topbar-badge" data-count={items.length} aria-hidden />}</span>
           <span className="topbar-label" aria-hidden>Avisos</span>
         </>
       }
@@ -275,7 +276,8 @@ function Header() {
     <header className={cx("island-header no-print", compact && "is-compact", nav.side && "is-side")}>
       {/* Ilha flutuante (referência: Liquid Glass do macOS Tahoe/iOS 26 e barras flutuantes do Safari 26):
           três cápsulas sobre a página — oficina, menu e ferramentas. Encolhem ao rolar. */}
-        {!nav.side && <Link href="/inicio" className="island island-brand app-brand" aria-label={`${settings.displayName} — início`}>
+        {!nav.side && <Link href="/inicio" className="island island-brand app-brand">
+          <span className="sr-only">Ir para o Hoje: </span>
           {settings.logoDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={settings.logoDataUrl} alt="" className="app-brand-logo bg-white object-contain" />
@@ -309,8 +311,7 @@ function Header() {
             buttonClassName="topbar-account"
             button={
               <>
-                <span className="topbar-avatar">
-                  {user.name.split(" ").slice(0, 2).map((p) => p[0]).join("")}
+                <span className="topbar-avatar" data-initials={user.name.split(" ").slice(0, 2).map((p) => p[0]).join("")}>
                   <span className={cx("topbar-avatar-dot", conn.dot)} aria-hidden />
                 </span>
                 <span className="topbar-label" aria-hidden>Minha conta</span>
@@ -468,6 +469,7 @@ export function ModuleGuard({ module, children }: { module: ModuleKey; children:
   if (!settings.activeModules.includes(module)) {
     return (
       <div className="rounded-md border border-line bg-surface">
+        <h1 className="sr-only">{info.label}</h1>
         <EmptyState icon={<Lock className="size-8" aria-hidden />} title="Módulo desativado" description={`O módulo ${info.label} não está ativo para esta oficina. O proprietário pode ativá-lo em Configurações.`} />
       </div>
     );
@@ -475,6 +477,7 @@ export function ModuleGuard({ module, children }: { module: ModuleKey; children:
   if (info.anyOf.length > 0 && !info.anyOf.some(can)) {
     return (
       <div className="rounded-md border border-line bg-surface">
+        <h1 className="sr-only">{info.label}</h1>
         <EmptyState icon={<Lock className="size-8" aria-hidden />} title="Permissão insuficiente" description={`Seu usuário não tem acesso a ${info.label}. Fale com o proprietário da oficina se precisar deste acesso.`} />
       </div>
     );

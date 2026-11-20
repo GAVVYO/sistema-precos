@@ -168,7 +168,8 @@ export function MechanicYard() {
   const doneToday = mine.filter((o) => o.status === "done" && o.completedAt && dateOf(o.completedAt) === todayISO()).length;
   const free = view.orders.filter((o) => !o.cancelledAt && o.status === "waiting" && !o.mechanicId).length;
   return (
-    <section className="yard" aria-label="Seus carros">
+    <section className="yard" aria-labelledby="yard-mine-title">
+      <h2 id="yard-mine-title" className="sr-only">Seus carros</h2>
       {waiting.length + doing.length === 0 ? (
         <div className="yard-empty">
           <span className="yard-empty-art" aria-hidden><CarFront /></span>

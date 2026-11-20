@@ -290,7 +290,7 @@ export function PeoplePage() {
                 const last = lastOf((o) => o.customerId === c.id);
                 return (
                   <li key={c.id} className="person-row">
-                    <button type="button" className="person-open" onClick={() => setOpen({ kind: "customers", id: c.id })} aria-label={`Abrir ficha de ${c.name}`}>
+                    <button type="button" className="person-open" onClick={() => setOpen({ kind: "customers", id: c.id })}>
                       <PersonAvatar name={c.name} size={48} />
                       <span className="person-main">
                         <span className="person-name">{c.name}</span>
@@ -321,7 +321,7 @@ export function PeoplePage() {
                 if (!u) return null;
                 return (
                   <li key={m.id} className="person-row" data-inactive={!m.active || undefined}>
-                    <button type="button" className="person-open" onClick={() => setOpen({ kind: "staff", id: m.id })} aria-label={`Abrir ficha de ${u.name}`}>
+                    <button type="button" className="person-open" onClick={() => setOpen({ kind: "staff", id: m.id })}>
                       <PersonAvatar name={u.name} photo={u.photo} size={48} />
                       <span className="person-main">
                         <span className="person-name">{u.name}{m.userId === user.id && <span className="person-you"> (você)</span>}</span>

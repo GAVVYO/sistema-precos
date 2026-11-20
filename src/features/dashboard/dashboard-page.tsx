@@ -49,7 +49,7 @@ function FinanceDashboard({ editing, prefs }: { editing: boolean; prefs: WidgetP
             <EmptyState icon={<CircleDollarSign className="size-7" aria-hidden />} title="Nada a receber" description="Todos os serviços prontos já foram pagos." />
           ) : (
             <table className="data-table">
-              <thead><tr><th>Origem</th><th>Cliente</th><th className="num">Valor</th><th /></tr></thead>
+              <thead><tr><th>Origem</th><th>Cliente</th><th className="num">Valor</th><th><span className="sr-only">Ação</span></th></tr></thead>
               <tbody>
                 {receivables.map((r) => (
                   <tr key={r.key}>

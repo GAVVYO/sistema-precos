@@ -2754,3 +2754,7 @@ html[data-motion="reduce"] .ag-item { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .cfg-swatches > button, .cfg-switch span::after { transition: none; animation: none !important; } }
 /* Serviços: a busca do topo filtra a lista (decisão 92). */
 .svc-searching { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 8px 14px; border-radius: 999px; background: var(--color-primary-soft); font-size: .9375rem; color: var(--primary); }
+/* Número dos avisos e iniciais da conta desenhados pelo CSS: o nome lido pelo leitor de tela
+   começa pelo texto que aparece ("Avisos", "Minha conta"). */
+.topbar-badge[data-count]::after { content: attr(data-count); }
+.topbar-avatar[data-initials]::before { content: attr(data-initials); }

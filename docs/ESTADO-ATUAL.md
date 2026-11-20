@@ -36,6 +36,7 @@
 | (19/11) | App simplificado (botões grandes), animações, clientes com crachá e carimbo (decisões 68–69); **entrada nova com nome + PIN** no site (decisão 70) e rasante do gavião ao entrar (decisão 72); entrada própria para computador com painel azul (decisão 73); conectar o aparelho com e-mail e senha da GAVYO e PIN em 1 passo (decisões 74–75); QR para conectar o celular em Pessoas e entrada do app pelo QR, com digital ou PIN e rasante, e pátio por função no app (decisão 76); Relatórios virou a aba Resultados do Financeiro (decisões 77–79); Caixa redesenhado (81–85); fotos do carro no serviço com câmera no app (decisão 87) |
 | (18/11) | App mobile **E0**: base em `mobile/` (Expo SDK 58), regras do site compartilhadas, tema e componentes base (decisão 67) |
 | (18/11) | App: **primeira versão navegável das telas** (Hoje/pátio, Serviços em abas, ficha, Receber, Novo serviço passo a passo, Pessoas, Conta, Seus carros do mecânico) com dados de demonstração em memória — para discutir a direção visual |
+| `8d79503` (20/11) | Plano "terminar o site": Estoque em cartões com foto da peça, Agenda no Dia, Configurações simples, uma busca em Serviços, passada final (axe limpo em 7 telas × 7 situações), Hoje do Financeiro (decisões 87–94) — **republicado em demo.gavyo.me em 20/11** e conferido no ar |
 
 ### Validação vigente
 

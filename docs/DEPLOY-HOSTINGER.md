@@ -50,3 +50,5 @@ Repita o passo 1 e envie de novo, substituindo os arquivos (pode apagar o conte�
 ## Verificado antes de publicar
 
 `npm run build:hostinger` gera 14 páginas; servido por um servidor de arquivos simples (sem Node), as 4 tarefas da [validação sem treino](validacao/SEM-TREINO-20261117.md) foram concluídas em 1366 e 390 px, axe sem violações, e recarregar páginas internas funciona. Não testado no servidor da Hostinger em si (feito pelo dono da conta).
+
+**20/11:** republicado pelo painel da Hostinger (envio do `gavyo-hostinger.zip` e extração em `public_html` de demo.gavyo.me). Conferido no ar: 7 telas × 7 situações sem erro e axe limpo, as 4 tarefas da validação concluídas, páginas internas e 404 respondendo.

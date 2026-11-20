@@ -69,6 +69,18 @@ export function assertCan(db: Database, ctx: Ctx, ...anyOf: PermissionKey[]): vo
   }
 }
 
+/** Arquivo de imagem guardado no servidor (decisão 99): `/api/arquivos/<oficina>/<nome>.jpg`. */
+export const FILE_URL = /^\/api\/arquivos\/[\w-]+\/[\w-]+\.(jpg|png|webp)$/;
+const DATA_IMAGE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+
+/**
+ * Campo de imagem: foto nova (data URL, a tela manda assim) ou arquivo que já
+ * está no servidor (o servidor troca o data URL pelo endereço ao gravar).
+ */
+export function imageField(maxLength: number, tooBig: string, invalid = "Arquivo de imagem inválido.") {
+  return z.string().max(maxLength, tooBig).refine((v) => DATA_IMAGE.test(v) || FILE_URL.test(v), invalid);
+}
+
 /** Valida a entrada com Zod e converte o primeiro problema em DomainError. */
 export function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);

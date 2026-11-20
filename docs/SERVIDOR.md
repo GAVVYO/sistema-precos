@@ -20,6 +20,7 @@ Decisões 95 e 96. O mesmo projeto Next.js serve as telas e a API; os dados fica
 | `POST /api/desconectar` | Desconecta o aparelho |
 | `GET /api/estado?v=` | Dados da oficina (204 se a versão não mudou) |
 | `POST /api/acoes` | Lote de ações com nome |
+| `GET /api/arquivos/:oficina/:nome` | Foto ou logo (só para quem está na oficina) |
 | `POST /api/gavyo/entrar` | Área da GAVYO: entra com a chave (cookie 8 h) |
 | `GET/POST /api/gavyo/oficinas` | Lista / cria oficina + dono (cookie da área ou `Bearer GAVYO_ADMIN_KEY`) |
 | `POST /api/gavyo/oficinas/:id` | Trocar senha do dono / ativar ou desativar |
@@ -27,7 +28,8 @@ Decisões 95 e 96. O mesmo projeto Next.js serve as telas e a API; os dados fica
 ## Variáveis do servidor (nunca no código)
 
 - `DATABASE_URL` — `mysql://usuario:senha@127.0.0.1:3306/banco` (na Hostinger, sempre 127.0.0.1).
-- `GAVYO_ADMIN_KEY` — chave longa (24+ caracteres) para criar oficinas.
+- `GAVYO_ADMIN_KEY` — chave longa (24+ caracteres) para a Área da GAVYO.
+- `UPLOAD_DIR` — pasta das fotos (padrão `~/gavyo-arquivos`, fora da pasta do app; decisão 99).
 
 As tabelas são criadas sozinhas no primeiro acesso (`src/server/schema.ts`).
 

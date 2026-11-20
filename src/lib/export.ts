@@ -63,6 +63,24 @@ function fileName(title: string, ext: string): string {
 
 type JsPDF = import("jspdf").jsPDF;
 
+/** Logo guardada como arquivo no servidor (decisão 99): o PDF precisa dela em data URL. */
+async function withLogoData(branding: Branding): Promise<Branding> {
+  const src = branding.logoDataUrl;
+  if (!src || src.startsWith("data:") || typeof fetch === "undefined" || typeof FileReader === "undefined") return branding;
+  try {
+    const blob = await (await fetch(src, { credentials: "same-origin" })).blob();
+    const data = await new Promise<string | null>((resolve) => {
+      const r = new FileReader();
+      r.onload = () => resolve(typeof r.result === "string" ? r.result : null);
+      r.onerror = () => resolve(null);
+      r.readAsDataURL(blob);
+    });
+    return { ...branding, logoDataUrl: data };
+  } catch {
+    return { ...branding, logoDataUrl: null };
+  }
+}
+
 /** Cabeçalho com logotipo, oficina e título. Retorna a posição Y seguinte. */
 function pdfHeader(doc: JsPDF, branding: Branding, title: string, lines: string[]): number {
   const width = doc.internal.pageSize.getWidth();
@@ -102,7 +120,8 @@ export async function exportReportPdf(report: ReportData, branding: Branding): P
 }
 
 /** Monta o PDF sem salvar (usado também nos testes automatizados). */
-export async function buildReportPdf(report: ReportData, branding: Branding): Promise<JsPDF> {
+export async function buildReportPdf(report: ReportData, brand: Branding): Promise<JsPDF> {
+  const branding = await withLogoData(brand);
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   const doc = new jsPDF({ orientation: report.columns.length > 6 ? "landscape" : "portrait", unit: "mm", format: "a4" });
   const info = [`Gerado em ${formatDateTime(new Date().toISOString())}`];
@@ -247,7 +266,8 @@ export interface OrderDocument {
   total: string;
 }
 
-export async function exportOrderPdf(order: OrderDocument, branding: Branding): Promise<void> {
+export async function exportOrderPdf(order: OrderDocument, brand: Branding): Promise<void> {
+  const branding = await withLogoData(brand);
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = pdfHeader(doc, branding, order.kind === "Serviço" ? order.number : `${order.kind} · ${order.number}`, [

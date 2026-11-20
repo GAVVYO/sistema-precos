@@ -2,18 +2,14 @@ import { z } from "zod";
 import { ALL_MODULES, ALL_PERMISSIONS, MODULES, ROLE_TEMPLATES } from "@/domain/permissions";
 import type { Database, ID, ModuleKey, PermissionKey, Role, WorkshopMembership } from "@/domain/types";
 import { normalizePhone } from "@/lib/format";
-import { assertCan, Ctx, DomainError, findScoped, membershipOf, newId, parse } from "./core";
+import { assertCan, Ctx, DomainError, findScoped, imageField, membershipOf, newId, parse } from "./core";
 
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida.");
 
 const settingsSchema = z.object({
   displayName: z.string().trim().min(2, "Informe o nome da oficina."),
   phone: z.string().refine((v) => v.trim() === "" || normalizePhone(v) !== null, "Telefone inválido."),
-  logoDataUrl: z
-    .string()
-    .startsWith("data:image/", "Logotipo inválido.")
-    .max(400_000, "Imagem muito grande. Use um logotipo de até 250 KB.")
-    .nullable(),
+  logoDataUrl: imageField(400_000, "Imagem muito grande. Use um logotipo de até 250 KB.", "Logotipo inválido.").nullable(),
   primaryColor: hex,
   secondaryColor: hex,
   activeModules: z.array(z.enum(ALL_MODULES as [ModuleKey, ...ModuleKey[]])),
@@ -87,12 +83,7 @@ export function updateMember(db: Database, ctx: Ctx, membershipId: ID, input: Me
 }
 
 /** Foto do crachá: imagem pequena embutida (data URL), até ~300 KB. */
-const photoSchema = z
-  .string()
-  .regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/, "Foto inválida.")
-  .max(400_000, "Foto grande demais. Escolha outra.")
-  .nullable()
-  .optional();
+const photoSchema = imageField(400_000, "Foto grande demais. Escolha outra.", "Foto inválida.").nullable().optional();
 const memberPhoneSchema = z
   .string()
   .optional()

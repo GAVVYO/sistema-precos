@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Database, ID, OrderPhoto, OrderStatus, PhotoStage } from "@/domain/types";
-import { assertCan, type Ctx, DomainError, findScoped, newId, parse } from "./core";
+import { assertCan, type Ctx, DomainError, findScoped, imageField, newId, parse } from "./core";
 
 /**
  * Fotos do carro no serviço (decisão 87): como chegou (riscos e amassados, para
@@ -24,7 +24,7 @@ const MAX_DATA_URL = 950_000;
 
 const photoSchema = z.object({
   stage: z.enum(["arrival", "during", "done"]),
-  dataUrl: z.string().regex(/^data:image\/(jpeg|png|webp);base64,/, "Arquivo de imagem inválido.").max(MAX_DATA_URL, "Foto grande demais. Tente de novo."),
+  dataUrl: imageField(MAX_DATA_URL, "Foto grande demais. Tente de novo."),
 });
 
 export function addOrderPhoto(db: Database, ctx: Ctx, orderId: ID, input: z.input<typeof photoSchema>): OrderPhoto {

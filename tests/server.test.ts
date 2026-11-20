@@ -9,7 +9,11 @@ import { adminLogin, isAdmin, listWorkshops, resetOwnerPassword, setWorkshopActi
 import { connectDevice, deviceOf, peopleOf, pinLogin, sessionOf } from "@/server/auth";
 import { closePool } from "@/server/db";
 import { createDemoWorkshop, createWorkshop } from "@/server/provision";
+import { readImage } from "@/server/files";
 import { applyBatch, clearCache, readState } from "@/server/workshop-store";
+import { existsSync, mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { DomainError } from "@/services/core";
 
 const URL = process.env.TEST_DATABASE_URL;
@@ -35,6 +39,7 @@ describe.skipIf(!URL)("servidor com MySQL", () => {
     for (const t of ["tenants", "records", "users", "devices", "sessions", "attempts"]) await c.query(`DROP TABLE IF EXISTS ${t}`);
     await c.end();
     process.env.DATABASE_URL = URL;
+    process.env.UPLOAD_DIR = mkdtempSync(path.join(tmpdir(), "gavyo-arquivos-"));
     A = await createWorkshop({ workshopName: "Oficina A", ownerName: "Ana Dona", ownerEmail: "ana@a.com", ownerPassword: "senha-forte-a", ownerPin: "1111" });
     B = await createWorkshop({ workshopName: "Oficina B", ownerName: "Beto Dono", ownerEmail: "beto@b.com", ownerPassword: "senha-forte-b", ownerPin: "2222" });
   });
@@ -152,5 +157,29 @@ describe.skipIf(!URL)("servidor com MySQL", () => {
     await expectCode(connectDevice("beto@b.com", "senha-nova-beto"), "forbidden");
     await setWorkshopActive(B.workshopId, true);
     await expect(connectDevice("beto@b.com", "senha-nova-beto")).resolves.toBeTruthy();
+  });
+
+  it("foto vira arquivo: o banco guarda só o endereço, e apagar a foto apaga o arquivo", async () => {
+    // JPEG mínimo válido (1x1).
+    const jpeg = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=";
+    const created = await applyBatch(A.workshopId, A.ownerId, {
+      calls: [{ name: "createPart", args: [{ code: "FOTO-1", name: "Peça com foto", category: "Filtros", unit: "un", costCents: 100, priceCents: 200, minQuantity: 0, initialQuantity: 1, photo: jpeg }] }],
+      ids: [],
+    });
+    const part = created.changes.upserts.parts![0] as { id: string; photo: string };
+    expect(part.photo).toMatch(new RegExp(`^/api/arquivos/${A.workshopId}/[\\w-]+\\.jpg$`));
+    const name = part.photo.split("/").pop()!;
+    const file = path.join(process.env.UPLOAD_DIR!, A.workshopId, name);
+    expect(existsSync(file)).toBe(true);
+    expect((await readImage(A.workshopId, name))?.type).toBe("image/jpeg");
+    expect(await readImage(B.workshopId, name)).toBeNull();
+    // Editar a peça mantendo a foto (o endereço volta como veio) não cria arquivo novo.
+    await applyBatch(A.workshopId, A.ownerId, { calls: [{ name: "setPartPhoto", args: [part.id, part.photo] }], ids: [] });
+    expect(existsSync(file)).toBe(true);
+    await applyBatch(A.workshopId, A.ownerId, { calls: [{ name: "setPartPhoto", args: [part.id, null] }], ids: [] });
+    expect(existsSync(file)).toBe(false);
+    // Texto disfarçado de JPEG é recusado.
+    const fake = `data:image/jpeg;base64,${Buffer.from("<script>alert(1)</script>").toString("base64")}`;
+    await expectCode(applyBatch(A.workshopId, A.ownerId, { calls: [{ name: "setPartPhoto", args: [part.id, fake] }], ids: [] }), "validation");
   });
 });

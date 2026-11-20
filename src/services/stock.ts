@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Database, ID, Part, StockMovementType } from "@/domain/types";
-import { assertCan, Ctx, DomainError, findScoped, newId, parse } from "./core";
+import { assertCan, Ctx, DomainError, findScoped, imageField, newId, parse } from "./core";
 
 export type PartSituation = "ok" | "low" | "out";
 
@@ -18,7 +18,7 @@ const partSchema = z.object({
   minQuantity: z.number().int("Quantidade mínima deve ser inteira.").min(0, "Quantidade mínima inválida."),
   costCents: z.number().int().min(0, "Custo inválido."),
   priceCents: z.number().int().min(0, "Preço de venda inválido."),
-  photo: z.string().regex(/^data:image\/(jpeg|png|webp);base64,/, "Arquivo de imagem inválido.").max(700_000, "Foto grande demais. Tente de novo.").nullable().optional(),
+  photo: imageField(700_000, "Foto grande demais. Tente de novo.").nullable().optional(),
 });
 
 export type PartInput = z.input<typeof partSchema>;

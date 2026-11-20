@@ -4,6 +4,7 @@ import type { Database, ID } from "@/domain/types";
 import { type CommandBatch, replayCommands } from "@/services/commands";
 import { DomainError, membershipOf } from "@/services/core";
 import { transaction, withConnection } from "./db";
+import { externalizeImages, removeFiles, unusedFiles } from "./files";
 import { hashSecret, isHashed } from "./secrets";
 import { type Changes, emptyDatabase, type Kind, KINDS, keyOf, type Row } from "@/services/sync";
 
@@ -142,20 +143,29 @@ export interface ApplyResult {
 /** Aplica um lote de ações de uma pessoa na oficina dela. */
 export async function applyBatch(workshopId: ID, userId: ID, batch: CommandBatch): Promise<ApplyResult> {
   let saved: { version: number; db: Database } | null = null;
+  let created: string[] = [];
+  let unused: string[] = [];
   const result = await transaction(async (c) => {
     const from = await lockTenant(c, workshopId);
     const before = await current(c, workshopId, from);
     const after = structuredClone(before);
     replayCommands(after, { workshopId, userId, now: new Date() }, batch);
     hashNewPins(after);
+    created = await externalizeImages(after, workshopId);
+    unused = unusedFiles(before, after, workshopId);
     const changes = diff(before, after, workshopId);
     assertOwn(changes, after, workshopId);
     await write(c, workshopId, changes);
     await c.query("UPDATE tenants SET version = ? WHERE id = ?", [from + 1, workshopId]);
     saved = { version: from + 1, db: after };
     return { from, version: from + 1, changes: stripSecrets(changes) };
+  }).catch(async (e) => {
+    // Não gravou: as fotos salvas para este pedido não servem para nada.
+    await removeFiles(created);
+    throw e;
   });
   if (saved) cache.set(workshopId, saved);
+  await removeFiles(unused);
   return result;
 }
 
@@ -175,6 +185,7 @@ export async function readState(workshopId: ID, userId: ID, since?: number): Pro
 /** Grava uma oficina inteira de uma vez (criação pela GAVYO). */
 export async function insertWorkshop(db: Database, workshopId: ID, passwords: Record<ID, string>): Promise<void> {
   hashNewPins(db);
+  await externalizeImages(db, workshopId);
   await transaction(async (c) => {
     await c.query("INSERT INTO tenants (id, version) VALUES (?, 1)", [workshopId]);
     await write(c, workshopId, diff(emptyDatabase(), db, workshopId));

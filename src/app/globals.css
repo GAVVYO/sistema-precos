@@ -2752,3 +2752,5 @@ html[data-motion="reduce"] .ag-item { animation: none !important; }
 .cfg-switch input:checked + span::after { transform: translateX(20px); }
 .cfg-save { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; grid-column: 1 / -1; }
 @media (prefers-reduced-motion: reduce) { .cfg-swatches > button, .cfg-switch span::after { transition: none; animation: none !important; } }
+/* Serviços: a busca do topo filtra a lista (decisão 92). */
+.svc-searching { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 8px 14px; border-radius: 999px; background: var(--color-primary-soft); font-size: .9375rem; color: var(--primary); }

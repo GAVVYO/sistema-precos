@@ -231,3 +231,9 @@ Abre no Dia: setas, faixa da semana e cada horário como cartão numa linha do t
 Sua oficina (logo, nome, telefone), Cores em bolinhas com nome e prévia, e O que aparece no menu com chaves de ligar e desligar.
 
 ![Configurações](imagens/interface/configuracoes.png)
+
+## Serviços: uma busca só (decisão 92)
+
+Na tela de Serviços, a busca do topo filtra a lista ("Mostrando só …" e Limpar).
+
+![Serviços com a busca do topo](imagens/interface/servicos-busca.png)

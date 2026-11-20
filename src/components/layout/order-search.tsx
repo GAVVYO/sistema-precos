@@ -1,7 +1,8 @@
 "use client";
 
+import { setPageSearch, usePageSearch } from "@/lib/page-search";
 import { Search, ArrowUpRight, X, ArrowRight, Plus, CalendarPlus, User, Package } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { QuickOrderAction } from "@/features/orders/quick-order-action";
@@ -32,16 +33,26 @@ export function OrderSearch() {
   const { view, can, settings, online, customerOf, vehicleOf, openOrder, openNewOrder } = useApp();
   const router = useRouter();
   const modules = useVisibleModules();
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  // Em Serviços, esta busca filtra a lista da própria tela (decisão 92).
+  const filtersPage = pathname === "/ordens" || pathname.startsWith("/ordens/");
+  const [query, setQueryRaw] = useState("");
+  const [open, setOpenRaw] = useState(false);
+  const setOpen = (v: boolean) => setOpenRaw(v && !filtersPage);
+  const setQuery = (v: string) => { setQueryRaw(v); if (filtersPage) setPageSearch(v); };
+  const pageQuery = usePageSearch();
+  // Ao trocar de tela, a busca começa vazia (e o filtro de Serviços também).
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) { setLastPath(pathname); setQueryRaw(""); setOpenRaw(false); setPageSearch(""); }
+  const shownQuery = filtersPage ? pageQuery : query;
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const id = useId();
   useEffect(() => {
-    const close = (e: PointerEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
+    const close = (e: PointerEvent) => { if (!root.current?.contains(e.target as Node)) setOpenRaw(false); };
     const keys = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); input.current?.focus(); setOpen(true); }
-      if (e.key === "Escape") setOpen(false);
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); input.current?.focus(); setOpenRaw(true); }
+      if (e.key === "Escape") setOpenRaw(false);
     };
     document.addEventListener("pointerdown", close);
     document.addEventListener("keydown", keys);
@@ -71,9 +82,9 @@ export function OrderSearch() {
   return (
     <div className="order-search" data-tour="search" ref={root} onBlur={(e) => { if (e.relatedTarget instanceof Element && e.relatedTarget.closest("dialog")) return; if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
       <Search size={18} aria-hidden />
-      <input ref={input} aria-label="Buscar placa ou nome do cliente" aria-controls={open ? id : undefined} value={query} onChange={(e) => { setQuery(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} placeholder="Buscar placa ou nome do cliente" />
+      <input ref={input} aria-label={filtersPage ? "Procurar serviço por placa, cliente ou número" : "Buscar placa ou nome do cliente"} aria-controls={open && !filtersPage ? id : undefined} value={shownQuery} onChange={(e) => { setQuery(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} placeholder={filtersPage ? "Placa, cliente ou nº do serviço" : "Buscar placa ou nome do cliente"} />
       {query ? <button type="button" aria-label="Limpar busca global" onClick={() => { setQuery(""); input.current?.focus(); }}><X size={16} aria-hidden /></button> : <kbd>Ctrl K</kbd>}
-      {open && <div id={id} className="order-search-results">
+      {open && !filtersPage && <div id={id} className="order-search-results">
         {nothing && <p className="search-empty">Nada encontrado. Busque por outra placa, nome, número, peça ou comando.</p>}
 
         {actions.length > 0 && <>

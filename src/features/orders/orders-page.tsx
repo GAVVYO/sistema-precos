@@ -1,5 +1,6 @@
 "use client";
 
+import { setPageSearch, usePageSearch } from "@/lib/page-search";
 import { vtName } from "@/lib/view-transition";
 import { isBorn, ORDER_CLOSED_EVENT, takeBorn } from "@/lib/born";
 import { CountUp } from "@/components/ui/count-up";
@@ -124,7 +125,7 @@ function OrderCard({ order, draggable, overlay }: { order: ServiceOrder; draggab
           <GripVertical className="size-4" aria-hidden />
         </button>
       )}
-      <button type="button" className="svc-open" aria-label={`Abrir ${number}, ${customer}`} onClick={(e) => {
+      <button type="button" className="svc-open" onClick={(e) => {
           if (e.ctrlKey || e.metaKey || e.shiftKey) togglePick(order.id);
           else openOrder(order.id);
         }}
@@ -218,7 +219,9 @@ const PERIODS = [
 export function OrdersPage() {
   const { view, can, online, mechanics, customerOf, vehicleOf, openOrder, openNewOrder, membership, user } = useApp();
   const moveOrder = useMoveOrder();
-  const [search, setSearch] = useState("");
+  // Uma busca só (decisão 92): a do topo filtra esta lista.
+  const search = usePageSearch();
+  const setSearch = setPageSearch;
   const [mechanic, setMechanic] = useState("");
   const [period, setPeriod] = useState("all");
   const [dragging, setDragging] = useState<{ type: "order"; order: ServiceOrder } | { type: "part"; partId: ID } | null>(null);
@@ -351,11 +354,7 @@ export function OrdersPage() {
       />
 
       <div className="svc-toolbar">
-        <label className="svc-search" data-tour="search-page">
-          <MagnifyingGlass size={20} weight="duotone" aria-hidden />
-          <span className="sr-only">Buscar serviços</span>
-          <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Placa, nome do cliente ou nº do serviço" />
-        </label>
+        {search.trim() && <p className="svc-searching" role="status"><MagnifyingGlass size={18} weight="bold" aria-hidden /> Mostrando só <strong>“{search.trim()}”</strong></p>}
         <details className="svc-filter">
           <summary>
             <SlidersHorizontal size={20} weight="duotone" aria-hidden />Filtrar
@@ -382,7 +381,7 @@ export function OrdersPage() {
           id="quadro"
           steps={[
             {
-              target: "[data-tour=search-page]",
+              target: ".island-search-slot, .order-search",
               title: "Ache o carro pela placa ou pelo nome",
               body: <p>Digite aqui a placa (ou o nome do cliente) para encontrar o serviço na hora.</p>,
               illustration: <IllusTyping text="QRT4J58" />,

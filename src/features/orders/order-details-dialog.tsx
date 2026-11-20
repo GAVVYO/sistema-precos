@@ -1,39 +1,48 @@
 "use client";
 
-import { Ban, CircleDollarSign, FileDown, MessageCircle, Pencil, RefreshCw } from "lucide-react";
-import { ReactNode, useState } from "react";
+import { OrderPhotos } from "./order-photos";
+import { Check, CurrencyCircleDollar, FilePdf, Gauge, HourglassMedium, Money, NoteBlank, PencilSimple, Phone, Plus, Prohibit, Receipt, SealCheck, WhatsappLogo, Wrench } from "@phosphor-icons/react";
+import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
+import { ReadableText } from "@/components/accessibility/accessibility-controls";
+import { ChoiceGroup } from "@/components/ui/choice";
 import { Dialog } from "@/components/ui/dialog";
-import { Button, Field, Select, Textarea } from "@/components/ui/primitives";
+import { Button, Field, Input, Textarea } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { ORDER_STATUS_LABELS, ORDER_STATUSES, PAYMENT_METHOD_LABELS } from "@/domain/labels";
 import type { ID, OrderStatus } from "@/domain/types";
+import { MiniPlate } from "@/features/dashboard/yard";
 import { exportOrderPdf } from "@/lib/export";
-import { formatBRL, formatBRLOrPending, formatDateTime, formatOrderNumber, formatPhone, formatPlate } from "@/lib/format";
+import { addDays, dateOf, formatBRL, formatBRLOrPending, formatDateTime, formatOrderNumber, formatPhone, formatPlate, formatTime, parseBRL, todayISO } from "@/lib/format";
 import { quoteMessage, statusMessage } from "@/lib/whatsapp";
-import {
-  canChangeStatus, changeOrderStatus, orderTotals, PAYMENT_SITUATION_LABELS, paymentSituation, setOrderItems,
-} from "@/services/orders";
+import { canChangeStatus, orderTotals, PAYMENT_SITUATION_LABELS, paymentSituation } from "@/services/orders";
+import { useMoveOrder } from "./move-order";
+import { useOrderActions } from "./order-actions";
 import { CancelOrderDialog, EditOrderDialog, PaymentDialog, WhatsAppDialog } from "./order-dialogs";
-import { DraftItem, draftsToItems, orderTotalText, PartsEditor, PaymentBadge, StatusBadge, toDrafts, vehicleLabel } from "./shared";
+import { QuickOrderAction } from "./quick-order-action";
+import { DraftItem, draftsToItems, orderTotalText, PartsEditor, toDrafts, vehicleLabel } from "./shared";
+import { maskMoney } from "@/lib/masks";
 
-function Info({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <dt className="text-xs text-muted">{label}</dt>
-      <dd className="text-[13px] font-medium">{children}</dd>
-    </div>
-  );
+/** "hoje às 14:43", "ontem às 9:10", "em 13/11 às 8:00". */
+function sinceWhen(at: string): string {
+  const d = dateOf(at);
+  const today = todayISO();
+  const day = d === today ? "hoje" : d === addDays(today, -1) ? "ontem" : `em ${formatDateTime(at).slice(0, 5)}`;
+  return `${day} às ${formatTime(at)}`;
 }
 
 type Sub = null | "edit" | "pay" | "cancel" | "quote" | "update";
 
 export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose: () => void }) {
-  const { db, view, act, can, online, user, settings, customerOf, vehicleOf, userOf, partOf } = useApp();
+  const { db, view, act, can, online, user, settings, mechanics, customerOf, vehicleOf, userOf, partOf } = useApp();
   const [sub, setSub] = useState<Sub>(null);
   const [drafts, setDrafts] = useState<DraftItem[] | null>(null);
   const [correction, setCorrection] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [pickMech, setPickMech] = useState(false);
+  const [laborDraft, setLaborDraft] = useState<string | null>(null);
+  const { assign, setLabor } = useOrderActions();
+  const moveOrder = useMoveOrder();
 
   const order = view.orders.find((o) => o.id === orderId);
   if (!order) return null;
@@ -54,7 +63,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
   const saveParts = () => {
     const parsed = draftsToItems(drafts ?? []);
     if (typeof parsed === "string") return toast("error", parsed);
-    const r = act((d, c) => setOrderItems(d, c, order.id, parsed, correction), "Peças atualizadas e estoque ajustado.");
+    const r = act((c) => c.setOrderItems(order.id, parsed, correction), "Peças atualizadas e estoque ajustado.");
     if (r.ok) {
       setDrafts(null);
       setCorrection("");
@@ -67,8 +76,8 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
       await exportOrderPdf(
         {
           number,
-          kind: order.status === "done" || order.paymentId ? "Ordem de serviço" : "Orçamento",
-          status: cancelled ? "Cancelada" : ORDER_STATUS_LABELS[order.status],
+          kind: order.status === "done" || order.paymentId ? "Serviço" : "Orçamento",
+          status: cancelled ? "Cancelado" : ORDER_STATUS_LABELS[order.status],
           payment: PAYMENT_SITUATION_LABELS[situation],
           openedAt: formatDateTime(order.openedAt),
           customer: customer?.name ?? "",
@@ -106,180 +115,202 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
     plate: vehicle?.plate ?? "",
   };
 
+  const mechanicName = userOf(order.mechanicId)?.name;
+  const paidStep = situation === "paid" || situation === "free";
+  const steps: { key: OrderStatus | "paid"; label: string; Icon: typeof Wrench }[] = [
+    { key: "waiting", label: "Aguardando", Icon: HourglassMedium },
+    { key: "in_progress", label: "Em andamento", Icon: Wrench },
+    { key: "done", label: "Pronto", Icon: SealCheck },
+    { key: "paid", label: "Pago", Icon: Money },
+  ];
+  const at = paidStep && order.status === "done" ? 3 : ORDER_STATUSES.indexOf(order.status);
+  const laborValue = laborDraft ?? "";
+  const canSetLabor = can("os.edit") && !locked && totals.laborPending;
+  const saveLabor = () => {
+    const cents = parseBRL(laborValue);
+    if (cents === null) return toast("error", "Escreva o valor da mão de obra. Ex.: 150,00");
+    setLabor(order, cents);
+    setLaborDraft(null);
+  };
+
   return (
     <>
       <Dialog
-        title={`${number} — ${order.description}`}
+        className="order-hero-dialog osd"
+        title={
+          <span className="osd-title">
+            <MiniPlate plate={vehicle?.plate} />
+            <span className="osd-title-text">
+              <span className="osd-car">{vehicleLabel(vehicle)}</span>
+              <span className="osd-owner">{customer?.name ?? "Cliente"}</span>
+            </span>
+          </span>
+        }
         subtitle={
-          <span className="flex flex-wrap items-center gap-2">
-            <StatusBadge order={order} />
-            <PaymentBadge order={order} />
-            <span>Aberta em {formatDateTime(order.openedAt)}</span>
+          <span className="osd-sub">
+            <span>{number} · aberto {sinceWhen(order.openedAt)}</span>
+            {!cancelled && (
+              <ol className="osd-steps" aria-label="Caminho do serviço">
+                {steps.map((st, i) => {
+                  const state = i < at ? "done" : i === at ? "current" : "todo";
+                  const target = st.key !== "paid" && st.key !== order.status && canChangeStatus(db, ctx, order.status, st.key) && !order.paymentId;
+                  const payable = st.key === "paid" && situation === "pending" && order.status === "done" && can("finance.payment");
+                  const content = <><span className="osd-step-dot" aria-hidden>{state === "done" ? <Check size={14} weight="bold" /> : <st.Icon size={16} weight="duotone" />}</span><span className="osd-step-label">{st.label}</span></>;
+                  return (
+                    <li key={st.key} className="osd-step" data-state={state} aria-current={state === "current" ? "step" : undefined}>
+                      {target || payable ? (
+                        <button type="button" disabled={!online} title={payable ? "Receber" : `Mudar para ${st.label}`} onClick={() => (payable ? setSub("pay") : moveOrder(order, st.key as OrderStatus))}>{content}</button>
+                      ) : <span>{content}</span>}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
           </span>
         }
         size="lg"
         onClose={onClose}
         footer={
           <>
-            {!cancelled && (
-              <label className="mr-auto flex items-center gap-2 text-xs text-muted">
-                Status
-                <Select
-                  className="h-8 w-40"
-                  value={order.status}
-                  disabled={!online || !ORDER_STATUSES.some((s) => s !== order.status && canChangeStatus(db, ctx, order.status, s))}
-                  onChange={(e) => {
-                    const next = e.target.value as OrderStatus;
-                    act((d, c) => changeOrderStatus(d, c, order.id, next), `${number} movida para ${ORDER_STATUS_LABELS[next]}.`);
-                  }}
-                >
-                  {ORDER_STATUSES.map((s) => (
-                    <option key={s} value={s} disabled={s !== order.status && !canChangeStatus(db, ctx, order.status, s)}>
-                      {ORDER_STATUS_LABELS[s]}
-                    </option>
-                  ))}
-                </Select>
-              </label>
-            )}
-            {can("os.cancel") && !locked && order.status !== "done" && (
-              <Button variant="danger" icon={<Ban className="size-4" aria-hidden />} disabled={!online} onClick={() => setSub("cancel")}>
-                Cancelar OS
-              </Button>
-            )}
-            <Button icon={<FileDown className="size-4" aria-hidden />} loading={exporting} onClick={downloadPdf}>
-              Gerar PDF
-            </Button>
             {can("os.edit") && !cancelled && (
-              <Button icon={<Pencil className="size-4" aria-hidden />} disabled={!online} onClick={() => setSub("edit")}>
-                Editar
+              <Button className="mr-auto" icon={<PencilSimple size={18} weight="duotone" aria-hidden />} disabled={!online} onClick={() => setSub("edit")}>
+                Editar serviço
               </Button>
             )}
-            {can("finance.payment") && situation === "pending" && (
-              <Button variant="primary" icon={<CircleDollarSign className="size-4" aria-hidden />} disabled={!online} onClick={() => setSub("pay")}>
-                Registrar pagamento
+            {can("finance.payment") && situation === "pending" && order.status === "done" ? (
+              <Button variant="primary" icon={<CurrencyCircleDollar size={18} weight="duotone" aria-hidden />} disabled={!online} onClick={() => setSub("pay")}>
+                Receber {formatBRL(totals.totalCents)}
               </Button>
-            )}
+            ) : !cancelled ? <QuickOrderAction order={order} size="md" statusOnly /> : null}
           </>
         }
       >
         {cancelled && (
-          <div className="mb-4 rounded-md border border-red-200 bg-danger-soft px-3 py-2 text-[13px] text-danger">
-            <strong>OS cancelada</strong> em {formatDateTime(order.cancelledAt!)}. Motivo: {order.cancelReason}
+          <div className="osd-alert" role="note">
+            <strong>Serviço cancelado</strong> em {formatDateTime(order.cancelledAt!)}. Motivo: {order.cancelReason}
           </div>
         )}
 
-        <div className="grid gap-5 lg:grid-cols-[1fr_260px]">
-          <div className="space-y-5">
-            <dl className="grid grid-cols-3 gap-x-4 gap-y-3 rounded-md border border-line p-3">
-              <Info label="Cliente">{customer?.name ?? "—"}</Info>
-              <Info label="Telefone">{customer ? formatPhone(customer.phone) : "—"}</Info>
-              <Info label="Responsável">{userOf(order.mechanicId)?.name ?? "A definir"}</Info>
-              <Info label="Veículo">{vehicleLabel(vehicle)}</Info>
-              <Info label="Placa">{vehicle ? formatPlate(vehicle.plate) : "—"}</Info>
-              <Info label="Quilometragem">{order.mileage ? `${order.mileage.toLocaleString("pt-BR")} km` : "—"}</Info>
-              {order.notes && (
-                <div className="col-span-3">
-                  <dt className="text-xs text-muted">Observações</dt>
-                  <dd className="text-[13px]">{order.notes}</dd>
-                </div>
+        <div className="osd-grid">
+          <div className="osd-main">
+            <section className="osd-block" aria-labelledby="osd-what">
+              <h3 id="osd-what" className="osd-h">O que fazer</h3>
+              <p className="osd-desc"><ReadableText label="descrição do serviço" text={order.description} /></p>
+              <div className="osd-facts">
+                <span className="osd-fact"><span className="svc-avatar" aria-hidden>{mechanicName ? mechanicName.split(" ").map((w) => w[0]).slice(0, 2).join("") : "?"}</span>{mechanicName ? <>Com <strong>{mechanicName.split(" ").slice(0, 2).join(" ")}</strong></> : "Ninguém pegou ainda"}</span>
+                {order.mileage ? <span className="osd-fact"><Gauge size={18} weight="duotone" aria-hidden />{order.mileage.toLocaleString("pt-BR")} km</span> : null}
+                {can("os.edit") && !cancelled && (
+                  <button type="button" className="osd-link" disabled={!online} aria-expanded={pickMech} onClick={() => setPickMech((v) => !v)}>{mechanicName ? "Trocar quem faz" : "Escolher quem faz"}</button>
+                )}
+              </div>
+              {pickMech && (
+                <ChoiceGroup
+                  className="osd-pick"
+                  label="Quem vai fazer?"
+                  value={order.mechanicId ?? ""}
+                  onChange={(v) => { assign(order, v || null); setPickMech(false); }}
+                  options={[{ value: "", label: "Ainda não sei" }, ...mechanics.map((m) => ({ value: m.id, label: m.name.split(" ").slice(0, 2).join(" ") }))]}
+                />
               )}
-            </dl>
+              {order.notes && <p className="osd-notes"><NoteBlank size={18} weight="duotone" aria-hidden />{order.notes}</p>}
+            </section>
 
-            <section>
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Peças utilizadas</h3>
+            <section className="osd-block" aria-labelledby="osd-parts">
+              <div className="osd-h-row">
+                <h3 id="osd-parts" className="osd-h">Peças <span className="osd-count">{items.length}</span></h3>
                 {canEditParts && drafts === null && (
-                  <Button size="sm" disabled={!online} onClick={() => setDrafts(toDrafts(items))}>
-                    {order.status === "done" ? "Corrigir peças" : "Adicionar ou remover peças"}
+                  <Button size="sm" icon={<Plus size={16} weight="bold" aria-hidden />} disabled={!online} onClick={() => setDrafts(toDrafts(items))}>
+                    {order.status === "done" ? "Corrigir peças" : items.length ? "Adicionar ou tirar" : "Adicionar peça"}
                   </Button>
                 )}
               </div>
               {drafts !== null ? (
-                <div className="space-y-3 rounded-md border border-primary/40 bg-primary-soft/40 p-3">
+                <div className="osd-edit">
                   <PartsEditor drafts={drafts} onChange={setDrafts} alreadyUsed={new Map(items.map((i) => [i.partId, i.quantity]))} />
                   {order.status === "done" && (
-                    <Field label="Motivo da correção" hint="Obrigatório: esta OS já foi concluída e a correção ficará registrada no histórico e no estoque.">
+                    <Field label="Por que está corrigindo?" hint="O serviço já está pronto: a correção fica registrada no histórico e no estoque.">
                       {(p) => <Textarea {...p} rows={2} value={correction} onChange={(e) => setCorrection(e.target.value)} />}
                     </Field>
                   )}
-                  <div className="flex items-center justify-end gap-2">
-                    <span className="mr-auto text-xs text-muted">O estoque é movimentado apenas pela diferença.</span>
-                    <Button size="sm" onClick={() => { setDrafts(null); setCorrection(""); }}>Descartar</Button>
-                    <Button size="sm" variant="primary" disabled={!online} onClick={saveParts}>Salvar peças</Button>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <span className="mr-auto text-sm text-muted">O estoque muda só pela diferença.</span>
+                    <Button onClick={() => { setDrafts(null); setCorrection(""); }}>Descartar</Button>
+                    <Button variant="primary" disabled={!online} onClick={saveParts}>Salvar peças</Button>
                   </div>
                 </div>
               ) : items.length === 0 ? (
-                <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-[13px] text-muted">Nenhuma peça adicionada a esta OS.</p>
+                <p className="osd-empty">Nenhuma peça lançada ainda.</p>
               ) : (
-                <div className="overflow-x-auto rounded-md border border-line">
-                  <table className="data-table">
-                    <thead>
-                      <tr><th>Peça</th><th className="num">Qtd.</th><th className="num">Preço unit.</th><th className="num">Subtotal</th></tr>
-                    </thead>
-                    <tbody>
-                      {items.map((i) => (
-                        <tr key={i.id}>
-                          <td>{partOf(i.partId)?.name ?? "Peça removida"} <span className="text-xs text-muted">{partOf(i.partId)?.code}</span></td>
-                          <td className="num">{i.quantity}</td>
-                          <td className="num">{formatBRL(i.unitPriceCents)}</td>
-                          <td className="num">{formatBRL(i.quantity * i.unitPriceCents)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <ul className="osd-parts">
+                  {items.map((i) => (
+                    <li key={i.id}>
+                      <span className="osd-part-name">{partOf(i.partId)?.name ?? "Peça removida"}</span>
+                      <span className="osd-part-qty">{i.quantity} × {formatBRL(i.unitPriceCents)}</span>
+                      <span className="osd-part-sum">{formatBRL(i.quantity * i.unitPriceCents)}</span>
+                    </li>
+                  ))}
+                </ul>
               )}
             </section>
 
-            <section>
-              <h3 className="mb-2 text-sm font-semibold">Histórico de alterações</h3>
-              <ol className="space-y-1.5 border-l-2 border-line pl-3">
+            <OrderPhotos order={order} />
+
+            <details className="more-details osd-history">
+              <summary>O que aconteceu ({events.length})</summary>
+              <ol className="osd-timeline more-details-body">
                 {events.map((e) => (
-                  <li key={e.id} className="text-[13px]">
-                    <span className="text-xs text-muted">{formatDateTime(e.at)} · {userOf(e.userId)?.name ?? "Usuário"}</span>
-                    <br />
-                    {e.message}
+                  <li key={e.id}>
+                    <span className="osd-tl-msg">{e.message}</span>
+                    <span className="osd-tl-meta">{formatDateTime(e.at)} · {userOf(e.userId)?.name ?? "Usuário"}</span>
                   </li>
                 ))}
               </ol>
-            </section>
+            </details>
           </div>
 
-          <aside className="space-y-3">
-            <div className="rounded-md border border-line p-3">
-              <h3 className="mb-2 text-sm font-semibold">Valores</h3>
-              <dl className="space-y-1 text-[13px]">
-                <div className="flex justify-between"><dt className="text-muted">Mão de obra</dt><dd>{formatBRLOrPending(totals.laborCents)}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted">Peças</dt><dd>{formatBRL(totals.partsCents)}</dd></div>
-                <div className="flex justify-between border-t border-line pt-1.5 text-base font-semibold"><dt>Total</dt><dd>{orderTotalText(totals)}</dd></div>
+          <aside className="osd-side" aria-label="Valor e ações">
+            <section className="osd-money" aria-labelledby="osd-total">
+              <h3 id="osd-total" className="osd-h">Quanto custa</h3>
+              <p className="osd-total"><ReadableText label="total do serviço" text={totals.laborPending ? orderTotalText(totals) : formatBRL(totals.totalCents)} /></p>
+              <dl className="osd-break">
+                <div><dt>Mão de obra</dt><dd>{formatBRLOrPending(totals.laborCents)}</dd></div>
+                <div><dt>Peças</dt><dd>{formatBRL(totals.partsCents)}</dd></div>
               </dl>
-              <p className="mt-2 text-xs text-muted">
+              {canSetLabor && (laborDraft === null ? (
+                <Button className="w-full" icon={<PencilSimple size={16} weight="duotone" aria-hidden />} disabled={!online} onClick={() => setLaborDraft("")}>Definir mão de obra</Button>
+              ) : (
+                <form className="osd-labor" onSubmit={(e) => { e.preventDefault(); saveLabor(); }}>
+                  <Field label="Mão de obra (R$)">{(p) => <Input {...p} inputMode="decimal" autoFocus value={laborValue} onChange={(e) => setLaborDraft(maskMoney(e.target.value))} />}</Field>
+                  <div className="flex gap-2"><Button onClick={() => setLaborDraft(null)}>Cancelar</Button><Button type="submit" variant="primary" disabled={!online}>Salvar</Button></div>
+                </form>
+              ))}
+              <p className="osd-paynote" data-state={situation}>
                 {situation === "paid" && payment
-                  ? `Pago em ${formatDateTime(payment.paidAt)} via ${PAYMENT_METHOD_LABELS[payment.method]}.`
+                  ? <><SealCheck size={18} weight="duotone" aria-hidden />Pago {sinceWhen(payment.paidAt)} no {PAYMENT_METHOD_LABELS[payment.method].toLowerCase()}.</>
                   : situation === "pending"
-                    ? order.status === "done" ? "Serviço concluído, aguardando pagamento." : "Pagamento ainda não registrado."
+                    ? order.status === "done" ? "Pronto, falta receber." : "Ainda não foi pago."
                     : situation === "undefined"
-                      ? "Informe a mão de obra para liberar o pagamento."
+                      ? "Falta definir a mão de obra para poder receber."
                       : situation === "free" ? "Serviço sem cobrança." : ""}
               </p>
               {can("finance.view") && !totals.laborPending && totals.totalCents > 0 && (
-                <p className="mt-2 border-t border-line pt-2 text-xs text-muted">
-                  Margem estimada: <strong className="text-ink">{formatBRL(totals.totalCents - totals.partsCostCents)}</strong>
-                  <br />
-                  Considera apenas o custo das peças ({formatBRL(totals.partsCostCents)}); não inclui mão de obra interna nem despesas fixas.
-                </p>
+                <p className="osd-margin">Sobra estimada: <strong>{formatBRL(totals.totalCents - totals.partsCostCents)}</strong> <span>(tirando só o custo das peças)</span></p>
               )}
-            </div>
+            </section>
 
             {!cancelled && customer && (
-              <div className="rounded-md border border-line p-3">
-                <h3 className="mb-2 text-sm font-semibold">WhatsApp</h3>
-                <div className="flex flex-col gap-2">
-                  <Button icon={<MessageCircle className="size-4" aria-hidden />} onClick={() => setSub("quote")}>Enviar orçamento</Button>
-                  <Button icon={<RefreshCw className="size-4" aria-hidden />} onClick={() => setSub("update")}>Enviar atualização</Button>
-                </div>
-              </div>
+              <section className="osd-actions" aria-label="Falar com o cliente">
+                <a className="osd-action" href={`tel:${customer.phone}`}><Phone size={20} weight="duotone" aria-hidden /><span>Ligar<small>{formatPhone(customer.phone)}</small></span></a>
+                <button type="button" className="osd-action" onClick={() => setSub("update")}><WhatsappLogo size={20} weight="duotone" aria-hidden /><span>Avisar no WhatsApp<small>Como está o carro</small></span></button>
+                <button type="button" className="osd-action" onClick={() => setSub("quote")}><Receipt size={20} weight="duotone" aria-hidden /><span>Mandar orçamento<small>Pelo WhatsApp</small></span></button>
+              </section>
             )}
+            <section className="osd-actions is-quiet" aria-label="Outras ações">
+              <button type="button" className="osd-action" disabled={exporting} onClick={downloadPdf}><FilePdf size={20} weight="duotone" aria-hidden /><span>{exporting ? "Gerando PDF…" : "Gerar PDF"}</span></button>
+              {can("os.cancel") && !locked && order.status !== "done" && (
+                <button type="button" className="osd-action is-danger" disabled={!online} onClick={() => setSub("cancel")}><Prohibit size={20} weight="duotone" aria-hidden /><span>Cancelar serviço</span></button>
+              )}
+            </section>
           </aside>
         </div>
       </Dialog>
@@ -289,7 +320,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
       {sub === "cancel" && <CancelOrderDialog order={order} hasParts={items.length > 0} onClose={() => setSub(null)} />}
       {sub === "quote" && customer && (
         <WhatsAppDialog
-          title={`Orçamento da ${number}`}
+          title={`Orçamento do ${number}`}
           phone={customer.phone}
           text={quoteMessage({ ...whatsappBase, description: order.description, laborCents: totals.laborCents, partsCents: totals.partsCents, totalCents: totals.totalCents })}
           onClose={() => setSub(null)}
@@ -297,7 +328,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
       )}
       {sub === "update" && customer && (
         <WhatsAppDialog
-          title={`Atualização da ${number}`}
+          title={`Atualização do ${number}`}
           phone={customer.phone}
           text={statusMessage({ ...whatsappBase, orderNumber: order.number, statusLabel: ORDER_STATUS_LABELS[order.status] })}
           onClose={() => setSub(null)}

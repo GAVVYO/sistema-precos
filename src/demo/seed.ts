@@ -5,6 +5,7 @@
  * com datas relativas ao dia atual. Assim toda OS paga tem sua receita,
  * e toda peça usada tem a movimentação de estoque correspondente.
  */
+import { demoHash } from "@/services/auth";
 import { ALL_MODULES, ROLE_TEMPLATES } from "@/domain/permissions";
 import type { Database, ID, PaymentMethod, Role } from "@/domain/types";
 import { addDays, fortalezaInstant, todayISO } from "@/lib/format";
@@ -17,6 +18,8 @@ import { createPart } from "@/services/stock";
 export const DEMO_WORKSHOP_ID = "ws-passare";
 export const SECOND_WORKSHOP_ID = "ws-castelao";
 export const DEMO_OWNER_ID = "u-carlos";
+/** Senha que a GAVYO entregou aos donos da demonstração (mostrada na tela de entrada). */
+export const DEMO_OWNER_PASSWORD = "gavyo2026";
 
 export function emptyDatabase(): Database {
   return {
@@ -30,6 +33,7 @@ export function emptyDatabase(): Database {
     orders: [],
     orderItems: [],
     orderEvents: [],
+    orderPhotos: [],
     parts: [],
     stockMovements: [],
     appointments: [],
@@ -111,8 +115,37 @@ export function buildSeed(now: Date = new Date()): Database {
     ],
     at(60).toISOString(),
   );
+  // A GAVYO entrega e-mail e senha a cada dono (decisão 75).
+  for (const id of [DEMO_OWNER_ID, "u-marcos"]) db.users.find((u) => u.id === id)!.passwordHash = demoHash(DEMO_OWNER_PASSWORD);
 
   seedWorkshop(db, now, DEMO_WORKSHOP_ID, DEMO_OWNER_ID, {
+    history: {
+      customers: [
+        ["Antônio Carlos Ribeiro", "85991110201", "PNA3B21", "Fiat", "Strada", 2019],
+        ["Luzia Helena Martins", "85991110202", "OSE7C44", "Chevrolet", "Onix", 2020],
+        ["Raimunda Ferreira Lima", "85991110203", "HYU2D10", "Hyundai", "HB20", 2018],
+        ["Paulo Sérgio Andrade", "85991110204", "PMQ9E83", "Toyota", "Hilux", 2017],
+        ["Expedito Nogueira", "85991110205", "NQB4F62", "Volkswagen", "Fox", 2012],
+        ["Socorro Bezerra Lima", "85991110206", "MXT1G37", "Fiat", "Palio", 2010],
+        ["Francisco Holanda Costa", "85991110207", "OCV5H19", "Ford", "EcoSport", 2014],
+        ["Marta Rejane Sales", "85991110208", "PNH8J52", "Renault", "Kwid", 2021],
+      ],
+      services: [
+        ["Troca de óleo e filtro", 9000], ["Alinhamento e balanceamento", 12000], ["Troca de pastilhas de freio", 18000],
+        ["Revisão completa", 35000], ["Troca de óleo", 8000], ["Diagnóstico elétrico", 15000], ["Troca de correia dentada", 30000],
+      ],
+      visits: [
+        // Mês passado e retrasado: clientes que voltam.
+        [20, 0, 0, "u-raimundo"], [48, 0, 1, "u-wesley"], [95, 0, 4, "u-raimundo"],
+        [24, 1, 1, "u-wesley"], [70, 1, 0, "u-raimundo"],
+        [32, 2, 2, "u-raimundo"], [60, 2, 4, "u-raimundo"], [118, 2, 3, "u-wesley"],
+        [27, 3, 3, "u-wesley"], [86, 3, 6, "u-raimundo"],
+        [36, 7, 0, "u-raimundo"], [41, 7, 5, "u-wesley"],
+        [22, 2, 0, "u-raimundo"], [30, 3, 1, "u-raimundo"], [45, 1, 2, "u-wesley"],
+        // Sumidos: último serviço há mais de 6 meses.
+        [205, 4, 0, "u-raimundo"], [240, 5, 2, "u-wesley"], [300, 5, 4, "u-raimundo"], [215, 6, 3, "u-raimundo"],
+      ],
+    },
     parts: [
       ["FIL-001", "Filtro de óleo", "Filtros", 24, 5, 1800, 3500],
       ["FIL-002", "Filtro de ar", "Filtros", 12, 4, 2500, 4990],
@@ -187,7 +220,16 @@ export function buildSeed(now: Date = new Date()): Database {
   return db;
 }
 
+/** Histórico de meses anteriores (decisão 77): clientes que voltam e clientes sumidos, para o Desempenho. */
+type HistoryVisit = [daysAgo: number, customer: number, service: number, mechanic: ID];
+interface History {
+  customers: [name: string, phone: string, plate: string, brand: string, model: string, year: number][];
+  services: [description: string, laborCents: number][];
+  visits: HistoryVisit[];
+}
+
 interface WorkshopSeed {
+  history?: History;
   parts: [code: string, name: string, category: string, qty: number, min: number, cost: number, price: number][];
   orders: SeedOrder[];
   expenses: [daysAgo: number, description: string, category: string, cents: number, method: PaymentMethod][];
@@ -206,6 +248,23 @@ function seedWorkshop(db: Database, now: Date, workshopId: ID, ownerId: ID, seed
     });
   }
   const partByCode = (code: string) => db.parts.find((p) => p.workshopId === workshopId && p.code === code)!;
+
+  // Primeiro o histórico (mais antigo), para a numeração dos serviços seguir a ordem das datas.
+  for (const [daysAgo, ci, si, mechanicId] of [...(seed.history?.visits ?? [])].sort((a, b) => b[0] - a[0])) {
+    const [name, phone, plate, brand, model, year] = seed.history!.customers[ci];
+    const [description, labor] = seed.history!.services[si];
+    const opened = at(daysAgo, "09:10");
+    const known = db.customers.find((c) => c.workshopId === workshopId && c.phone === phone);
+    const car = known && db.vehicles.find((v) => v.workshopId === workshopId && v.plate === plate);
+    const order = createOrder(db, ctxAt(opened), {
+      customer: known ? { id: known.id } : { name, phone },
+      vehicle: car ? { id: car.id } : { plate, brand, model, year, mileage: null },
+      description, notes: "", mechanicId, laborCents: labor, mileage: null, items: [],
+    });
+    changeOrderStatus(db, ctxAt(new Date(opened.getTime() + 3_600_000)), order.id, "in_progress");
+    changeOrderStatus(db, ctxAt(new Date(opened.getTime() + 5 * 3_600_000)), order.id, "done");
+    registerPayment(db, ctxAt(new Date(opened.getTime() + 6 * 3_600_000)), order.id, { method: daysAgo % 3 ? "pix" : "card" });
+  }
 
   for (const o of seed.orders) {
     const opened = o.daysAgo === 0 ? new Date(now.getTime() - (o.hoursAgo ?? 1) * 3_600_000) : at(o.daysAgo, "08:40");

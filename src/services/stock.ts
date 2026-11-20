@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Database, ID, Part, StockMovementType } from "@/domain/types";
-import { assertCan, Ctx, DomainError, findScoped, newId, parse } from "./core";
+import { assertCan, Ctx, DomainError, findScoped, imageField, newId, parse } from "./core";
 
 export type PartSituation = "ok" | "low" | "out";
 
@@ -18,6 +18,7 @@ const partSchema = z.object({
   minQuantity: z.number().int("Quantidade mínima deve ser inteira.").min(0, "Quantidade mínima inválida."),
   costCents: z.number().int().min(0, "Custo inválido."),
   priceCents: z.number().int().min(0, "Preço de venda inválido."),
+  photo: imageField(700_000, "Foto grande demais. Tente de novo.").nullable().optional(),
 });
 
 export type PartInput = z.input<typeof partSchema>;
@@ -90,6 +91,13 @@ export function updatePart(db: Database, ctx: Ctx, partId: ID, input: PartInput)
   assertUniqueCode(db, ctx, data.code, partId);
   Object.assign(part, data);
   return part;
+}
+
+/** Trocar ou tirar a foto da peça sem abrir o cadastro inteiro (decisão 89). */
+export function setPartPhoto(db: Database, ctx: Ctx, partId: ID, photo: string | null): void {
+  assertCan(db, ctx, "stock.move");
+  const part = findScoped(db.parts, ctx, partId, "Peça não encontrada.");
+  part.photo = parse(partSchema.shape.photo, photo) ?? null;
 }
 
 const moveSchema = z.object({

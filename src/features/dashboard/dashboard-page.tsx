@@ -1,329 +1,127 @@
 "use client";
 
-import { CalendarDays, CalendarPlus, CheckCircle2, CircleDollarSign, PackageCheck, Plus, Wrench } from "lucide-react";
+import { CalendarPlus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
-import { Badge, Button, Card, CardHeader, EmptyState, PageHeader, Stat } from "@/components/ui/primitives";
-import { APPOINTMENT_STATUS_LABELS, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from "@/domain/labels";
-import { ROLE_LABELS } from "@/domain/permissions";
-import type { ServiceOrder } from "@/domain/types";
+import { PersonAvatar } from "@/components/ui/person-avatar";
+import { Button, Card, EmptyState, PageHeader } from "@/components/ui/primitives";
+import { PAYMENT_METHOD_LABELS } from "@/domain/labels";
+import type { Cents, FinancialTransaction } from "@/domain/types";
+import { SettleDialog } from "@/features/finance/finance-page";
 import { PaymentDialog } from "@/features/orders/order-dialogs";
-import { StatusBadge, vehicleLabel } from "@/features/orders/shared";
-import {
-  addDays, dateOf, formatBRL, formatDate, formatDateTime, formatOrderNumber, formatPlate, formatTime, startOfMonth, todayISO, weekdayName,
-} from "@/lib/format";
+import { vehicleLabel } from "@/features/orders/shared";
+import { formatBRL, formatDate, monthName, startOfMonth, todayISO, weekdayName } from "@/lib/format";
 import { financeSummary, listReceivables } from "@/services/finance";
-import { changeOrderStatus } from "@/services/orders";
-import { partSituation } from "@/services/stock";
+import { TodayRail } from "./today-panel";
+import { MechanicYard, useYard, Yard } from "./yard";
 
-function OrderLink({ order }: { order: ServiceOrder }) {
-  const { openOrder } = useApp();
-  return (
-    <button type="button" className="font-semibold whitespace-nowrap text-primary hover:underline" onClick={() => openOrder(order.id)}>
-      {formatOrderNumber(order.number)}
-    </button>
-  );
-}
+/**
+ * Hoje do perfil Financeiro (decisão 94), no padrão do Caixa: uma frase com o
+ * mês, quem está devendo (com Receber) e o que entrou e saiu por último.
+ */
+function FinanceToday() {
+  const { view, customerOf, vehicleOf, can, online } = useApp();
+  const [payOrder, setPayOrder] = useState<string | null>(null);
+  const [settle, setSettle] = useState<FinancialTransaction | null>(null);
+  const today = todayISO();
+  const summary = financeSummary(view, startOfMonth(today), today);
+  const receivables = listReceivables(view);
+  const owed = receivables.reduce((s, r) => s + r.amountCents, 0);
+  const recent = view.transactions.filter((t) => t.status === "paid").sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
+  const result = summary.receivedCents - summary.expensesCents;
+  const month = monthName(today).split(" ")[0];
 
-function OpenOrdersTable({ orders, empty }: { orders: ServiceOrder[]; empty: string }) {
-  const { customerOf, vehicleOf, userOf } = useApp();
-  if (orders.length === 0) return <EmptyState icon={<Wrench className="size-7" aria-hidden />} title={empty} />;
   return (
-    <div className="overflow-x-auto">
-      <table className="data-table">
-        <thead>
-          <tr><th>OS</th><th>Cliente</th><th>Veículo</th><th>Placa</th><th>Serviço</th><th>Responsável</th><th>Status</th><th>Abertura</th></tr>
-        </thead>
-        <tbody>
-          {orders.map((o) => {
-            const v = vehicleOf(o.vehicleId);
-            return (
-              <tr key={o.id}>
-                <td><OrderLink order={o} /></td>
-                <td>{customerOf(o.customerId)?.name}</td>
-                <td>{vehicleLabel(v)}</td>
-                <td className="font-mono text-xs">{v ? formatPlate(v.plate) : "—"}</td>
-                <td className="max-w-56 truncate" title={o.description}>{o.description}</td>
-                <td>{userOf(o.mechanicId)?.name.split(" ").slice(0, 2).join(" ") ?? <span className="text-muted">A definir</span>}</td>
-                <td><StatusBadge order={o} /></td>
-                <td className="whitespace-nowrap">{dateOf(o.openedAt) === todayISO() ? `Hoje, ${formatTime(o.openedAt)}` : formatDateTime(o.openedAt)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="cash">
+      <p className="cash-say">
+        Em {month} entrou <strong>{formatBRL(summary.receivedCents)}</strong> e saiu <strong data-tone="out">{formatBRL(summary.expensesCents)}</strong>:{" "}
+        <strong data-tone={result < 0 ? "down" : "up"}>{result < 0 ? `faltou ${formatBRL(-result as Cents)}` : `sobrou ${formatBRL(result as Cents)}`}</strong>.
+      </p>
+      <div className="cash-two">
+        <section className="cash-card" aria-labelledby="ft-due">
+          <h2 id="ft-due" className="cash-h2">Quem está devendo</h2>
+          <p className="cash-hint">{receivables.length ? `${formatBRL(owed as Cents)} de ${receivables.length} ${receivables.length === 1 ? "cliente" : "clientes"}` : "Ninguém. Todos os serviços prontos foram pagos."}</p>
+          {receivables.length > 0 && (
+            <ul className="cash-list">
+              {receivables.slice(0, 6).map((r, i) => {
+                const name = customerOf(r.customerId)?.name ?? "Cliente";
+                const v = r.order ? vehicleOf(r.order.vehicleId) : undefined;
+                const days = Math.max(0, Math.round((Date.parse(today) - Date.parse(r.since)) / 86_400_000));
+                return (
+                  <li key={r.key} className="cash-row" style={{ "--i": i } as React.CSSProperties}>
+                    <PersonAvatar name={name} size={40} />
+                    <span className="cash-row-main">
+                      <b>{name}</b>
+                      <small>{r.order ? `${v ? `${vehicleLabel(v)} · ` : ""}pronto ${days === 0 ? "hoje" : days === 1 ? "ontem" : `há ${days} dias`}` : r.transaction?.description}</small>
+                    </span>
+                    <span className="cash-amt is-due">{formatBRL(r.amountCents)}</span>
+                    {can("finance.payment") && <Button variant="primary" className="rounded-full" disabled={!online} onClick={() => (r.order ? setPayOrder(r.order.id) : r.transaction && setSettle(r.transaction))}>Receber</Button>}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+        <section className="cash-card" aria-labelledby="ft-moves">
+          <h2 id="ft-moves" className="cash-h2">O que entrou e saiu por último</h2>
+          <ul className="cash-list">
+            {recent.map((t, i) => (
+              <li key={t.id} className="cash-row" style={{ "--i": i } as React.CSSProperties}>
+                <span className="cash-row-main">
+                  <b>{t.kind === "income" ? customerOf(t.customerId)?.name ?? t.description : t.description}</b>
+                  <small>{formatDate(t.date)} · {PAYMENT_METHOD_LABELS[t.method]}{t.kind === "expense" ? ` · ${t.category}` : ""}</small>
+                </span>
+                <span className={`cash-amt ${t.kind === "income" ? "is-in" : "is-out"}`}>{t.kind === "income" ? "+" : "−"} {formatBRL(t.amountCents)}</span>
+              </li>
+            ))}
+          </ul>
+          <Link href="/financeiro" className="cash-link">Ver o Financeiro →</Link>
+        </section>
+      </div>
+      {payOrder && <PaymentDialog orderId={payOrder} onClose={() => setPayOrder(null)} />}
+      {settle && <SettleDialog tx={settle} onClose={() => setSettle(null)} />}
     </div>
   );
 }
 
-function TodayAgenda() {
-  const { view, userOf } = useApp();
-  const today = todayISO();
-  const list = view.appointments.filter((a) => a.date === today && a.status !== "cancelled").sort((a, b) => a.time.localeCompare(b.time));
-  return (
-    <Card>
-      <CardHeader title="Agenda de hoje" subtitle={`${list.length} ${list.length === 1 ? "atendimento previsto" : "atendimentos previstos"}`} actions={<Link href="/agenda" className="text-xs font-medium text-primary hover:underline">Ver agenda</Link>} />
-      {list.length === 0 ? (
-        <EmptyState icon={<CalendarDays className="size-7" aria-hidden />} title="Nenhum agendamento para hoje" />
-      ) : (
-        <ul className="divide-y divide-line">
-          {list.map((a) => (
-            <li key={a.id} className="flex items-center gap-3 px-4 py-2 text-[13px]">
-              <span className="w-11 font-semibold tabular-nums">{a.time}</span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-medium">{a.customerName} · {a.brand} {a.model}</span>
-                <span className="block truncate text-xs text-muted">{a.service}{a.mechanicId ? ` · ${userOf(a.mechanicId)?.name.split(" ")[0]}` : ""}</span>
-              </span>
-              <Badge tone={a.status === "confirmed" ? "success" : a.status === "attended" ? "neutral" : "info"}>{APPOINTMENT_STATUS_LABELS[a.status]}</Badge>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
-  );
-}
-
-function StockAlerts() {
-  const { view } = useApp();
-  const low = view.parts.filter((p) => partSituation(p) !== "ok").sort((a, b) => a.quantity - b.quantity);
-  return (
-    <Card>
-      <CardHeader title="Alertas de estoque" subtitle="Peças abaixo ou no limite mínimo" actions={<Link href="/estoque" className="text-xs font-medium text-primary hover:underline">Ver estoque</Link>} />
-      {low.length === 0 ? (
-        <EmptyState icon={<PackageCheck className="size-7" aria-hidden />} title="Estoque em dia" description="Nenhuma peça abaixo da quantidade mínima." />
-      ) : (
-        <ul className="divide-y divide-line">
-          {low.map((p) => (
-            <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-2 text-[13px]">
-              <span className="min-w-0">
-                <span className="block truncate font-medium">{p.name}</span>
-                <span className="text-xs text-muted">{p.code} · mínimo {p.minQuantity}</span>
-              </span>
-              <Badge tone={p.quantity <= 0 ? "danger" : "warning"}>{p.quantity <= 0 ? "Sem estoque" : `${p.quantity} em estoque`}</Badge>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
-  );
-}
-
-function RecentActivity() {
-  const { view, userOf, openOrder } = useApp();
-  const relevant = view.orderEvents
-    .filter((e) => /^(OS aberta|Status alterado para Concluído|Pagamento|OS cancelada)/.test(e.message))
-    .sort((a, b) => b.at.localeCompare(a.at))
-    .slice(0, 8);
-  return (
-    <Card>
-      <CardHeader title="Atividade recente" />
-      {relevant.length === 0 ? (
-        <EmptyState title="Nenhuma atividade registrada" />
-      ) : (
-        <ul className="divide-y divide-line">
-          {relevant.map((e) => {
-            const order = view.orders.find((o) => o.id === e.orderId);
-            return (
-              <li key={e.id} className="px-4 py-2 text-[13px]">
-                <button type="button" className="font-semibold text-primary hover:underline" onClick={() => order && openOrder(order.id)}>
-                  {order ? formatOrderNumber(order.number) : "OS"}
-                </button>{" "}
-                {e.message.replace(/^OS aberta\.$/, "aberta.").replace(/^Status alterado para Concluído\.$/, "concluída.").replace(/^OS cancelada/, "cancelada")}
-                <span className="block text-xs text-muted">{formatDateTime(e.at)} · {userOf(e.userId)?.name ?? "Usuário"}</span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </Card>
-  );
-}
-
-function OperationalDashboard() {
-  const { view, can, settings } = useApp();
-  const today = todayISO();
-  const active = view.orders.filter((o) => !o.cancelledAt);
-  const open = active.filter((o) => o.status !== "done").sort((a, b) => a.openedAt.localeCompare(b.openedAt));
-  const doneToday = active.filter((o) => o.status === "done" && o.completedAt && dateOf(o.completedAt) === today).length;
-  const doneWeek = active.filter((o) => o.status === "done" && o.completedAt && dateOf(o.completedAt) >= addDays(today, -6)).length;
-  const lowStock = view.parts.filter((p) => partSituation(p) !== "ok").length;
-  const todayAppointments = view.appointments.filter((a) => a.date === today && a.status !== "cancelled").length;
-  const showStock = can("stock.view") && settings.activeModules.includes("stock");
-  const showAgenda = can("schedule.manage") && settings.activeModules.includes("schedule");
-
-  return (
-    <>
-      <div className="mb-4 grid grid-cols-3 gap-3 xl:grid-cols-6">
-        <Stat label="Ordens aguardando" value={open.filter((o) => o.status === "waiting").length} tone="warning" />
-        <Stat label="Ordens em andamento" value={open.filter((o) => o.status === "in_progress").length} />
-        <Stat label="Ordens concluídas" value={doneWeek} hint={`${doneToday} hoje · últimos 7 dias`} tone="success" />
-        <Stat label="Veículos com serviço aberto" value={new Set(open.map((o) => o.vehicleId)).size} />
-        {showAgenda && <Stat label="Agendamentos do dia" value={todayAppointments} />}
-        {showStock && <Stat label="Peças com estoque baixo" value={lowStock} tone={lowStock ? "danger" : "neutral"} />}
-      </div>
-      <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
-        <div className="space-y-4">
-          <Card>
-            <CardHeader title="Serviços em andamento" subtitle="Ordens aguardando ou em execução" actions={<Link href="/ordens" className="text-xs font-medium text-primary hover:underline">Abrir quadro</Link>} />
-            <OpenOrdersTable orders={open} empty="Nenhum serviço aberto no momento" />
-          </Card>
-          <RecentActivity />
-        </div>
-        <div className="space-y-4">
-          {showAgenda && <TodayAgenda />}
-          {showStock && <StockAlerts />}
-        </div>
-      </div>
-    </>
-  );
-}
-
-function MechanicDashboard() {
-  const { view, user, act, can, online } = useApp();
-  const today = todayISO();
-  const mine = view.orders.filter((o) => !o.cancelledAt && o.mechanicId === user.id);
-  const open = mine.filter((o) => o.status !== "done").sort((a, b) => a.openedAt.localeCompare(b.openedAt));
-  const doneToday = mine.filter((o) => o.status === "done" && o.completedAt && dateOf(o.completedAt) === today);
-  const { customerOf, vehicleOf, openOrder } = useApp();
-
-  return (
-    <>
-      <div className="mb-4 grid grid-cols-3 gap-3">
-        <Stat label="Aguardando você" value={open.filter((o) => o.status === "waiting").length} tone="warning" />
-        <Stat label="Em andamento" value={open.filter((o) => o.status === "in_progress").length} />
-        <Stat label="Concluídas hoje" value={doneToday.length} tone="success" />
-      </div>
-      <Card>
-        <CardHeader title="Meus serviços" subtitle="Ordens atribuídas a você" />
-        {open.length === 0 ? (
-          <EmptyState icon={<CheckCircle2 className="size-7" aria-hidden />} title="Nenhum serviço pendente" description="Quando uma OS for atribuída a você, ela aparece aqui." />
-        ) : (
-          <ul className="divide-y divide-line">
-            {open.map((o) => {
-              const v = vehicleOf(o.vehicleId);
-              const next = o.status === "waiting" ? "in_progress" : "done";
-              const allowed = next === "done" ? can("os.complete") : can("os.status") || can("os.complete");
-              return (
-                <li key={o.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-[13px]">
-                  <div className="min-w-0 flex-1">
-                    <p><OrderLink order={o} /> <StatusBadge order={o} /></p>
-                    <p className="mt-0.5 font-medium">{o.description}</p>
-                    <p className="text-xs text-muted">{vehicleLabel(v)} · {v ? formatPlate(v.plate) : ""} · {customerOf(o.customerId)?.name}</p>
-                  </div>
-                  <Button onClick={() => openOrder(o.id)}>Ver detalhes e peças</Button>
-                  {allowed && (
-                    <Button
-                      variant="primary"
-                      disabled={!online}
-                      onClick={() => act((d, c) => changeOrderStatus(d, c, o.id, next), `${formatOrderNumber(o.number)} movida para ${ORDER_STATUS_LABELS[next]}.`)}
-                    >
-                      {next === "in_progress" ? "Iniciar serviço" : "Concluir serviço"}
-                    </Button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </Card>
-    </>
-  );
-}
-
-function FinanceDashboard() {
-  const { view, customerOf, can, online } = useApp();
-  const [payOrder, setPayOrder] = useState<string | null>(null);
-  const today = todayISO();
-  const summary = financeSummary(view, startOfMonth(today), today);
-  const receivables = listReceivables(view);
-  const recent = view.transactions.filter((t) => t.status === "paid").sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
-
-  return (
-    <>
-      <div className="mb-4 grid grid-cols-4 gap-3">
-        <Stat label="Recebido no mês" value={formatBRL(summary.receivedCents)} tone="success" />
-        <Stat label="Despesas pagas no mês" value={formatBRL(summary.expensesCents)} tone="danger" />
-        <Stat label="Contas a receber" value={formatBRL(summary.receivableCents)} tone="warning" hint={`${receivables.length} em aberto`} />
-        <Stat label="Resultado de caixa do mês" value={formatBRL(summary.cashResultCents)} hint="Recebido − despesas pagas" />
-      </div>
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader title="Contas a receber" actions={<Link href="/financeiro" className="text-xs font-medium text-primary hover:underline">Ver financeiro</Link>} />
-          {receivables.length === 0 ? (
-            <EmptyState icon={<CircleDollarSign className="size-7" aria-hidden />} title="Nada a receber" description="Todos os serviços concluídos estão pagos." />
-          ) : (
-            <table className="data-table">
-              <thead><tr><th>Origem</th><th>Cliente</th><th className="num">Valor</th><th /></tr></thead>
-              <tbody>
-                {receivables.map((r) => (
-                  <tr key={r.key}>
-                    <td>{r.order ? <OrderLink order={r.order} /> : r.transaction?.description}</td>
-                    <td>{customerOf(r.customerId)?.name ?? "—"}</td>
-                    <td className="num">{formatBRL(r.amountCents)}</td>
-                    <td className="text-right">
-                      {r.order && can("finance.payment") && (
-                        <Button size="sm" disabled={!online} onClick={() => setPayOrder(r.order!.id)}>Registrar pagamento</Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Card>
-        <Card>
-          <CardHeader title="Últimas movimentações" />
-          <table className="data-table">
-            <thead><tr><th>Data</th><th>Descrição</th><th>Forma</th><th className="num">Valor</th></tr></thead>
-            <tbody>
-              {recent.map((t) => (
-                <tr key={t.id}>
-                  <td>{formatDate(t.date)}</td>
-                  <td>{t.description}</td>
-                  <td>{PAYMENT_METHOD_LABELS[t.method]}</td>
-                  <td className={`num font-medium ${t.kind === "income" ? "text-success" : "text-danger"}`}>{t.kind === "income" ? "+" : "−"} {formatBRL(t.amountCents)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-      </div>
-      {payOrder && <PaymentDialog orderId={payOrder} onClose={() => setPayOrder(null)} />}
-    </>
-  );
-}
-
 export function DashboardPage() {
-  const { user, membership, can, online, settings, openNewOrder } = useApp();
+  const { user, membership, can, settings } = useApp();
   const today = todayISO();
   const variant =
     membership.role === "mechanic" ? "mechanic" : membership.role === "financial" && can("finance.view") ? "finance" : can("os.view") ? "operational" : "none";
+  const yard = useYard();
+  const ready = yard.ready.length;
+  const day = `${weekdayName(today)}, ${formatDate(today).slice(0, 5)}`;
+  const summary =
+    variant === "operational"
+      ? `${day} · ${yard.count === 0 ? "nenhum carro na oficina" : `${yard.count} ${yard.count === 1 ? "carro" : "carros"} na oficina`}${ready ? ` · ${ready} ${ready === 1 ? "pronto" : "prontos"} esperando o cliente` : ""}`
+      : `${weekdayName(today)}, ${formatDate(today)}`;
 
   return (
     <>
       <PageHeader
-        title={`Olá, ${user.name.split(" ")[0]}`}
-        description={`${weekdayName(today)}, ${formatDate(today)} · ${ROLE_LABELS[membership.role]} · ${settings.displayName}`}
+        title={membership.role === "mechanic" ? `Seus carros, ${user.name.split(" ")[0]}` : "Hoje"}
+        description={summary}
         actions={
           <>
             {can("schedule.manage") && settings.activeModules.includes("schedule") && (
-              <Link href="/agenda?novo=1" className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-surface px-3.5 text-[13px] font-medium hover:bg-slate-50">
+              <Link href="/agenda?novo=1" className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-surface px-3.5 text-sm font-medium hover:bg-slate-50">
                 <CalendarPlus className="size-4" aria-hidden />
                 Novo agendamento
               </Link>
             )}
-            {can("os.create") && settings.activeModules.includes("orders") && (
-              <Button variant="primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()}>
-                Nova OS
-              </Button>
-            )}
           </>
         }
       />
-      {variant === "mechanic" && <MechanicDashboard />}
-      {variant === "finance" && <FinanceDashboard />}
-      {variant === "operational" && <OperationalDashboard />}
+      {variant === "operational" && (
+        <div className="hoje-layout">
+          <Yard />
+          <TodayRail />
+        </div>
+      )}
+      {variant === "mechanic" && <MechanicYard />}
+      {variant === "finance" && <FinanceToday />}
       {variant === "none" && (
         <Card>
           <EmptyState title="Nada para exibir" description="Seu usuário ainda não possui permissões para os módulos desta oficina. Fale com o proprietário." />

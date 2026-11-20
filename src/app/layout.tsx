@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { SwoopHost } from "@/components/ui/swoop";
 import { Toaster } from "@/components/ui/toast";
+import "@fontsource-variable/manrope";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,10 +11,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="h-full antialiased">
-      <body className="min-h-full">
+    <html lang="pt-BR" className="h-full antialiased" suppressHydrationWarning>
+      <body className="min-h-full" suppressHydrationWarning>
         {children}
         <Toaster />
+        <SwoopHost />
       </body>
     </html>
   );

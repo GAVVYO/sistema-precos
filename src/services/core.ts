@@ -32,8 +32,21 @@ export class DomainError extends Error {
   }
 }
 
+let idSource: (() => ID) | null = null;
+
 export function newId(): ID {
-  return crypto.randomUUID();
+  return idSource ? idSource() : crypto.randomUUID();
+}
+
+/** Roda `fn` tirando os IDs novos de `source` (para o servidor repetir os mesmos IDs da tela). */
+export function withIds<T>(source: () => ID, fn: () => T): T {
+  const prev = idSource;
+  idSource = source;
+  try {
+    return fn();
+  } finally {
+    idSource = prev;
+  }
 }
 
 export function membershipOf(db: Database, ctx: Pick<Ctx, "workshopId" | "userId">): WorkshopMembership | undefined {
@@ -54,6 +67,18 @@ export function assertCan(db: Database, ctx: Ctx, ...anyOf: PermissionKey[]): vo
   if (!anyOf.some((p) => can(db, ctx, p))) {
     throw new DomainError("forbidden", "Você não tem permissão para realizar esta ação.");
   }
+}
+
+/** Arquivo de imagem guardado no servidor (decisão 99): `/api/arquivos/<oficina>/<nome>.jpg`. */
+export const FILE_URL = /^\/api\/arquivos\/[\w-]+\/[\w-]+\.(jpg|png|webp)$/;
+const DATA_IMAGE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+
+/**
+ * Campo de imagem: foto nova (data URL, a tela manda assim) ou arquivo que já
+ * está no servidor (o servidor troca o data URL pelo endereço ao gravar).
+ */
+export function imageField(maxLength: number, tooBig: string, invalid = "Arquivo de imagem inválido.") {
+  return z.string().max(maxLength, tooBig).refine((v) => DATA_IMAGE.test(v) || FILE_URL.test(v), invalid);
 }
 
 /** Valida a entrada com Zod e converte o primeiro problema em DomainError. */
@@ -93,6 +118,7 @@ export function scopeTo(db: Database, workshopId: ID) {
     orders: own(db.orders),
     orderItems: own(db.orderItems),
     orderEvents: own(db.orderEvents),
+    orderPhotos: own(db.orderPhotos ?? []),
     parts: own(db.parts),
     stockMovements: own(db.stockMovements),
     appointments: own(db.appointments),

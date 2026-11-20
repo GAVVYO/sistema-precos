@@ -3,15 +3,15 @@
 import { FileSpreadsheet, FileText, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
-import { PeriodPicker, usePeriod } from "@/components/ui/period";
-import { Button, Card, CardHeader, cx, EmptyState, Input, PageHeader, Select } from "@/components/ui/primitives";
+import { type Period, PeriodPicker, usePeriod } from "@/components/ui/period";
+import { Button, Card, CardHeader, EmptyState, Input, Select } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { MOVEMENT_TYPE_LABELS, ORDER_STATUS_LABELS } from "@/domain/labels";
 import { exportReportPdf, exportReportXlsx, formatCell } from "@/lib/export";
 import { buildReport, ReportKind, REPORTS } from "@/services/reports";
 
 const OPTIONS: Partial<Record<ReportKind, { label: string; all: string; items: [string, string][] }>> = {
-  orders: { label: "Status", all: "Todos os status", items: [...Object.entries(ORDER_STATUS_LABELS), ["cancelled", "Cancelada"]] as [string, string][] },
+  orders: { label: "Etapa", all: "Todas as etapas", items: [...Object.entries(ORDER_STATUS_LABELS), ["cancelled", "Cancelado"]] as [string, string][] },
   finance: { label: "Tipo", all: "Receitas e despesas", items: [["income", "Somente receitas"], ["expense", "Somente despesas"]] },
   stock: { label: "Situação", all: "Todas as situações", items: [["ok", "Normal"], ["low", "Estoque baixo"], ["out", "Sem estoque"]] },
   stock_moves: { label: "Tipo", all: "Todos os tipos", items: Object.entries(MOVEMENT_TYPE_LABELS) },
@@ -19,12 +19,15 @@ const OPTIONS: Partial<Record<ReportKind, { label: string; all: string; items: [
 
 const PREVIEW_LIMIT = 200;
 
-export function ReportsPage() {
+/** Listas completas com filtros e exportação (Financeiro › Resultados, em "Listas completas e planilhas"). */
+export function ReportTables({ period: fixed }: { period?: Period } = {}) {
   const { view, can, settings, mechanics } = useApp();
   // Somente relatórios que o usuário pode consultar.
   const available = REPORTS.filter((r) => can(r.permission));
   const [kind, setKind] = useState<ReportKind | null>(available[0]?.kind ?? null);
-  const [period, setPeriod] = usePeriod("30");
+  const [own, setPeriod] = usePeriod("30");
+  // Dentro do Financeiro, usa o período escolhido no alto da página (um seletor só).
+  const period = fixed ?? own;
   const [option, setOption] = useState("");
   const [mechanicId, setMechanicId] = useState("");
   const [text, setText] = useState("");
@@ -57,28 +60,23 @@ export function ReportsPage() {
   const canExport = can("reports.export");
 
   return (
-    <>
-      <PageHeader title="Relatórios" description="Consulte, filtre e exporte os registros da oficina em PDF ou Excel." />
-      <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
-        <Card className="self-start">
-          <CardHeader title="Tipo de relatório" />
-          <div role="radiogroup" aria-label="Tipo de relatório" className="p-1.5">
-            {available.map((r) => (
-              <button
-                key={r.kind}
-                type="button"
-                role="radio"
-                aria-checked={r.kind === info.kind}
-                onClick={() => { setKind(r.kind); setOption(""); setMechanicId(""); setText(""); }}
-                className={cx("block w-full rounded-md px-3 py-2 text-left", r.kind === info.kind ? "bg-primary-soft" : "hover:bg-slate-50")}
-              >
-                <span className={cx("block text-[13px] font-semibold", r.kind === info.kind && "text-primary")}>{r.label}</span>
-                <span className="block text-xs text-muted">{r.description}</span>
-              </button>
-            ))}
-          </div>
-        </Card>
-
+    <div className="module-reports">
+      {/* Tipo de relatório em faixa horizontal: a tabela ganha a largura toda (referência: Metabase, Stripe Reports). */}
+      <div role="group" aria-label="Tipo de relatório" className="report-kinds">
+        {available.map((r) => (
+          <button
+            key={r.kind}
+            type="button"
+            aria-pressed={r.kind === info.kind}
+            title={r.description}
+            onClick={() => { setKind(r.kind); setOption(""); setMechanicId(""); setText(""); }}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+      <p className="mb-4 text-sm text-muted">{info.description}</p>
+      <div className="report-layout">
         <Card className="min-w-0">
           <CardHeader
             title={report.title}
@@ -95,7 +93,7 @@ export function ReportsPage() {
             }
           />
           <div className="flex flex-wrap items-center gap-2 border-b border-line p-3">
-            {info.usesPeriod && <PeriodPicker value={period} onChange={setPeriod} />}
+            {info.usesPeriod && !fixed && <PeriodPicker value={period} onChange={setPeriod} />}
             {opt && (
               <Select className="w-52" aria-label={opt.label} value={option} onChange={(e) => setOption(e.target.value)}>
                 <option value="">{opt.all}</option>
@@ -113,7 +111,7 @@ export function ReportsPage() {
           </div>
 
           {report.summary && (
-            <dl className="flex flex-wrap gap-x-8 gap-y-1 border-b border-line px-4 py-2 text-[13px]">
+            <dl className="flex flex-wrap gap-x-8 gap-y-1 border-b border-line px-4 py-2 text-sm">
               {report.summary.map((s) => (
                 <div key={s.label} className="flex gap-2"><dt className="text-muted">{s.label}:</dt><dd className="font-semibold">{s.value}</dd></div>
               ))}
@@ -121,10 +119,10 @@ export function ReportsPage() {
           )}
 
           {report.rows.length === 0 ? (
-            <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum registro encontrado" description="Ajuste o período ou os filtros para ver resultados." />
+            <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum registro encontrado" description="Escolha um período maior ou mude os filtros acima da tabela." />
           ) : (
-            <div className="max-h-[calc(100vh-330px)] overflow-auto">
-              <table className="data-table">
+            <div className="max-h-[calc(100vh-390px)] overflow-auto">
+              <table tabIndex={0} aria-label={report.title} className="data-table report-table">
                 <thead className="sticky top-0">
                   <tr>{report.columns.map((c) => <th key={c.key} className={c.type === "money" || c.type === "number" ? "num" : undefined}>{c.label}</th>)}</tr>
                 </thead>
@@ -132,7 +130,7 @@ export function ReportsPage() {
                   {report.rows.slice(0, PREVIEW_LIMIT).map((r, i) => (
                     <tr key={i}>
                       {report.columns.map((c) => (
-                        <td key={c.key} className={c.type === "money" || c.type === "number" ? "num" : c.key === "service" || c.key === "parts" || c.key === "reason" || c.key === "description" ? "min-w-48" : "whitespace-nowrap"}>
+                        <td key={c.key} className={c.type === "money" || c.type === "number" ? "num" : c.key === "service" || c.key === "parts" || c.key === "reason" || c.key === "description" ? "min-w-48" : c.type === "date" || c.key === "plate" || c.key === "number" ? "whitespace-nowrap" : undefined}>
                           {formatCell(r[c.key] ?? null, c.type)}
                         </td>
                       ))}
@@ -158,6 +156,6 @@ export function ReportsPage() {
           )}
         </Card>
       </div>
-    </>
+    </div>
   );
 }

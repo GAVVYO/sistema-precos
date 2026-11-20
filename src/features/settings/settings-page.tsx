@@ -1,33 +1,55 @@
 "use client";
 
-import { ImageUp, Trash2, UserPlus, Wrench } from "lucide-react";
+import { ImageUp, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
+import { Check, IdentificationBadge, Palette } from "@phosphor-icons/react";
+import { NAV_ICONS } from "@/components/layout/personal-navigation";
+import Link from "next/link";
 import { useApp } from "@/app-state/app-context";
-import { Dialog } from "@/components/ui/dialog";
-import { Badge, Button, Card, CardHeader, Field, Input, PageHeader, Select, Tabs } from "@/components/ui/primitives";
+import { Button, Field, Input, PageHeader } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
-import { ALL_PERMISSIONS, MODULES, PERMISSIONS, ROLE_LABELS, ROLE_TEMPLATES } from "@/domain/permissions";
-import type { ModuleKey, PermissionKey, Role, WorkshopMembership } from "@/domain/types";
+import { BrandMark } from "@/components/ui/brand-mark";
+import { contrastOn } from "@/lib/theme";
+import { MODULES } from "@/domain/permissions";
+import type { ModuleKey } from "@/domain/types";
 import { formatPhone } from "@/lib/format";
-import { addMember, updateMember, updateSettings } from "@/services/admin";
 
-const ROLES = Object.keys(ROLE_LABELS) as Role[];
+import { maskPhone } from "@/lib/masks";
+
 const DEFAULT_COLORS = { primary: "#2563EB", secondary: "#172033" };
-const PRIMARY_PRESETS = ["#2563EB", "#0F766E", "#B45309", "#BE123C", "#6D28D9", "#15803D"];
+const PRIMARY_PRESETS: [string, string][] = [["#2563EB", "Azul"], ["#0F766E", "Verde-azulado"], ["#15803D", "Verde"], ["#B45309", "Laranja"], ["#BE123C", "Vermelho"], ["#6D28D9", "Roxo"]];
+const MENU_PRESETS: [string, string][] = [["#172033", "Azul-marinho"], ["#0F172A", "Quase preto"], ["#1F2937", "Grafite"], ["#3B0764", "Roxo escuro"], ["#052E16", "Verde escuro"], ["#7C2D12", "Marrom"]];
+/** O que cada item do menu faz, em uma frase (decisão 91). */
+const MODULE_HINT: Partial<Record<ModuleKey, string>> = {
+  dashboard: "Os carros na oficina e quem chega hoje",
+  orders: "Abrir serviço, mudar etapa e receber",
+  stock: "Peças e quanto tem de cada uma",
+  finance: "Quanto entrou, saiu e quem está devendo",
+  schedule: "Clientes marcados por dia",
+  customers: "Clientes, carros e funcionários",
+  settings: "Esta tela",
+};
 
-function ColorField({ label, value, onChange, presets }: { label: string; value: string; onChange: (v: string) => void; presets?: string[] }) {
+/** Cores em bolinhas para tocar, sem código de cor; "Outra cor" fica guardada. */
+function ColorPick({ label, hint, value, onChange, presets }: { label: string; hint: string; value: string; onChange: (v: string) => void; presets: [string, string][] }) {
+  const custom = !presets.some(([c]) => c.toUpperCase() === value.toUpperCase());
   return (
-    <Field label={label}>
-      {(p) => (
-        <div className="flex items-center gap-2">
-          <input {...p} type="color" value={value} onChange={(e) => onChange(e.target.value.toUpperCase())} className="h-9 w-12 cursor-pointer rounded-md border border-line bg-surface p-1" />
-          <span className="font-mono text-xs text-muted">{value}</span>
-          {presets?.map((c) => (
-            <button key={c} type="button" aria-label={`Usar a cor ${c}`} aria-pressed={c === value} onClick={() => onChange(c)} className="size-6 rounded-full border-2 border-white ring-1 ring-line aria-pressed:ring-2 aria-pressed:ring-ink" style={{ background: c }} />
-          ))}
-        </div>
-      )}
-    </Field>
+    <fieldset className="cfg-colors">
+      <legend>{label}</legend>
+      <p className="cfg-hint">{hint}</p>
+      <div className="cfg-swatches">
+        {presets.map(([c, name]) => (
+          <button key={c} type="button" aria-label={name} aria-pressed={c.toUpperCase() === value.toUpperCase()} onClick={() => onChange(c)} style={{ background: c }}>
+            {c.toUpperCase() === value.toUpperCase() && <Check size={20} weight="bold" color={contrastOn(c)} aria-hidden />}
+          </button>
+        ))}
+        <label className="cfg-other" data-on={custom || undefined}>
+          <span style={{ background: custom ? value : undefined }} aria-hidden><Palette size={20} weight="bold" color={custom ? contrastOn(value) : undefined} /></span>
+          Outra cor
+          <input type="color" className="sr-only" value={value} onChange={(e) => onChange(e.target.value.toUpperCase())} />
+        </label>
+      </div>
+    </fieldset>
   );
 }
 
@@ -44,262 +66,110 @@ function WorkshopSettingsForm() {
   const onFile = (file: File | undefined) => {
     if (!file) return;
     if (!/^image\/(png|jpeg)$/.test(file.type)) return toast("error", "Use uma imagem PNG ou JPG.");
-    if (file.size > 250_000) return toast("error", "Imagem muito grande. Use um logotipo de até 250 KB.");
+    if (file.size > 250_000) return toast("error", "Imagem muito grande. Use um logo de até 250 KB.");
     const reader = new FileReader();
     reader.onload = () => setLogo(reader.result as string);
-    reader.onerror = () => toast("error", "Não foi possível ler a imagem.");
+    reader.onerror = () => toast("error", "Não deu para ler a imagem.");
     reader.readAsDataURL(file);
   };
 
   const save = () =>
     act(
-      (db, ctx) => updateSettings(db, ctx, { displayName, phone, logoDataUrl: logo, primaryColor: primary, secondaryColor: secondary, activeModules: modules }),
-      "Configurações salvas. A identidade visual já foi aplicada.",
+      (c) => c.updateSettings({ displayName, phone, logoDataUrl: logo, primaryColor: primary, secondaryColor: secondary, activeModules: modules }),
+      "Salvo. As cores e o menu já mudaram.",
     );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Card>
-        <CardHeader title="Identidade da oficina" subtitle="Aparece no cabeçalho, nos PDFs e nas mensagens de WhatsApp." />
-        <div className="space-y-4 p-4">
-          <div className="grid grid-cols-5 gap-3">
-            <Field label="Nome da oficina" className="col-span-3">{(p) => <Input {...p} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />}</Field>
-            <Field label="Telefone" optional className="col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />}</Field>
+    <div className="cfg">
+      <section className="cash-card cfg-block" aria-labelledby="cfg-shop">
+        <h2 id="cfg-shop" className="cash-h2">Sua oficina</h2>
+        <p className="cfg-hint">Aparece no topo do sistema, nos PDFs e nas mensagens de WhatsApp.</p>
+        <div className="cfg-shop">
+          <div className="cfg-logo">
+            {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo} alt="Logo da oficina" />
+            ) : (
+              <BrandMark className="size-12" />
+            )}
           </div>
-          <div>
-            <p className="mb-1 text-xs font-medium">Logotipo</p>
-            <div className="flex items-center gap-3">
-              <div className="flex size-14 items-center justify-center rounded-md border border-line bg-slate-50">
-                {logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logo} alt="Logotipo atual" className="max-h-full max-w-full object-contain" />
-                ) : (
-                  <Wrench className="size-6 text-slate-400" aria-hidden />
-                )}
-              </div>
-              <input ref={fileRef} type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ""; }} />
-              <Button icon={<ImageUp className="size-4" aria-hidden />} onClick={() => fileRef.current?.click()}>Enviar imagem</Button>
-              {logo && <Button variant="ghost" icon={<Trash2 className="size-4" aria-hidden />} onClick={() => setLogo(null)}>Remover</Button>}
-              <span className="text-xs text-muted">PNG ou JPG, até 250 KB.</span>
-            </div>
+          <div className="cfg-logo-actions">
+            <span className="text-sm font-semibold">Logo da oficina</span>
+            <input ref={fileRef} type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ""; }} />
+            <span className="flex flex-wrap gap-2">
+              <Button icon={<ImageUp className="size-4" aria-hidden />} onClick={() => fileRef.current?.click()}>{logo ? "Trocar logo" : "Pôr logo"}</Button>
+              {logo && <Button variant="ghost" icon={<Trash2 className="size-4" aria-hidden />} onClick={() => setLogo(null)}>Tirar logo</Button>}
+            </span>
           </div>
-          <ColorField label="Cor principal (botões, destaques e links)" value={primary} onChange={setPrimary} presets={PRIMARY_PRESETS} />
-          <ColorField label="Cor secundária (cabeçalho)" value={secondary} onChange={setSecondary} />
-          <div className="overflow-hidden rounded-md border border-line" aria-label="Pré-visualização">
-            <div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold" style={{ background: secondary, color: "#fff" }}>
-              <span className="rounded px-2 py-1" style={{ background: primary }}>Início</span>
-              <span className="opacity-80">Ordens de serviço</span>
-              <span className="opacity-80">Estoque</span>
-              <span className="ml-auto opacity-80">Pré-visualização</span>
-            </div>
-            <div className="flex items-center gap-3 bg-bg px-3 py-3">
-              <span className="rounded-md px-3 py-1.5 text-xs font-medium text-white" style={{ background: primary }}>Botão principal</span>
-              <span className="text-xs font-semibold" style={{ color: primary }}>OS-0012</span>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => { setPrimary(DEFAULT_COLORS.primary); setSecondary(DEFAULT_COLORS.secondary); }}>Restaurar cores padrão do GAVYO Auto</Button>
         </div>
-      </Card>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+          <Field label="Nome da oficina" className="sm:col-span-3">{(p) => <Input {...p} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />}</Field>
+          <Field label="Telefone" optional className="sm:col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="tel" />}</Field>
+        </div>
+      </section>
 
-      <Card className="self-start">
-        <CardHeader title="Módulos ativos" subtitle="Módulos desativados somem do menu de todos os usuários desta oficina." />
-        <ul className="divide-y divide-line">
-          {MODULES.map((m) => (
-            <li key={m.key}>
-              <label className="flex items-center gap-3 px-4 py-2.5 text-[13px]">
-                <input
-                  type="checkbox"
-                  className="size-4 accent-(--primary)"
-                  checked={m.required || modules.includes(m.key)}
-                  disabled={m.required}
-                  onChange={(e) => setModules(e.target.checked ? [...modules, m.key] : modules.filter((k) => k !== m.key))}
-                />
-                <span className="font-medium">{m.label}</span>
-                {m.required && <span className="text-xs text-muted">sempre ativo</span>}
-              </label>
-            </li>
-          ))}
+      <section className="cash-card cfg-block" aria-labelledby="cfg-colors">
+        <h2 id="cfg-colors" className="cash-h2">Cores</h2>
+        <ColorPick label="Cor dos botões" hint="Botões principais e destaques." value={primary} onChange={setPrimary} presets={PRIMARY_PRESETS} />
+        <ColorPick label="Cor do menu" hint="Item escolhido do menu e as iniciais das pessoas." value={secondary} onChange={setSecondary} presets={MENU_PRESETS} />
+        <div className="cfg-preview" aria-label="Como vai ficar">
+          <span className="cfg-preview-label">Como vai ficar</span>
+          <div className="cfg-preview-bar">
+            <span className="cfg-preview-tab" style={{ background: secondary, color: contrastOn(secondary) }}>Hoje</span>
+            <span>Serviços</span><span>Estoque</span>
+            <span className="cfg-preview-btn" style={{ background: primary, color: contrastOn(primary) }}>+ Novo serviço</span>
+          </div>
+        </div>
+        <button type="button" className="cash-link justify-self-start" onClick={() => { setPrimary(DEFAULT_COLORS.primary); setSecondary(DEFAULT_COLORS.secondary); }}>Voltar às cores da GAVYO</button>
+      </section>
+
+      <section className="cash-card cfg-block" aria-labelledby="cfg-menu">
+        <h2 id="cfg-menu" className="cash-h2">O que aparece no menu</h2>
+        <p className="cfg-hint">Desligue o que a oficina não usa. Some do menu de todo mundo daqui.</p>
+        <ul className="cfg-mods">
+          {MODULES.filter((m) => !m.hidden).map((m) => {
+            const Icon = NAV_ICONS[m.key as keyof typeof NAV_ICONS];
+            const on = m.required || modules.includes(m.key);
+            return (
+              <li key={m.key}>
+                <label className="cfg-mod" data-on={on || undefined}>
+                  <span className="cfg-mod-icon" aria-hidden>{Icon && <Icon />}</span>
+                  <span className="cfg-mod-text"><b>{m.label}</b><small>{MODULE_HINT[m.key] ?? ""}</small></span>
+                  {m.required ? <span className="cfg-always">Sempre aparece</span> : (
+                    <span className="cfg-switch">
+                      <input type="checkbox" role="switch" checked={on} onChange={(e) => setModules(e.target.checked ? [...modules, m.key] : modules.filter((k) => k !== m.key))} aria-label={`Mostrar ${m.label} no menu`} />
+                      <span aria-hidden />
+                    </span>
+                  )}
+                </label>
+              </li>
+            );
+          })}
         </ul>
-      </Card>
+      </section>
 
-      <div className="flex items-center gap-3 lg:col-span-2">
-        <Button variant="primary" disabled={!online} onClick={save}>Salvar configurações</Button>
-        <span className="text-xs text-muted">As alterações valem apenas para esta oficina.</span>
+      <div className="cfg-save">
+        <Button variant="primary" disabled={!online} onClick={save}>Salvar</Button>
+        <span className="text-sm text-muted">Vale para todos desta oficina.</span>
       </div>
     </div>
   );
 }
 
-function MemberDialog({ member, onClose }: { member: WorkshopMembership; onClose: () => void }) {
-  const { act, online, userOf, user, membership: mine } = useApp();
-  const [role, setRole] = useState<Role>(member.role);
-  const [active, setActive] = useState(member.active);
-  const [permissions, setPermissions] = useState<PermissionKey[]>(member.permissions);
-  const isSelf = member.userId === user.id;
-  const target = userOf(member.userId);
-  const groups = [...new Set(PERMISSIONS.map((p) => p.group))];
-  const toggle = (key: PermissionKey, on: boolean) => setPermissions(on ? [...permissions, key] : permissions.filter((p) => p !== key));
-  // Só é possível conceder o que o próprio operador possui (regra repetida no serviço).
-  const grantable = (key: PermissionKey) => member.permissions.includes(key) || mine.permissions.includes(key);
-
-  return (
-    <Dialog
-      title={`Acesso de ${target?.name ?? "funcionário"}`}
-      subtitle={target?.email}
-      onClose={onClose}
-      footer={
-        <>
-          <Button onClick={onClose}>Cancelar</Button>
-          <Button
-            variant="primary"
-            disabled={!online || isSelf}
-            onClick={() => {
-              const r = act((db, ctx) => updateMember(db, ctx, member.id, { role, active, permissions }), "Permissões atualizadas.");
-              if (r.ok) onClose();
-            }}
-          >
-            Salvar permissões
-          </Button>
-        </>
-      }
-    >
-      {isSelf && <p className="mb-3 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">Você não pode alterar o seu próprio acesso. Peça a outro proprietário.</p>}
-      <fieldset disabled={isSelf} className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Cargo" hint="O cargo é um modelo inicial; as permissões abaixo podem ser ajustadas individualmente.">
-            {(p) => (
-              <Select {...p} value={role} onChange={(e) => setRole(e.target.value as Role)}>
-                {ROLES.map((r) => <option key={r} value={r} disabled={r === "owner" && mine.role !== "owner"}>{ROLE_LABELS[r]}</option>)}
-              </Select>
-            )}
-          </Field>
-          <Field label="Situação">
-            {(p) => (
-              <Select {...p} value={active ? "1" : "0"} onChange={(e) => setActive(e.target.value === "1")}>
-                <option value="1">Ativo</option>
-                <option value="0">Inativo (sem acesso)</option>
-              </Select>
-            )}
-          </Field>
-        </div>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => setPermissions(ROLE_TEMPLATES[role].filter(grantable))}>Aplicar modelo de {ROLE_LABELS[role]}</Button>
-          <Button size="sm" variant="ghost" onClick={() => setPermissions([])}>Remover todas</Button>
-        </div>
-        <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-          {groups.map((g) => (
-            <div key={g}>
-              <p className="mb-1 text-xs font-semibold text-muted uppercase">{g}</p>
-              {PERMISSIONS.filter((p) => p.group === g).map((p) => (
-                <label key={p.key} className="flex items-center gap-2 py-0.5 text-[13px]">
-                  <input type="checkbox" className="size-4 accent-(--primary)" checked={permissions.includes(p.key)} disabled={!grantable(p.key)} onChange={(e) => toggle(p.key, e.target.checked)} />
-                  {p.label}
-                </label>
-              ))}
-            </div>
-          ))}
-        </div>
-      </fieldset>
-    </Dialog>
-  );
-}
-
-function NewMemberDialog({ onClose }: { onClose: () => void }) {
-  const { act, online, membership } = useApp();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<Role>("mechanic");
-  return (
-    <Dialog
-      title="Novo funcionário"
-      subtitle="Na demonstração o acesso é fictício. No ambiente real, a GAVYO entrega os acessos iniciais."
-      size="sm"
-      onClose={onClose}
-      footer={
-        <>
-          <Button onClick={onClose}>Cancelar</Button>
-          <Button
-            variant="primary"
-            disabled={!online}
-            onClick={() => {
-              const r = act((db, ctx) => addMember(db, ctx, { name, email, role }), "Funcionário adicionado com as permissões do cargo.");
-              if (r.ok) onClose();
-            }}
-          >
-            Adicionar funcionário
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-3">
-        <Field label="Nome">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoFocus />}</Field>
-        <Field label="E-mail">{(p) => <Input {...p} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />}</Field>
-        <Field label="Cargo">
-          {(p) => (
-            <Select {...p} value={role} onChange={(e) => setRole(e.target.value as Role)}>
-              {ROLES.map((r) => <option key={r} value={r} disabled={r === "owner" && membership.role !== "owner"}>{ROLE_LABELS[r]}</option>)}
-            </Select>
-          )}
-        </Field>
-      </div>
-    </Dialog>
-  );
-}
-
-function StaffPanel() {
-  const { view, userOf, user, online } = useApp();
-  const [editing, setEditing] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
-  const member = view.memberships.find((m) => m.id === editing);
-  return (
-    <Card>
-      <CardHeader
-        title="Usuários e permissões"
-        subtitle="Cada funcionário parte do modelo do cargo e pode ter permissões ajustadas individualmente."
-        actions={<Button variant="primary" icon={<UserPlus className="size-4" aria-hidden />} disabled={!online} onClick={() => setAdding(true)}>Novo funcionário</Button>}
-      />
-      <table className="data-table">
-        <thead><tr><th>Nome</th><th>E-mail</th><th>Cargo</th><th>Situação</th><th>Permissões</th><th className="text-right">Ações</th></tr></thead>
-        <tbody>
-          {view.memberships.map((m) => {
-            const u = userOf(m.userId);
-            const template = ROLE_TEMPLATES[m.role];
-            const custom = m.permissions.length !== template.length || m.permissions.some((p) => !template.includes(p));
-            return (
-              <tr key={m.id}>
-                <td className="font-medium">{u?.name}{m.userId === user.id && <span className="ml-1.5 text-xs font-normal text-muted">(você)</span>}</td>
-                <td>{u?.email}</td>
-                <td>{ROLE_LABELS[m.role]}</td>
-                <td>{m.active ? <Badge tone="success">Ativo</Badge> : <Badge tone="neutral">Inativo</Badge>}</td>
-                <td>
-                  {m.permissions.length} de {ALL_PERMISSIONS.length}
-                  {custom && <span className="ml-1.5"><Badge tone="info">Personalizado</Badge></span>}
-                </td>
-                <td className="text-right"><Button size="sm" onClick={() => setEditing(m.id)}>Gerenciar acesso</Button></td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      {member && <MemberDialog key={member.id} member={member} onClose={() => setEditing(null)} />}
-      {adding && <NewMemberDialog onClose={() => setAdding(false)} />}
-    </Card>
-  );
-}
-
 export function SettingsPage() {
   const { can, settings } = useApp();
-  const tabs = [
-    ...(can("settings.manage") ? [{ value: "workshop" as const, label: "Oficina e identidade visual" }] : []),
-    ...(can("staff.manage") ? [{ value: "staff" as const, label: "Usuários e permissões" }] : []),
-  ];
-  const [tab, setTab] = useState<"workshop" | "staff">(tabs[0]?.value ?? "workshop");
+  // Funcionários e permissões foram para Pessoas (decisão 62).
   return (
-    <>
-      <PageHeader title="Configurações" description={`Personalização e acessos de ${settings.displayName}.`} />
-      <div className="mb-4"><Tabs label="Seções de configuração" value={tab} onChange={setTab} tabs={tabs} /></div>
-      {tab === "workshop" && can("settings.manage") && <WorkshopSettingsForm key={settings.workshopId} />}
-      {tab === "staff" && can("staff.manage") && <StaffPanel />}
-    </>
+    <div className="module-page module-settings">
+      <PageHeader title="Configurações" description={`Nome, logo, cores e menu de ${settings.displayName}.`} />
+      {can("staff.manage") && (
+        <Link href="/clientes" className="rail-line mb-4">
+          <IdentificationBadge size={22} weight="duotone" aria-hidden />
+          <span><strong>Funcionários e permissões</strong> agora ficam em Pessoas › Funcionários.</span>
+          <span className="rail-line-go">Abrir →</span>
+        </Link>
+      )}
+      {can("settings.manage") && <WorkshopSettingsForm key={settings.workshopId} />}
+    </div>
   );
 }

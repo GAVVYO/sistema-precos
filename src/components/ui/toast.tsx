@@ -4,10 +4,16 @@ import { AlertCircle, CheckCircle2, X } from "lucide-react";
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { cx } from "./primitives";
 
+interface ToastAction {
+  label: string;
+  run: () => void;
+}
+
 interface Toast {
   id: number;
   kind: "success" | "error";
   message: string;
+  action?: ToastAction;
 }
 
 let toasts: Toast[] = [];
@@ -24,11 +30,27 @@ function dismiss(id: number) {
   emit();
 }
 
-export function toast(kind: Toast["kind"], message: string) {
+/* Desfazer (Ctrl+Z / ⌘Z), como no macOS: vale para a última ação que ofereceu desfazer. */
+let pendingUndo: { id: number; run: () => void } | null = null;
+
+export function runUndo(): boolean {
+  if (!pendingUndo) return false;
+  const { id, run } = pendingUndo;
+  pendingUndo = null;
+  dismiss(id);
+  run();
+  return true;
+}
+
+export function toast(kind: Toast["kind"], message: string, action?: ToastAction) {
   const id = nextId++;
-  toasts = [...toasts.slice(-3), { id, kind, message }];
+  toasts = [...toasts.slice(-3), { id, kind, message, action }];
   emit();
-  setTimeout(() => dismiss(id), kind === "error" ? 7000 : 4000);
+  if (action) pendingUndo = { id, run: action.run };
+  setTimeout(() => {
+    dismiss(id);
+    if (pendingUndo?.id === id) pendingUndo = null;
+  }, kind === "error" ? 7000 : action ? 8000 : 4000);
 }
 
 /**
@@ -70,7 +92,7 @@ export function Toaster() {
           key={t.id}
           role={t.kind === "error" ? "alert" : "status"}
           className={cx(
-            "flex items-start gap-2 rounded-md border bg-surface px-3 py-2.5 text-[13px] text-ink shadow-lg",
+            "toast-enter flex items-start gap-2 rounded-md border bg-surface px-3 py-2.5 text-sm text-ink shadow-lg",
             t.kind === "error" ? "border-danger/40" : "border-success/40",
           )}
         >
@@ -80,7 +102,20 @@ export function Toaster() {
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
           )}
           <span className="flex-1">{t.message}</span>
-          <button type="button" onClick={() => dismiss(t.id)} aria-label="Dispensar aviso" className="text-muted hover:text-ink">
+          {t.action && (
+            <button
+              type="button"
+              onClick={() => {
+                if (pendingUndo?.id === t.id) pendingUndo = null;
+                dismiss(t.id);
+                t.action!.run();
+              }}
+              className="-my-1 shrink-0 rounded-md px-2 py-1 text-sm font-semibold text-primary hover:bg-primary-soft"
+            >
+              {t.action.label}
+            </button>
+          )}
+          <button type="button" onClick={() => dismiss(t.id)} aria-label="Dispensar aviso" className="inline-flex size-8 shrink-0 items-center justify-center rounded text-muted hover:text-ink">
             <X className="size-3.5" aria-hidden />
           </button>
         </div>

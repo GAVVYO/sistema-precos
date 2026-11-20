@@ -19,7 +19,8 @@ function resolve(preset: PeriodPreset, current: Period | null): Period {
     case "month":
       return { preset, from: startOfMonth(today), to: endOfMonth(today) };
     case "last_month": {
-      const start = addMonths(today, -1);
+      // Do dia 1º ao último dia do mês anterior (antes começava no "mesmo dia" do mês passado).
+      const start = startOfMonth(addMonths(today, -1));
       return { preset, from: start, to: endOfMonth(start) };
     }
     case "custom":

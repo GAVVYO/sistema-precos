@@ -1,0 +1,315 @@
+{
+  "date": "2026-11-16",
+  "branch": "feat/visual-oficina",
+  "browser": "138.0.7204.184",
+  "environment": "Chrome headless no macOS 11.7.11; perfis isolados via Playwright e axe-core",
+  "checks": [
+    "teclado: abrir, conter foco, Esc e retornar ao acionador",
+    "texto 150%, espaçamento, contraste e movimento reduzido aplicados",
+    "preferências persistem após reload",
+    "preferências isoladas por usuário; acesso também para recepção",
+    "preferências isoladas por oficina",
+    "ampliar placa e devolver foco",
+    "leitura ampliada em janela sobreposta preserva a OS e seu foco",
+    "preferências funcionam offline e restauração recupera padrão",
+    "mover navegação e restaurar topo por clique sem arraste",
+    "mover navegação com setas e Home",
+    "mobile 390px e texto 150% sem rolagem horizontal da página",
+    "texto 200% em viewport equivalente a zoom 200%",
+    "preferência de movimento do sistema respeitada",
+    "modo de cores forçadas mantém controles acessíveis",
+    "sem erros JavaScript no navegador",
+    "Armazenamento bloqueado mantém preferências na sessão e apresenta aviso",
+    "Alt+L amplia o texto selecionado",
+    "Gráfico financeiro oferece valores em tabela",
+    "Menu do usuário funciona com Tab e Esc",
+    "Link Pular para o conteúdo transfere foco ao main"
+  ],
+  "default_and_controls": [
+    {
+      "name": "login",
+      "violations": []
+    },
+    {
+      "name": "inicio-padrao",
+      "violations": []
+    },
+    {
+      "name": "painel-150-contraste-espaco",
+      "violations": []
+    },
+    {
+      "name": "/ordens-default",
+      "violations": []
+    },
+    {
+      "name": "/estoque-default",
+      "violations": []
+    },
+    {
+      "name": "/financeiro-default",
+      "violations": []
+    },
+    {
+      "name": "/agenda-default",
+      "violations": []
+    },
+    {
+      "name": "/clientes-default",
+      "violations": []
+    },
+    {
+      "name": "/relatorios-default",
+      "violations": []
+    },
+    {
+      "name": "/configuracoes-default",
+      "violations": []
+    },
+    {
+      "name": "mobile-inicio-150",
+      "violations": []
+    },
+    {
+      "name": "mobile-painel-150",
+      "violations": []
+    },
+    {
+      "name": "forced-colors",
+      "violations": []
+    }
+  ],
+  "desktop_all_preferences_150": [
+    {
+      "width": 1366,
+      "route": "/inicio",
+      "overflow": {
+        "width": 1366,
+        "scroll": 1366
+      },
+      "violations": []
+    },
+    {
+      "width": 1366,
+      "route": "/ordens",
+      "overflow": {
+        "width": 1366,
+        "scroll": 1366
+      },
+      "violations": []
+    },
+    {
+      "width": 1366,
+      "route": "/estoque",
+      "overflow": {
+        "width": 1366,
+        "scroll": 1366
+      },
+      "violations": []
+    },
+    {
+      "width": 1366,
+      "route": "/financeiro",
+      "overflow": {
+        "width": 1366,
+        "scroll": 1366
+      },
+      "violations": []
+    },
+    {
+      "width": 1366,
+      "route": "/agenda",
+      "overflow": {
+        "width": 1366,
+        "scroll": 1366
+      },
+      "violations": []
+    },
+    {
+      "width": 1366,
+      "route": "/clientes",
+      "overflow": {
+        "width": 1366,
+        "scroll": 1366
+      },
+      "violations": []
+    },
+    {
+      "width": 1366,
+      "route": "/relatorios",
+      "overflow": {
+        "width": 1366,
+        "scroll": 1366
+      },
+      "violations": []
+    },
+    {
+      "width": 1366,
+      "route": "/configuracoes",
+      "overflow": {
+        "width": 1366,
+        "scroll": 1366
+      },
+      "violations": []
+    }
+  ],
+  "mobile_all_preferences_150": [
+    {
+      "width": 390,
+      "route": "/inicio",
+      "overflow": {
+        "width": 390,
+        "scroll": 390
+      },
+      "violations": []
+    },
+    {
+      "width": 390,
+      "route": "/ordens",
+      "overflow": {
+        "width": 390,
+        "scroll": 390
+      },
+      "violations": []
+    },
+    {
+      "width": 390,
+      "route": "/estoque",
+      "overflow": {
+        "width": 390,
+        "scroll": 390
+      },
+      "violations": []
+    },
+    {
+      "width": 390,
+      "route": "/financeiro",
+      "overflow": {
+        "width": 390,
+        "scroll": 390
+      },
+      "violations": []
+    },
+    {
+      "width": 390,
+      "route": "/agenda",
+      "overflow": {
+        "width": 390,
+        "scroll": 390
+      },
+      "violations": []
+    },
+    {
+      "width": 390,
+      "route": "/clientes",
+      "overflow": {
+        "width": 390,
+        "scroll": 390
+      },
+      "violations": []
+    },
+    {
+      "width": 390,
+      "route": "/relatorios",
+      "overflow": {
+        "width": 390,
+        "scroll": 390
+      },
+      "violations": []
+    },
+    {
+      "width": 390,
+      "route": "/configuracoes",
+      "overflow": {
+        "width": 390,
+        "scroll": 390
+      },
+      "violations": []
+    },
+    {
+      "width": 320,
+      "route": "/inicio",
+      "overflow": {
+        "width": 320,
+        "scroll": 320
+      },
+      "violations": []
+    },
+    {
+      "width": 320,
+      "route": "/ordens",
+      "overflow": {
+        "width": 320,
+        "scroll": 320
+      },
+      "violations": []
+    },
+    {
+      "width": 320,
+      "route": "/estoque",
+      "overflow": {
+        "width": 320,
+        "scroll": 320
+      },
+      "violations": []
+    },
+    {
+      "width": 320,
+      "route": "/financeiro",
+      "overflow": {
+        "width": 320,
+        "scroll": 320
+      },
+      "violations": []
+    },
+    {
+      "width": 320,
+      "route": "/agenda",
+      "overflow": {
+        "width": 320,
+        "scroll": 320
+      },
+      "violations": []
+    },
+    {
+      "width": 320,
+      "route": "/clientes",
+      "overflow": {
+        "width": 320,
+        "scroll": 320
+      },
+      "violations": []
+    },
+    {
+      "width": 320,
+      "route": "/relatorios",
+      "overflow": {
+        "width": 320,
+        "scroll": 320
+      },
+      "violations": []
+    },
+    {
+      "width": 320,
+      "route": "/configuracoes",
+      "overflow": {
+        "width": 320,
+        "scroll": 320
+      },
+      "violations": []
+    }
+  ],
+  "javascript_errors": [],
+  "unit_tests": 48,
+  "checks_passed": [
+    "typecheck",
+    "lint",
+    "test",
+    "build (14 páginas)"
+  ],
+  "limits": [
+    "Sem teste manual com VoiceOver ou NVDA",
+    "Sem Safari/Firefox ou dispositivo físico",
+    "Textos a 200% conferidos em viewport reduzida; não é certificação WCAG"
+  ]
+}

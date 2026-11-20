@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { buildSeed, DEMO_OWNER_ID, DEMO_WORKSHOP_ID, SECOND_WORKSHOP_ID } from "@/demo/seed";
 import type { Database } from "@/domain/types";
 import { todayISO } from "@/lib/format";
-import { addMember, updateMember, updateSettings } from "@/services/admin";
+import { addMember, DEMO_PIN, setMemberPin, updateMember, updateMemberProfile, updateSettings, verifyPin } from "@/services/admin";
 import { createAppointment } from "@/services/appointments";
 import { Ctx, DomainError, scopeTo } from "@/services/core";
 import { createExpense, financeSummary, listReceivables } from "@/services/finance";
@@ -201,7 +201,9 @@ describe("permissões", () => {
   it("cada cargo só executa o que seu modelo permite", () => {
     const order = newOrder();
     expectError(() => createExpense(db, ctx("u-raimundo"), { description: "Teste", category: "Aluguel", amountCents: 100, date: "2026-11-16", method: "pix" }), "forbidden");
-    expectError(() => registerPayment(db, ctx("u-juliana"), order.id, { method: "pix" }), "forbidden");
+    // Recepção recebe no balcão (decisão 46), mas não lança despesa; mecânico não recebe.
+    expectError(() => registerPayment(db, ctx("u-raimundo"), order.id, { method: "pix" }), "forbidden");
+    expectError(() => createExpense(db, ctx("u-juliana"), { description: "Teste", category: "Aluguel", amountCents: 100, date: "2026-11-16", method: "pix" }), "forbidden");
     expectError(() => changeOrderStatus(db, ctx("u-juliana"), order.id, "done"), "forbidden");
     expectError(() => cancelOrder(db, ctx("u-raimundo"), order.id, { reason: "teste", returnParts: true }), "forbidden");
     changeOrderStatus(db, ctx("u-raimundo"), order.id, "done");
@@ -230,6 +232,39 @@ describe("permissões", () => {
     updateMember(db, ctx(), wesley.id, { role: "mechanic", active: false, permissions: wesley.permissions });
     const order = newOrder();
     expectError(() => changeOrderStatus(db, ctx("u-wesley"), order.id, "in_progress"), "forbidden");
+  });
+});
+
+describe("crachá do funcionário", () => {
+  const PHOTO = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==";
+  it("cadastra com telefone e foto e depois edita nome, telefone e foto", () => {
+    const m = addMember(db, ctx(), { name: "João Batista", email: "joao@demo.test", role: "mechanic", phone: "(85) 99999-1111", photo: PHOTO });
+    const u = db.users.find((x) => x.id === m.userId)!;
+    expect(u.phone).toBe("85999991111");
+    expect(u.photo).toBe(PHOTO);
+    updateMemberProfile(db, ctx(), m.id, { name: "João B. Lima", phone: "", photo: null });
+    expect(u.name).toBe("João B. Lima");
+    expect(u.phone).toBe("");
+    expect(u.photo).toBeNull();
+  });
+  it("recusa foto que não é imagem e quem não gerencia funcionários", () => {
+    const m = addMember(db, ctx(), { name: "Pedro", email: "pedro@demo.test", role: "mechanic" });
+    expectError(() => updateMemberProfile(db, ctx(), m.id, { name: "Pedro", photo: "javascript:alert(1)" }), "validation");
+    expectError(() => updateMemberProfile(db, ctx("u-raimundo"), m.id, { name: "Pedro" }), "forbidden");
+  });
+});
+
+describe("PIN de entrada", () => {
+  it("usa 1234 na demonstração, troca pelo dono e recusa PIN inválido ou de outra oficina", () => {
+    expect(verifyPin(db, DEMO_WORKSHOP_ID, "u-juliana", DEMO_PIN)).toBe(true);
+    expect(verifyPin(db, DEMO_WORKSHOP_ID, "u-juliana", "0000")).toBe(false);
+    const m = db.memberships.find((x) => x.workshopId === DEMO_WORKSHOP_ID && x.userId === "u-juliana")!;
+    setMemberPin(db, ctx(), m.id, "4821");
+    expect(verifyPin(db, DEMO_WORKSHOP_ID, "u-juliana", "4821")).toBe(true);
+    expect(verifyPin(db, DEMO_WORKSHOP_ID, "u-juliana", DEMO_PIN)).toBe(false);
+    expect(verifyPin(db, SECOND_WORKSHOP_ID, "u-juliana", "4821")).toBe(false);
+    expectError(() => setMemberPin(db, ctx(), m.id, "12a4"), "validation");
+    expectError(() => setMemberPin(db, ctx("u-raimundo"), m.id, "1111"), "forbidden");
   });
 });
 
@@ -290,3 +325,98 @@ function newOrderAs(userId: string) {
     description: "Teste", notes: "", mechanicId: null, laborCents: null, items: [],
   });
 }
+
+describe("conectar o aparelho (decisões 74–75)", () => {
+  it("separa e-mail desconhecido, funcionário e dono", async () => {
+    const { checkEmail } = await import("@/services/auth");
+    const db = buildSeed();
+    expect(checkEmail(db, "ninguem@x.com").kind).toBe("unknown");
+    expect(checkEmail(db, "juliana@oficinamodelo.demo").kind).toBe("not-owner");
+    expect(checkEmail(db, "  Carlos@OficinaModelo.demo ").kind).toBe("owner");
+  });
+  it("o dono entra com a senha que a GAVYO entregou; a GAVYO troca a senha", async () => {
+    const { checkPassword, setOwnerPassword } = await import("@/services/auth");
+    const { DEMO_OWNER_PASSWORD } = await import("@/demo/seed");
+    const db = buildSeed();
+    expect(checkPassword(db, DEMO_OWNER_ID, DEMO_OWNER_PASSWORD)).toBe(true);
+    expect(checkPassword(db, DEMO_OWNER_ID, "errada123")).toBe(false);
+    expect(() => setOwnerPassword(db, DEMO_OWNER_ID, "curta")).toThrow();
+    setOwnerPassword(db, DEMO_OWNER_ID, "senhaforte1");
+    expect(checkPassword(db, DEMO_OWNER_ID, "senhaforte1")).toBe(true);
+    expect(() => setOwnerPassword(db, "u-juliana", "senhaforte1")).toThrow();
+  });
+  it("quem não é dono não troca o PIN do dono", () => {
+    const db = buildSeed();
+    const juliana = db.memberships.find((m) => m.userId === "u-juliana")!;
+    juliana.permissions.push("staff.manage");
+    const ownerM = db.memberships.find((m) => m.userId === DEMO_OWNER_ID)!;
+    expect(() => setMemberPin(db, { workshopId: DEMO_WORKSHOP_ID, userId: "u-juliana", now: new Date() }, ownerM.id, "0000")).toThrow(/proprietário/);
+  });
+});
+
+describe("QR para conectar o celular (decisão 76)", () => {
+  it("gera e lê QR pessoal e do aparelho; vence em 10 minutos", async () => {
+    const { createPairing, readPairing, PAIRING_TTL } = await import("@/services/pairing");
+    const db = buildSeed();
+    const now = new Date();
+    const ctx = { workshopId: DEMO_WORKSHOP_ID, userId: DEMO_OWNER_ID, now };
+    const juliana = db.memberships.find((m) => m.userId === "u-juliana")!;
+    const { code } = createPairing(db, ctx, { kind: "person", membershipId: juliana.id });
+    expect(readPairing(db, code, now)).toEqual({ kind: "person", workshopId: DEMO_WORKSHOP_ID, userId: "u-juliana" });
+    expect(() => readPairing(db, code, new Date(now.getTime() + PAIRING_TTL + 1))).toThrow(/venceu/);
+    const dev = createPairing(db, ctx, { kind: "device" });
+    expect(readPairing(db, dev.code, now)).toEqual({ kind: "device", workshopId: DEMO_WORKSHOP_ID });
+    expect(() => readPairing(db, "https://outro.site", now)).toThrow(/não é da GAVYO/);
+  });
+  it("mecânico não gera QR; quem não é dono não gera QR do dono; sem acesso não conecta", async () => {
+    const { createPairing, readPairing } = await import("@/services/pairing");
+    const db = buildSeed();
+    const now = new Date();
+    const owner = db.memberships.find((m) => m.userId === DEMO_OWNER_ID)!;
+    expect(() => createPairing(db, { workshopId: DEMO_WORKSHOP_ID, userId: "u-raimundo", now }, { kind: "device" })).toThrow();
+    const ju = db.memberships.find((m) => m.userId === "u-juliana")!;
+    ju.permissions.push("staff.manage");
+    expect(() => createPairing(db, { workshopId: DEMO_WORKSHOP_ID, userId: "u-juliana", now }, { kind: "person", membershipId: owner.id })).toThrow(/proprietário/);
+    const { code } = createPairing(db, { workshopId: DEMO_WORKSHOP_ID, userId: DEMO_OWNER_ID, now }, { kind: "person", membershipId: ju.id });
+    ju.active = false;
+    expect(() => readPairing(db, code, now)).toThrow(/sem acesso/);
+  });
+});
+
+describe("fotos do carro (decisão 87)", () => {
+  const jpg = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==";
+  it("todos da oficina tiram; quem tirou ou quem edita apaga; isolamento e limites", async () => {
+    const { addOrderPhoto, deleteOrderPhoto, moveOrderPhoto, photosOf, stageForStatus } = await import("@/services/photos");
+    const db = buildSeed();
+    const now = new Date();
+    const order = db.orders.find((o) => o.workshopId === DEMO_WORKSHOP_ID && !o.cancelledAt)!;
+    const mech = { workshopId: DEMO_WORKSHOP_ID, userId: "u-raimundo", now };
+    const p = addOrderPhoto(db, mech, order.id, { stage: stageForStatus(order.status), dataUrl: jpg });
+    expect(photosOf(db, order.id)).toHaveLength(1);
+    expect(() => addOrderPhoto(db, mech, order.id, { stage: "arrival", dataUrl: "data:text/html;base64,AAAA" })).toThrow();
+    // Outra oficina não acha o serviço.
+    expect(() => addOrderPhoto(db, { workshopId: SECOND_WORKSHOP_ID, userId: "u-marcos", now }, order.id, { stage: "arrival", dataUrl: jpg })).toThrow();
+    // Outro mecânico (sem editar serviço) não apaga a foto do colega; o dono apaga.
+    expect(() => deleteOrderPhoto(db, { workshopId: DEMO_WORKSHOP_ID, userId: "u-wesley", now }, p.id)).toThrow();
+    moveOrderPhoto(db, mech, p.id, "done");
+    expect(photosOf(db, order.id)[0].stage).toBe("done");
+    deleteOrderPhoto(db, { workshopId: DEMO_WORKSHOP_ID, userId: DEMO_OWNER_ID, now }, p.id);
+    expect(photosOf(db, order.id)).toHaveLength(0);
+  });
+});
+
+describe("foto da peça (decisão 89)", () => {
+  it("quem mexe no estoque põe e tira a foto; mecânico não; só imagem", async () => {
+    const { setPartPhoto } = await import("@/services/stock");
+    const db = buildSeed();
+    const now = new Date();
+    const part = db.parts.find((p) => p.workshopId === DEMO_WORKSHOP_ID)!;
+    const owner = { workshopId: DEMO_WORKSHOP_ID, userId: DEMO_OWNER_ID, now };
+    setPartPhoto(db, owner, part.id, "data:image/jpeg;base64,/9j/4AAQ");
+    expect(part.photo).toMatch(/^data:image\/jpeg/);
+    expect(() => setPartPhoto(db, owner, part.id, "javascript:alert(1)")).toThrow();
+    expect(() => setPartPhoto(db, { workshopId: DEMO_WORKSHOP_ID, userId: "u-raimundo", now }, part.id, null)).toThrow();
+    setPartPhoto(db, owner, part.id, null);
+    expect(part.photo).toBeNull();
+  });
+});

@@ -49,10 +49,10 @@ export type PaymentSituation = "paid" | "pending" | "undefined" | "free" | "canc
 
 export const PAYMENT_SITUATION_LABELS: Record<PaymentSituation, string> = {
   paid: "Pago",
-  pending: "Pagamento pendente",
+  pending: "Falta pagar",
   undefined: "Valor a definir",
   free: "Sem cobrança",
-  cancelled: "Cancelada",
+  cancelled: "Cancelado",
 };
 
 export function paymentSituation(order: ServiceOrder, totals: OrderTotals): PaymentSituation {
@@ -123,10 +123,10 @@ export function createOrder(db: Database, ctx: Ctx, input: CreateOrderInput): Se
     ? findScoped(db.appointments, ctx, input.appointmentId, "Agendamento não encontrado.")
     : null;
   if (appointment?.orderId) {
-    throw new DomainError("conflict", "Este agendamento já foi convertido em OS.");
+    throw new DomainError("conflict", "Este agendamento já virou serviço.");
   }
   if (appointment?.status === "cancelled") {
-    throw new DomainError("conflict", "Agendamento cancelado não pode ser convertido em OS.");
+    throw new DomainError("conflict", "Agendamento cancelado não pode virar serviço.");
   }
 
   const customer =
@@ -167,12 +167,12 @@ export function createOrder(db: Database, ctx: Ctx, input: CreateOrderInput): Se
     appointmentId: appointment?.id ?? null,
   };
   db.orders.push(order);
-  addEvent(db, ctx, order.id, "OS aberta.");
+  addEvent(db, ctx, order.id, "Serviço aberto.");
 
   const label = formatOrderNumber(number);
   for (const item of items) {
     const part = findScoped(db.parts, ctx, item.partId, "Peça não encontrada.");
-    applyStockDelta(db, ctx, part.id, -item.quantity, "order_out", `Uso na ${label}`, order.id);
+    applyStockDelta(db, ctx, part.id, -item.quantity, "order_out", `Uso no ${label}`, order.id);
     db.orderItems.push({
       id: newId(),
       workshopId: ctx.workshopId,
@@ -194,8 +194,8 @@ export function createOrder(db: Database, ctx: Ctx, input: CreateOrderInput): Se
 /* ---------- Edição ---------- */
 
 function getEditable(db: Database, ctx: Ctx, orderId: ID): ServiceOrder {
-  const order = findScoped(db.orders, ctx, orderId, "Ordem de serviço não encontrada.");
-  if (order.cancelledAt) throw new DomainError("conflict", "Esta OS está cancelada e não pode ser alterada.");
+  const order = findScoped(db.orders, ctx, orderId, "Serviço não encontrado.");
+  if (order.cancelledAt) throw new DomainError("conflict", "Este serviço está cancelado e não pode ser alterado.");
   return order;
 }
 
@@ -205,7 +205,7 @@ export function updateOrder(db: Database, ctx: Ctx, orderId: ID, input: OrderDet
   const details = parse(detailsSchema, input);
   assertMechanic(db, ctx, details.mechanicId);
   if (order.paymentId && details.laborCents !== order.laborCents) {
-    throw new DomainError("conflict", "Esta OS já foi paga; o valor não pode mais ser alterado.");
+    throw new DomainError("conflict", "Este serviço já foi pago; o valor não pode mais ser alterado.");
   }
   const changes: string[] = [];
   if (details.laborCents !== order.laborCents) {
@@ -216,7 +216,7 @@ export function updateOrder(db: Database, ctx: Ctx, orderId: ID, input: OrderDet
   if (details.mechanicId !== order.mechanicId) changes.push("responsável alterado");
   if (details.description !== order.description) changes.push("descrição atualizada");
   Object.assign(order, details);
-  addEvent(db, ctx, order.id, changes.length ? `OS editada (${changes.join("; ")}).` : "OS editada.");
+  addEvent(db, ctx, order.id, changes.length ? `Serviço editado (${changes.join("; ")}).` : "Serviço editado.");
   return order;
 }
 
@@ -235,13 +235,13 @@ export function setOrderItems(
   const order = getEditable(db, ctx, orderId);
   const items = parse(itemsSchema, input);
   if (order.paymentId) {
-    throw new DomainError("conflict", "Esta OS já foi paga; as peças não podem mais ser alteradas.");
+    throw new DomainError("conflict", "Este serviço já foi pago; as peças não podem mais ser alteradas.");
   }
   const reason = correctionReason?.trim() ?? "";
   if (order.status === "done" && reason.length < 5) {
     throw new DomainError(
       "validation",
-      "Esta OS está concluída. Informe o motivo da correção de peças para continuar.",
+      "Este serviço já está pronto. Escreva o motivo da correção das peças para continuar.",
     );
   }
   const label = formatOrderNumber(order.number);
@@ -254,16 +254,16 @@ export function setOrderItems(
   for (const existing of current) {
     const next = items.find((i) => i.partId === existing.partId);
     if (!next) {
-      applyStockDelta(db, ctx, existing.partId, existing.quantity, "return", `Peça removida da ${label}${suffix}`, order.id);
+      applyStockDelta(db, ctx, existing.partId, existing.quantity, "return", `Peça removida do ${label}${suffix}`, order.id);
       db.orderItems = db.orderItems.filter((i) => i.id !== existing.id);
       changed = true;
       continue;
     }
     const diff = next.quantity - existing.quantity;
     if (diff > 0) {
-      applyStockDelta(db, ctx, existing.partId, -diff, "order_out", `Quantidade aumentada na ${label}${suffix}`, order.id);
+      applyStockDelta(db, ctx, existing.partId, -diff, "order_out", `Quantidade aumentada no ${label}${suffix}`, order.id);
     } else if (diff < 0) {
-      applyStockDelta(db, ctx, existing.partId, -diff, "return", `Quantidade reduzida na ${label}${suffix}`, order.id);
+      applyStockDelta(db, ctx, existing.partId, -diff, "return", `Quantidade reduzida no ${label}${suffix}`, order.id);
     }
     if (diff !== 0 || next.unitPriceCents !== existing.unitPriceCents) changed = true;
     existing.quantity = next.quantity;
@@ -272,7 +272,7 @@ export function setOrderItems(
   for (const next of items) {
     if (current.some((c) => c.partId === next.partId)) continue;
     const part = findScoped(db.parts, ctx, next.partId, "Peça não encontrada.");
-    applyStockDelta(db, ctx, part.id, -next.quantity, "order_out", `Uso na ${label}${suffix}`, order.id);
+    applyStockDelta(db, ctx, part.id, -next.quantity, "order_out", `Uso no ${label}${suffix}`, order.id);
     db.orderItems.push({
       id: newId(),
       workshopId: ctx.workshopId,
@@ -307,12 +307,12 @@ export function changeOrderStatus(db: Database, ctx: Ctx, orderId: ID, status: O
   if (order.status === "done" || status === "done") assertCan(db, ctx, "os.complete");
   else assertCan(db, ctx, "os.status", "os.complete");
   if (order.status === "done" && order.paymentId) {
-    throw new DomainError("conflict", "Esta OS já foi paga e não pode ser reaberta.");
+    throw new DomainError("conflict", "Este serviço já foi pago e não pode voltar de etapa.");
   }
   order.status = status;
   // Concluir NÃO movimenta estoque: a baixa ocorreu quando as peças foram adicionadas.
   order.completedAt = status === "done" ? ctx.now.toISOString() : null;
-  addEvent(db, ctx, order.id, `Status alterado para ${ORDER_STATUS_LABELS[status]}.`);
+  addEvent(db, ctx, order.id, `Etapa mudou para ${ORDER_STATUS_LABELS[status]}.`);
 }
 
 export function cancelOrder(
@@ -323,16 +323,16 @@ export function cancelOrder(
 ): void {
   assertCan(db, ctx, "os.cancel");
   const order = getEditable(db, ctx, orderId);
-  if (order.paymentId) throw new DomainError("conflict", "Uma OS paga não pode ser cancelada.");
+  if (order.paymentId) throw new DomainError("conflict", "Um serviço já pago não pode ser cancelado.");
   if (order.status === "done") {
-    throw new DomainError("conflict", "Reabra a OS antes de cancelar um serviço já concluído.");
+    throw new DomainError("conflict", "Volte o serviço para \"Em andamento\" antes de cancelar um serviço pronto.");
   }
   const reason = input.reason.trim();
   if (reason.length < 3) throw new DomainError("validation", "Informe o motivo do cancelamento.");
   const label = formatOrderNumber(order.number);
   if (input.returnParts) {
     for (const item of db.orderItems.filter((i) => i.orderId === order.id)) {
-      applyStockDelta(db, ctx, item.partId, item.quantity, "return", `Cancelamento da ${label}`, order.id);
+      applyStockDelta(db, ctx, item.partId, item.quantity, "return", `Cancelamento do ${label}`, order.id);
     }
   }
   order.cancelledAt = ctx.now.toISOString();
@@ -341,7 +341,7 @@ export function cancelOrder(
     db,
     ctx,
     order.id,
-    `OS cancelada: ${reason}. ${input.returnParts ? "Peças devolvidas ao estoque." : "Peças não devolvidas ao estoque."}`,
+    `Serviço cancelado: ${reason}. ${input.returnParts ? "Peças devolvidas ao estoque." : "Peças não devolvidas ao estoque."}`,
   );
 }
 
@@ -360,7 +360,7 @@ export function registerPayment(
   assertCan(db, ctx, "finance.payment");
   const order = getEditable(db, ctx, orderId);
   if (order.paymentId || db.payments.some((p) => p.orderId === order.id)) {
-    throw new DomainError("conflict", "O pagamento desta OS já foi registrado.");
+    throw new DomainError("conflict", "O pagamento deste serviço já foi registrado.");
   }
   if (!(input.method in PAYMENT_METHOD_LABELS)) {
     throw new DomainError("validation", "Forma de pagamento inválida.");
@@ -370,7 +370,7 @@ export function registerPayment(
     throw new DomainError("validation", "Informe o valor da mão de obra antes de registrar o pagamento.");
   }
   if (totals.totalCents <= 0) {
-    throw new DomainError("validation", "Esta OS não possui valor a receber.");
+    throw new DomainError("validation", "Este serviço não tem valor a receber.");
   }
   const paymentId = newId();
   db.payments.push({
@@ -386,8 +386,8 @@ export function registerPayment(
     id: newId(),
     workshopId: ctx.workshopId,
     kind: "income",
-    description: `Pagamento da ${formatOrderNumber(order.number)}`,
-    category: "Ordem de serviço",
+    description: `Pagamento do ${formatOrderNumber(order.number)}`,
+    category: "Serviço",
     amountCents: totals.totalCents,
     date: todayISO(ctx.now),
     method: input.method,

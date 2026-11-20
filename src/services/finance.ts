@@ -58,7 +58,7 @@ export function createIncome(db: Database, ctx: Ctx, input: IncomeInput): Financ
     id: newId(),
     workshopId: ctx.workshopId,
     kind: "income",
-    category: "Receita avulsa",
+    category: "Entrada sem serviço",
     orderId: null,
     paymentId: null,
     userId: ctx.userId,

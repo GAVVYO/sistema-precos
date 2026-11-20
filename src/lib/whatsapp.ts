@@ -56,7 +56,7 @@ export function statusMessage(s: {
   return [
     `Olá, ${first}! Aqui é da ${s.workshopName}.`,
     "",
-    `Atualização da ${formatOrderNumber(s.orderNumber)} — ${s.vehicle} (placa ${formatPlate(s.plate)}):`,
-    `Status atual: ${s.statusLabel}.`,
+    `Atualização do ${formatOrderNumber(s.orderNumber)} — ${s.vehicle} (placa ${formatPlate(s.plate)}):`,
+    `Situação atual: ${s.statusLabel}.`,
   ].join("\n");
 }

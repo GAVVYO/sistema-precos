@@ -45,3 +45,4 @@ next-env.d.ts
 
 # configuração local de ferramentas
 .claude/
+/gavyo-hostinger.zip

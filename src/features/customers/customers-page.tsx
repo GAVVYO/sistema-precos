@@ -1,28 +1,32 @@
 "use client";
 
 import { Car, Pencil, Plus, Search, SearchX, UserPlus, Users } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { initialQuery } from "@/lib/query";
 import { useApp } from "@/app-state/app-context";
+import { MoreDetails } from "@/components/ui/choice";
 import { Dialog } from "@/components/ui/dialog";
 import { Button, Card, EmptyState, Field, Input, PageHeader, Select, Tabs } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
+import { type DataColumn, DataTable } from "@/components/ui/data-table";
 import type { Customer, ID, ServiceOrder, Vehicle } from "@/domain/types";
 import { orderTotalText, StatusBadge, vehicleLabel } from "@/features/orders/shared";
 import { formatDate, formatOrderNumber, formatPhone, formatPlate } from "@/lib/format";
-import { createCustomer, saveVehicle, updateCustomer } from "@/services/customers";
+
 import { orderTotals } from "@/services/orders";
+import { maskDigits, maskPhone, maskPlate } from "@/lib/masks";
 
 /** Histórico derivado das OS existentes — nada é digitado em duplicidade. */
 function OrderHistory({ orders, showVehicle, onOpen }: { orders: ServiceOrder[]; showVehicle?: boolean; onOpen: (id: ID) => void }) {
   const { view, vehicleOf, userOf, partOf, can } = useApp();
   if (orders.length === 0) {
-    return <p className="rounded-md border border-dashed border-line px-3 py-5 text-center text-[13px] text-muted">Nenhum atendimento registrado ainda.</p>;
+    return <p className="rounded-md border border-dashed border-line px-3 py-5 text-center text-sm text-muted">Nenhum atendimento registrado ainda.</p>;
   }
   return (
     <div className="overflow-x-auto rounded-md border border-line">
       <table className="data-table">
         <thead>
-          <tr><th>Data</th><th>OS</th>{showVehicle && <th>Veículo</th>}<th>Serviço</th><th>Peças</th><th className="num">Valor</th><th>Responsável</th><th>Status</th></tr>
+          <tr><th>Data</th><th>Serviço</th>{showVehicle && <th>Veículo</th>}<th>Serviço</th><th>Peças</th><th className="num">Valor</th><th>Responsável</th><th>Etapa</th></tr>
         </thead>
         <tbody>
           {orders.map((o) => {
@@ -65,26 +69,32 @@ function VehicleForm({ customerId, vehicle, onDone }: { customerId: ID; vehicle:
     const yr = year.trim() === "" ? null : Number(year);
     const km = mileage.trim() === "" ? null : Number(mileage);
     if ((yr !== null && !Number.isInteger(yr)) || (km !== null && !Number.isInteger(km))) return toast("error", "Ano e quilometragem devem ser números inteiros.");
-    const r = act((db, ctx) => saveVehicle(db, ctx, owner, { plate, brand, model, year: yr, mileage: km }, vehicle?.id), vehicle ? "Veículo atualizado." : "Veículo cadastrado.");
+    const r = act((c) => c.saveVehicle(owner, { plate, brand, model, year: yr, mileage: km }, vehicle?.id), vehicle ? "Veículo atualizado." : "Veículo cadastrado.");
     if (r.ok) onDone();
   };
 
   return (
     <div className="grid grid-cols-6 gap-3 rounded-md border border-primary/40 bg-primary-soft/40 p-3">
-      <Field label="Placa" className="col-span-2">{(p) => <Input {...p} value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} maxLength={8} autoFocus />}</Field>
-      <Field label="Marca" className="col-span-2">{(p) => <Input {...p} value={brand} onChange={(e) => setBrand(e.target.value)} />}</Field>
-      <Field label="Modelo" className="col-span-2">{(p) => <Input {...p} value={model} onChange={(e) => setModel(e.target.value)} />}</Field>
-      <Field label="Ano" optional className="col-span-2">{(p) => <Input {...p} value={year} onChange={(e) => setYear(e.target.value)} inputMode="numeric" maxLength={4} />}</Field>
-      <Field label="Quilometragem" optional className="col-span-2">{(p) => <Input {...p} value={mileage} onChange={(e) => setMileage(e.target.value)} inputMode="numeric" />}</Field>
-      {vehicle && (
-        <Field label="Proprietário atual" className="col-span-2">
-          {(p) => (
-            <Select {...p} value={owner} onChange={(e) => setOwner(e.target.value)}>
-              {[...view.customers].sort((a, b) => a.name.localeCompare(b.name)).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </Select>
+      <Field label="Placa" className="col-span-6 sm:col-span-2">{(p) => <Input {...p} value={plate} onChange={(e) => setPlate(maskPlate(e.target.value))} maxLength={8} autoFocus />}</Field>
+      <Field label="Marca" className="col-span-3 sm:col-span-2">{(p) => <Input {...p} value={brand} onChange={(e) => setBrand(e.target.value)} />}</Field>
+      <Field label="Modelo" className="col-span-3 sm:col-span-2">{(p) => <Input {...p} value={model} onChange={(e) => setModel(e.target.value)} />}</Field>
+      <div className="col-span-6">
+        <MoreDetails summary={vehicle ? "Mais detalhes (opcional): ano, quilometragem e troca de dono" : "Mais detalhes (opcional): ano e quilometragem"}>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Ano" optional>{(p) => <Input {...p} value={year} onChange={(e) => setYear(maskDigits(e.target.value, 4))} inputMode="numeric" maxLength={4} />}</Field>
+            <Field label="Quilometragem" optional>{(p) => <Input {...p} value={mileage} onChange={(e) => setMileage(maskDigits(e.target.value, 7))} inputMode="numeric" />}</Field>
+          </div>
+          {vehicle && (
+            <Field label="O carro mudou de dono? Escolha o novo dono" hint="Lista com todos os clientes, em ordem alfabética.">
+              {(p) => (
+                <Select {...p} value={owner} onChange={(e) => setOwner(e.target.value)}>
+                  {[...view.customers].sort((a, b) => a.name.localeCompare(b.name)).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </Select>
+              )}
+            </Field>
           )}
-        </Field>
-      )}
+        </MoreDetails>
+      </div>
       <div className="col-span-6 flex justify-end gap-2">
         <Button size="sm" onClick={onDone}>Descartar</Button>
         <Button size="sm" variant="primary" disabled={!online} onClick={save}>Salvar veículo</Button>
@@ -93,7 +103,7 @@ function VehicleForm({ customerId, vehicle, onDone }: { customerId: ID; vehicle:
   );
 }
 
-function CustomerDialog({ customer, onClose }: { customer: Customer | null; onClose: () => void }) {
+export function CustomerDialog({ customer, onClose }: { customer: Customer | null; onClose: () => void }) {
   const { view, act, can, online, openOrder, openNewOrder } = useApp();
   const [name, setName] = useState(customer?.name ?? "");
   const [phone, setPhone] = useState(customer ? formatPhone(customer.phone) : "");
@@ -106,8 +116,8 @@ function CustomerDialog({ customer, onClose }: { customer: Customer | null; onCl
 
   const save = () => {
     const r = customer
-      ? act((db, ctx) => updateCustomer(db, ctx, customer.id, { name, phone }), "Cliente atualizado.")
-      : act((db, ctx) => createCustomer(db, ctx, { name, phone }), "Cliente cadastrado.");
+      ? act((c) => c.updateCustomer(customer.id, { name, phone }), "Cliente atualizado.")
+      : act((c) => c.createCustomer({ name, phone }), "Cliente cadastrado.");
     if (!r.ok) return;
     if (customer) setEditing(false);
     else onClose();
@@ -124,7 +134,7 @@ function CustomerDialog({ customer, onClose }: { customer: Customer | null; onCl
           <Button onClick={onClose}>Fechar</Button>
           {customer && can("os.create") && (
             <Button variant="primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => { onClose(); openNewOrder({ customerId: customer.id }); }}>
-              Nova OS para este cliente
+              Novo serviço para este cliente
             </Button>
           )}
           {!customer && <Button variant="primary" disabled={!online} onClick={save}>Cadastrar cliente</Button>}
@@ -135,7 +145,7 @@ function CustomerDialog({ customer, onClose }: { customer: Customer | null; onCl
         {editing ? (
           <div className="grid grid-cols-5 items-end gap-3">
             <Field label="Nome" className="col-span-3">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoFocus />}</Field>
-            <Field label="Telefone" className="col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="(85) 98888-7777" />}</Field>
+            <Field label="Telefone" className="col-span-2">{(p) => <Input {...p} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} inputMode="tel" placeholder="(85) 98888-7777" />}</Field>
             {customer && (
               <div className="col-span-5 flex justify-end gap-2">
                 <Button size="sm" onClick={() => { setEditing(false); setName(customer.name); setPhone(formatPhone(customer.phone)); }}>Descartar</Button>
@@ -157,12 +167,12 @@ function CustomerDialog({ customer, onClose }: { customer: Customer | null; onCl
               {vehicleForm ? (
                 <VehicleForm key={vehicleForm === "new" ? "new" : vehicleForm.id} customerId={customer.id} vehicle={vehicleForm === "new" ? null : vehicleForm} onDone={() => setVehicleForm(null)} />
               ) : vehicles.length === 0 ? (
-                <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-[13px] text-muted">Nenhum veículo vinculado.</p>
+                <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-sm text-muted">Nenhum veículo vinculado.</p>
               ) : (
                 <ul className="grid gap-2 sm:grid-cols-2">
                   {vehicles.map((v) => (
                     <li key={v.id} className="flex items-center justify-between gap-2 rounded-md border border-line px-3 py-2">
-                      <span className="min-w-0 text-[13px]">
+                      <span className="min-w-0 text-sm">
                         <span className="block font-medium">{vehicleLabel(v)}</span>
                         <span className="text-xs text-muted"><span className="font-mono">{formatPlate(v.plate)}</span>{v.mileage ? ` · ${v.mileage.toLocaleString("pt-BR")} km` : ""}</span>
                       </span>
@@ -173,7 +183,7 @@ function CustomerDialog({ customer, onClose }: { customer: Customer | null; onCl
               )}
             </section>
             <section>
-              <h3 className="mb-2 text-sm font-semibold">Histórico de ordens de serviço ({orders.length})</h3>
+              <h3 className="mb-2 text-sm font-semibold">Serviços deste cliente ({orders.length})</h3>
               <OrderHistory orders={orders} showVehicle onOpen={(id) => { onClose(); openOrder(id); }} />
             </section>
           </>
@@ -183,7 +193,7 @@ function CustomerDialog({ customer, onClose }: { customer: Customer | null; onCl
   );
 }
 
-function VehicleDialog({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => void }) {
+export function VehicleDialog({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => void }) {
   const { view, can, online, customerOf, openOrder, openNewOrder } = useApp();
   const [editing, setEditing] = useState(false);
   const orders = view.orders.filter((o) => o.vehicleId === vehicle.id).sort((a, b) => b.openedAt.localeCompare(a.openedAt));
@@ -201,7 +211,7 @@ function VehicleDialog({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => 
           <Button onClick={onClose}>Fechar</Button>
           {can("os.create") && (
             <Button variant="primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => { onClose(); openNewOrder({ customerId: vehicle.customerId, vehicleId: vehicle.id }); }}>
-              Nova OS para este veículo
+              Novo serviço para este veículo
             </Button>
           )}
         </>
@@ -218,10 +228,14 @@ function VehicleDialog({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => 
   );
 }
 
+function lastOrderOf(orders: ServiceOrder[], filter: (o: ServiceOrder) => boolean): ServiceOrder | null {
+  return orders.filter(filter).reduce<ServiceOrder | null>((last, o) => (!last || o.openedAt > last.openedAt ? o : last), null);
+}
+
 export function CustomersPage() {
   const { view, can, online, customerOf } = useApp();
   const [tab, setTab] = useState<"customers" | "vehicles">("customers");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialQuery);
   const [customerId, setCustomerId] = useState<ID | "new" | null>(null);
   const [vehicleId, setVehicleId] = useState<ID | null>(null);
   const canManage = can("os.create") || can("os.edit") || can("schedule.manage");
@@ -229,27 +243,53 @@ export function CustomersPage() {
   const q = search.trim().toLowerCase();
   const digits = q.replace(/\D/g, "");
   const alnum = q.replace(/[^a-z0-9]/g, "");
-  const lastOrder = (filter: (o: ServiceOrder) => boolean) =>
-    view.orders.filter(filter).reduce<ServiceOrder | null>((last, o) => (!last || o.openedAt > last.openedAt ? o : last), null);
+  const customers = useMemo(
+    () => view.customers.filter((c) => !q || c.name.toLowerCase().includes(q) || (digits.length >= 3 && c.phone.includes(digits)) || view.vehicles.some((v) => v.customerId === c.id && alnum && v.plate.toLowerCase().includes(alnum))),
+    [view, q, digits, alnum],
+  );
+  const vehicles = useMemo(
+    () =>
+      view.vehicles.filter((v) => {
+        const owner = customerOf(v.customerId);
+        return !q || (alnum && v.plate.toLowerCase().includes(alnum)) || `${v.brand} ${v.model}`.toLowerCase().includes(q) || owner?.name.toLowerCase().includes(q) || (digits.length >= 3 && owner?.phone.includes(digits));
+      }),
+    [view, q, digits, alnum, customerOf],
+  );
 
-  const customers = view.customers
-    .filter((c) => !q || c.name.toLowerCase().includes(q) || (digits.length >= 3 && c.phone.includes(digits)) || view.vehicles.some((v) => v.customerId === c.id && alnum && v.plate.toLowerCase().includes(alnum)))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  const vehicles = view.vehicles
-    .filter((v) => {
-      const owner = customerOf(v.customerId);
-      return !q || (alnum && v.plate.toLowerCase().includes(alnum)) || `${v.brand} ${v.model}`.toLowerCase().includes(q) || owner?.name.toLowerCase().includes(q) || (digits.length >= 3 && owner?.phone.includes(digits));
-    })
-    .sort((a, b) => a.plate.localeCompare(b.plate));
+  const customerColumns = useMemo<DataColumn<Customer>[]>(() => {
+    const last = (id: ID) => lastOrderOf(view.orders, (o) => o.customerId === id);
+    const count = (id: ID) => view.orders.filter((o) => o.customerId === id).length;
+    return [
+      { id: "name", header: "Nome", size: 230, hideable: false, sortValue: (c) => c.name.toLocaleLowerCase("pt-BR"), cell: (c) => <button type="button" className="font-medium text-primary hover:underline">{c.name}</button> },
+      { id: "phone", header: "Telefone", size: 150, sortValue: (c) => c.phone, cell: (c) => formatPhone(c.phone) },
+      { id: "vehicles", header: "Veículos", size: 260, cell: (c) => view.vehicles.filter((v) => v.customerId === c.id).map((v) => `${v.model} (${formatPlate(v.plate)})`).join(", ") || "—" },
+      { id: "last", header: "Último atendimento", size: 320, sortValue: (c) => last(c.id)?.openedAt ?? "", cell: (c) => { const l = last(c.id); return l ? `${formatDate(l.openedAt)} · ${l.description}` : "—"; } },
+      { id: "orders", header: "Serviços", size: 80, align: "right", sortValue: (c) => count(c.id), cell: (c) => count(c.id) },
+    ];
+  }, [view]);
+
+  const vehicleColumns = useMemo<DataColumn<Vehicle>[]>(() => {
+    const last = (id: ID) => lastOrderOf(view.orders, (o) => o.vehicleId === id);
+    const owner = (v: Vehicle) => view.customers.find((c) => c.id === v.customerId)?.name ?? "";
+    return [
+      { id: "plate", header: "Placa", size: 120, hideable: false, sortValue: (v) => v.plate, cell: (v) => <button type="button" className="font-mono font-semibold text-primary hover:underline">{formatPlate(v.plate)}</button> },
+      { id: "brand", header: "Marca", size: 130, sortValue: (v) => v.brand, cell: (v) => v.brand },
+      { id: "model", header: "Modelo", size: 150, sortValue: (v) => v.model, cell: (v) => v.model },
+      { id: "year", header: "Ano", size: 80, sortValue: (v) => v.year ?? 0, cell: (v) => v.year ?? "—" },
+      { id: "owner", header: "Proprietário atual", size: 210, sortValue: (v) => owner(v).toLocaleLowerCase("pt-BR"), cell: (v) => owner(v) },
+      { id: "mileage", header: "Quilometragem", size: 140, align: "right", sortValue: (v) => v.mileage ?? 0, cell: (v) => (v.mileage ? `${v.mileage.toLocaleString("pt-BR")} km` : "—") },
+      { id: "last", header: "Último serviço", size: 300, sortValue: (v) => last(v.id)?.openedAt ?? "", cell: (v) => { const l = last(v.id); return l ? `${formatDate(l.openedAt)} · ${l.description}` : "—"; } },
+    ];
+  }, [view]);
 
   const selectedCustomer = customerId && customerId !== "new" ? view.customers.find((c) => c.id === customerId) : null;
   const selectedVehicle = vehicleId ? view.vehicles.find((v) => v.id === vehicleId) : null;
 
   return (
-    <>
+    <div className="module-page module-customers">
       <PageHeader
         title="Clientes e veículos"
-        description="Cadastro básico e histórico de manutenção derivado das ordens de serviço."
+        description="Encontre o cliente, consulte seus veículos e veja os serviços realizados."
         actions={canManage && <Button variant="primary" icon={<UserPlus className="size-4" aria-hidden />} disabled={!online} onClick={() => setCustomerId("new")}>Novo cliente</Button>}
       />
       <Card>
@@ -263,62 +303,24 @@ export function CustomersPage() {
 
         {tab === "customers" ? (
           view.customers.length === 0 ? (
-            <EmptyState icon={<Users className="size-8" aria-hidden />} title="Nenhum cliente cadastrado" description="Os clientes são criados ao abrir uma OS ou pelo botão Novo cliente." />
+            <EmptyState icon={<Users className="size-8" aria-hidden />} title="Nenhum cliente cadastrado" description="O cliente é cadastrado sozinho quando você abre um serviço. Também dá para usar o botão Novo cliente." />
           ) : customers.length === 0 ? (
-            <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum cliente encontrado" description="Tente buscar por outro nome, telefone ou placa." />
+            <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum cliente encontrado" description="Confira o nome, o telefone ou a placa. Se for cliente novo, ele é cadastrado ao abrir o serviço." />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead><tr><th>Nome</th><th>Telefone</th><th>Veículos</th><th>Último atendimento</th><th className="num">OS</th></tr></thead>
-                <tbody>
-                  {customers.map((c) => {
-                    const last = lastOrder((o) => o.customerId === c.id);
-                    return (
-                      <tr key={c.id} className="cursor-pointer" onClick={() => setCustomerId(c.id)}>
-                        <td><button type="button" className="font-medium text-primary hover:underline">{c.name}</button></td>
-                        <td>{formatPhone(c.phone)}</td>
-                        <td>{view.vehicles.filter((v) => v.customerId === c.id).map((v) => `${v.model} (${formatPlate(v.plate)})`).join(", ") || "—"}</td>
-                        <td>{last ? `${formatDate(last.openedAt)} · ${last.description}` : "—"}</td>
-                        <td className="num">{view.orders.filter((o) => o.customerId === c.id).length}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <DataTable prefKey="clientes" label="Clientes" columns={customerColumns} data={customers} rowKey={(c) => c.id} defaultSort={{ id: "name" }} onRowClick={(c) => setCustomerId(c.id)} />
           )
         ) : view.vehicles.length === 0 ? (
-          <EmptyState icon={<Car className="size-8" aria-hidden />} title="Nenhum veículo cadastrado" />
+          <EmptyState icon={<Car className="size-8" aria-hidden />} title="Nenhum veículo cadastrado" description="O carro é cadastrado sozinho quando você abre um serviço com a placa dele." />
         ) : vehicles.length === 0 ? (
-          <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum veículo encontrado" description="Tente buscar por outra placa, modelo ou proprietário." />
+          <EmptyState icon={<SearchX className="size-8" aria-hidden />} title="Nenhum veículo encontrado" description="Confira a placa, o modelo ou o nome do dono." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead><tr><th>Placa</th><th>Marca</th><th>Modelo</th><th>Ano</th><th>Proprietário atual</th><th className="num">Quilometragem</th><th>Último serviço</th></tr></thead>
-              <tbody>
-                {vehicles.map((v) => {
-                  const last = lastOrder((o) => o.vehicleId === v.id);
-                  return (
-                    <tr key={v.id} className="cursor-pointer" onClick={() => setVehicleId(v.id)}>
-                      <td><button type="button" className="font-mono font-semibold text-primary hover:underline">{formatPlate(v.plate)}</button></td>
-                      <td>{v.brand}</td>
-                      <td>{v.model}</td>
-                      <td>{v.year ?? "—"}</td>
-                      <td>{customerOf(v.customerId)?.name}</td>
-                      <td className="num">{v.mileage ? `${v.mileage.toLocaleString("pt-BR")} km` : "—"}</td>
-                      <td>{last ? `${formatDate(last.openedAt)} · ${last.description}` : "—"}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <DataTable prefKey="veiculos" label="Veículos" columns={vehicleColumns} data={vehicles} rowKey={(v) => v.id} defaultSort={{ id: "plate" }} onRowClick={(v) => setVehicleId(v.id)} />
         )}
       </Card>
 
       {customerId === "new" && <CustomerDialog customer={null} onClose={() => setCustomerId(null)} />}
       {selectedCustomer && <CustomerDialog key={selectedCustomer.id} customer={selectedCustomer} onClose={() => setCustomerId(null)} />}
       {selectedVehicle && <VehicleDialog key={selectedVehicle.id} vehicle={selectedVehicle} onClose={() => setVehicleId(null)} />}
-    </>
+    </div>
   );
 }

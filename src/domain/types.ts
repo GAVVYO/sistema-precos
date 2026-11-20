@@ -69,6 +69,15 @@ export interface User {
   id: ID;
   name: string;
   email: string;
+  /** Telefone (só dígitos), opcional. */
+  phone?: string;
+  /** Foto do crachá (data URL JPEG pequeno, ~256 px), opcional. */
+  photo?: string | null;
+  /**
+   * Senha do dono para conectar aparelhos (decisão 74). Ausente = primeiro acesso.
+   * Demonstração: resumo simples no navegador. Fase 2: bcrypt no servidor.
+   */
+  passwordHash?: string;
 }
 
 export interface WorkshopMembership {
@@ -79,6 +88,11 @@ export interface WorkshopMembership {
   active: boolean;
   /** Permissões efetivas; o cargo serve apenas de modelo inicial. */
   permissions: PermissionKey[];
+  /**
+   * PIN de 4 números para entrar no aparelho da oficina (decisão 70).
+   * Demonstração: guardado no aparelho e "1234" quando vazio. Fase 2: só o hash, no servidor.
+   */
+  pin?: string;
 }
 
 export interface Customer {
@@ -157,6 +171,8 @@ export interface Part {
   minQuantity: number;
   costCents: Cents;
   priceCents: Cents;
+  /** Foto da peça (decisão 89): JPEG reduzido em data URL na demonstração; arquivo no servidor na fase 2. */
+  photo?: string | null;
 }
 
 export type StockMovementType = "in" | "out" | "adjust" | "order_out" | "return";
@@ -229,6 +245,21 @@ export interface FinancialTransaction {
 }
 
 /** Conjunto completo de tabelas — equivalente ao banco MySQL futuro. */
+/** Momento da foto do carro (decisão 87). */
+export type PhotoStage = "arrival" | "during" | "done";
+
+/** Foto do carro num serviço: como chegou, durante o conserto ou pronto. */
+export interface OrderPhoto {
+  id: ID;
+  workshopId: ID;
+  orderId: ID;
+  stage: PhotoStage;
+  /** Demonstração: JPEG reduzido em data URL. Fase 2: arquivo no servidor. */
+  dataUrl: string;
+  takenAt: ISODateTime;
+  userId: ID;
+}
+
 export interface Database {
   version: number;
   workshops: Workshop[];
@@ -240,6 +271,8 @@ export interface Database {
   orders: ServiceOrder[];
   orderItems: ServiceOrderItem[];
   orderEvents: ServiceOrderEvent[];
+  /** Fotos dos carros (decisão 87). Dados antigos sem este campo recebem []. */
+  orderPhotos: OrderPhoto[];
   parts: Part[];
   stockMovements: StockMovement[];
   appointments: Appointment[];

@@ -72,7 +72,7 @@ export function setAppointmentStatus(db: Database, ctx: Ctx, id: ID, status: App
   assertCan(db, ctx, "schedule.manage");
   const appointment = findScoped(db.appointments, ctx, id, "Agendamento não encontrado.");
   if (appointment.orderId) {
-    throw new DomainError("conflict", "Agendamento já convertido em OS não pode mudar de status.");
+    throw new DomainError("conflict", "Este agendamento já virou serviço e não pode mudar de situação.");
   }
   appointment.status = status;
 }

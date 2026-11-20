@@ -1,36 +1,39 @@
 "use client";
 
+import { writePref } from "@/lib/prefs";
 import {
-  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, Lock, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
+  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, Lightbulb, Lock, MonitorPlay, PanelLeft, PanelTop, Settings2, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
 } from "lucide-react";
 import Link from "next/link";
+import { setNavMode, SideNavigation, useNavMode } from "./side-navigation";
+import { withTransition } from "@/lib/view-transition";
 import { usePathname, useRouter } from "next/navigation";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useApp } from "@/app-state/app-context";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Button, cx, EmptyState } from "@/components/ui/primitives";
+import { PersonalNavigation } from "./personal-navigation";
+import { OrderSearch } from "./order-search";
+import { GlobalShortcuts } from "./global-shortcuts";
+import { TrayDock, TrayProvider } from "./tray";
+import { PipProvider } from "./pip";
+import { BrandMark } from "@/components/ui/brand-mark";
 import { toast } from "@/components/ui/toast";
+import { SERVER_MODE, store } from "@/app-state/store";
 import { demoStore } from "@/demo/store";
 import { ModuleInfo, MODULES, ROLE_LABELS } from "@/domain/permissions";
 import type { ModuleKey } from "@/domain/types";
 import { formatDateTime, todayISO } from "@/lib/format";
+import { AccessibilityControls } from "@/components/accessibility/accessibility-controls";
+import { useAccessibility } from "@/components/accessibility/accessibility-provider";
+import { contrastOn, readableAccent } from "@/lib/theme";
 import { listReceivables } from "@/services/finance";
 import { partSituation } from "@/services/stock";
-
-/** Escolhe texto claro ou escuro conforme a luminância da cor de fundo. */
-function readableOn(hex: string): string {
-  const n = parseInt(hex.slice(1), 16);
-  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((c) => {
-    const s = c / 255;
-    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.4 ? "#172033" : "#ffffff";
-}
 
 export function useVisibleModules(): ModuleInfo[] {
   const { settings, can } = useApp();
   return MODULES.filter(
-    (m) => settings.activeModules.includes(m.key) && (m.anyOf.length === 0 || m.anyOf.some(can)),
+    (m) => !m.hidden && settings.activeModules.includes(m.key) && (m.anyOf.length === 0 || m.anyOf.some(can)),
   );
 }
 
@@ -49,12 +52,14 @@ function Menu({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const id = useId();
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
       if (!ref.current?.contains(e.target as Node)) setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); trigger.current?.focus(); } };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     return () => {
@@ -63,11 +68,12 @@ function Menu({
     };
   }, [open]);
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
       <button
         type="button"
         aria-label={label}
-        aria-haspopup="menu"
+        ref={trigger}
+        aria-controls={open ? id : undefined}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={buttonClassName}
@@ -76,7 +82,9 @@ function Menu({
       </button>
       {open && (
         <div
-          role="menu"
+          id={id}
+          role="region"
+          aria-label={label}
           className={cx(
             "absolute top-full z-40 mt-1.5 min-w-56 rounded-md border border-line bg-surface py-1 text-ink shadow-lg",
             align === "right" ? "right-0" : "left-0",
@@ -98,19 +106,23 @@ function DemoBar() {
   const switchWorkshop = (workshopId: string) => {
     const owner = db.memberships.find((m) => m.workshopId === workshopId && m.active && m.role === "owner");
     if (!owner) return;
-    demoStore.login(workshopId, owner.userId);
+    // A cor da oficina nova "varre" a tela a partir da logo.
+    const logo = document.querySelector(".side-brand-logo .app-brand-logo, .island-brand .app-brand-logo")?.getBoundingClientRect();
+    const x = logo ? `${logo.left + logo.width / 2}px` : "40px", y = logo ? `${logo.top + logo.height / 2}px` : "40px";
+    writePref("device-workshop", workshopId); // ao sair, a entrada mostra esta oficina
+    withTransition("workshop", () => demoStore.login(workshopId, owner.userId), { vars: { "--vt-x": x, "--vt-y": y } });
     router.push("/inicio");
   };
 
   return (
-    <div className="no-print flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-amber-200 bg-amber-50 px-4 py-1 text-xs text-amber-900">
+    <aside aria-label="Ambiente de demonstração" className="demo-bar no-print flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-amber-200 bg-amber-50 px-6 py-1.5 text-xs text-amber-900">
       <span className="flex items-center gap-1.5 font-semibold">
         <FlaskConical className="size-3.5" aria-hidden />
         Ambiente de demonstração — dados fictícios
       </span>
       <label className="flex items-center gap-1.5">
         Oficina
-        <select className={selectClass} value={view.workshop?.id} onChange={(e) => switchWorkshop(e.target.value)}>
+        <select aria-label="Oficina" className={selectClass} value={view.workshop?.id} onChange={(e) => switchWorkshop(e.target.value)}>
           {db.workshops.map((w) => (
             <option key={w.id} value={w.id}>
               {db.settings.find((s) => s.workshopId === w.id)?.displayName ?? w.name}
@@ -121,6 +133,7 @@ function DemoBar() {
       <label className="flex items-center gap-1.5">
         Entrar como
         <select
+          aria-label="Entrar como"
           className={selectClass}
           value={user.id}
           onChange={(e) => {
@@ -137,7 +150,10 @@ function DemoBar() {
             ))}
         </select>
       </label>
-      <div className="ml-auto flex items-center gap-3">
+      {/* Opções de teste ficam recolhidas para não confundir quem usa no dia a dia. */}
+      <details className="demo-options ml-auto">
+        <summary className="flex cursor-pointer items-center gap-1 font-medium"><Settings2 className="size-3.5" aria-hidden />Opções da demonstração</summary>
+        <div className="demo-options-panel">
         <button
           type="button"
           className="flex items-center gap-1 font-medium underline-offset-2 hover:underline"
@@ -155,7 +171,8 @@ function DemoBar() {
           <RotateCcw className="size-3.5" aria-hidden />
           Restaurar demonstração
         </button>
-      </div>
+        </div>
+      </details>
       {confirmReset && (
         <ConfirmDialog
           title="Restaurar demonstração"
@@ -170,7 +187,7 @@ function DemoBar() {
           }}
         />
       )}
-    </div>
+    </aside>
   );
 }
 
@@ -194,30 +211,28 @@ function Notifications() {
   }
   if (can("os.view") && active("orders")) {
     const n = view.orders.filter((o) => !o.cancelledAt && o.status === "waiting" && o.mechanicId === user.id).length;
-    if (n) items.push({ icon: <Wrench className="size-4 text-muted" aria-hidden />, text: `${n} OS aguardando você`, href: "/ordens" });
+    if (n) items.push({ icon: <Wrench className="size-4 text-muted" aria-hidden />, text: `${n} ${n === 1 ? "serviço aguardando" : "serviços aguardando"} você`, href: "/ordens" });
   }
 
   return (
     <Menu
-      label={`Notificações (${items.length})`}
-      buttonClassName="relative rounded p-1.5 hover:bg-white/10"
+      label={items.length ? `Avisos, ${items.length} ${items.length === 1 ? "novo" : "novos"}` : "Avisos"}
+      buttonClassName="topbar-icon topbar-labeled"
       button={
         <>
-          <Bell className="size-4" aria-hidden />
-          {items.length > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-danger text-[10px] font-bold text-white">
-              {items.length}
-            </span>
-          )}
+          <span className="relative inline-flex"><Bell className="size-5" aria-hidden />
+          {/* O número vem do CSS (data-count): o nome lido começa por "Avisos", igual ao texto visível. */}
+          {items.length > 0 && <span className="topbar-badge" data-count={items.length} aria-hidden />}</span>
+          <span className="topbar-label" aria-hidden>Avisos</span>
         </>
       }
     >
       {(close) =>
         items.length === 0 ? (
-          <p className="px-3 py-3 text-[13px] text-muted">Nenhuma notificação no momento.</p>
+          <p className="px-3 py-3 text-sm text-muted">Nenhum aviso agora.</p>
         ) : (
           items.map((it) => (
-            <Link key={it.href} href={it.href} role="menuitem" onClick={close} className="flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-slate-50">
+            <Link key={it.href} href={it.href} onClick={close} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50">
               {it.icon}
               {it.text}
             </Link>
@@ -228,124 +243,137 @@ function Notifications() {
   );
 }
 
+
 function Header() {
   const { settings, user, membership, connection, online, can, openNewOrder } = useApp();
-  const pathname = usePathname();
   const router = useRouter();
   const modules = useVisibleModules();
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  // Em telas menores, os últimos módulos vão para o menu "Mais".
-  const overflowFrom = 6;
+  const pref = `${membership.workshopId}:${user.id}`;
+  const nav = useNavMode(pref);
+  // Encolhe as cápsulas ao rolar (como as barras do iOS 26).
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    // Encolher muda a altura da página; numa página curta isso devolvia a rolagem
+    // para cima e o cabeçalho ficava abrindo e fechando sem parar (tremendo).
+    // Por isso: só encolhe se a página tiver rolagem de sobra, e com folga
+    // (encolhe depois de 64 px, só volta abaixo de 8 px).
+    const onScroll = () => {
+      const room = document.documentElement.scrollHeight - window.innerHeight;
+      const y = window.scrollY;
+      setCompact((was) => (was ? y > 8 : room >= 200 && y > 64));
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const conn = {
     online: { label: "Online", dot: "bg-emerald-400" },
-    offline: { label: "Offline", dot: "bg-red-400" },
+    offline: { label: "Sem internet", dot: "bg-red-400" },
     reconnecting: { label: "Reconectando…", dot: "bg-amber-400 animate-pulse" },
   }[connection];
 
   return (
-    <header className="no-print bg-secondary text-secondary-fg">
-      <div className="mx-auto flex h-12 max-w-[1440px] items-center gap-3 px-4">
-        <Link href="/inicio" className="flex min-w-0 shrink-0 items-center gap-2 rounded">
+    <header className={cx("island-header no-print", compact && "is-compact", nav.side && "is-side")}>
+      {/* Ilha flutuante (referência: Liquid Glass do macOS Tahoe/iOS 26 e barras flutuantes do Safari 26):
+          três cápsulas sobre a página — oficina, menu e ferramentas. Encolhem ao rolar. */}
+        {!nav.side && <Link href="/inicio" className="island island-brand app-brand">
+          <span className="sr-only">Ir para o Hoje: </span>
           {settings.logoDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={settings.logoDataUrl} alt="" className="size-7 rounded bg-white object-contain" />
+            <img src={settings.logoDataUrl} alt="" className="app-brand-logo bg-white object-contain" />
           ) : (
-            <span className="flex size-7 items-center justify-center rounded bg-primary text-primary-fg">
-              <Wrench className="size-4" aria-hidden />
-            </span>
+            <BrandMark className="app-brand-logo" />
           )}
-          <span className="max-w-44 truncate text-sm font-semibold">{settings.displayName}</span>
-        </Link>
-
-        <nav aria-label="Navegação principal" className="flex min-w-0 flex-1 items-center gap-0.5">
-          {modules.map((m, i) => (
-            <Link
-              key={m.key}
-              href={m.href}
-              aria-current={isActive(m.href) ? "page" : undefined}
-              className={cx(
-                "rounded px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap",
-                i >= overflowFrom && "hidden xl:block",
-                isActive(m.href) ? "bg-primary text-primary-fg" : "opacity-80 hover:bg-white/10 hover:opacity-100",
-              )}
-            >
-              {m.label}
-            </Link>
-          ))}
-          {modules.length > overflowFrom && (
-            <div className="xl:hidden">
-              <Menu
-                label="Mais módulos"
-                align="left"
-                buttonClassName="flex items-center gap-1 rounded px-2.5 py-1.5 text-[13px] font-medium opacity-80 hover:bg-white/10 hover:opacity-100"
-                button={
-                  <>
-                    Mais <ChevronDown className="size-3.5" aria-hidden />
-                  </>
-                }
-              >
-                {(close) =>
-                  modules.slice(overflowFrom).map((m) => (
-                    <Link key={m.key} href={m.href} role="menuitem" onClick={close} className="block px-3 py-2 text-[13px] hover:bg-slate-50">
-                      {m.label}
-                    </Link>
-                  ))
-                }
-              </Menu>
-            </div>
+          <span className="min-w-0">
+            <span className="app-brand-name" title={settings.displayName}>{settings.displayName}</span>
+            <span className="app-brand-product">GAVYO Auto</span>
+          </span>
+        </Link>}
+      <div className="island-search-slot"><OrderSearch /></div>
+      {!nav.side && <PersonalNavigation modules={modules} preferenceKey={pref} />}
+      <div className="island island-actions">
+        <div className="island-tools">
+          {can("os.create") && settings.activeModules.includes("orders") && (
+            <Button data-tour="new-order" variant="primary" size="sm" className="topbar-primary" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()} aria-keyshortcuts="N" title="Novo serviço (N)">
+              <span className="topbar-primary-label">Novo serviço</span>
+            </Button>
           )}
-        </nav>
-
-        {can("os.create") && settings.activeModules.includes("orders") && (
-          <Button variant="primary" size="sm" className="h-8" icon={<Plus className="size-4" aria-hidden />} disabled={!online} onClick={() => openNewOrder()}>
-            Nova OS
-          </Button>
-        )}
-        <span className="flex items-center gap-1.5 text-xs whitespace-nowrap" role="status" aria-live="polite">
-          <span className={cx("size-2 rounded-full", conn.dot)} aria-hidden />
-          {conn.label}
-        </span>
-        <Notifications />
-        <Menu
-          label="Menu do usuário"
-          buttonClassName="flex items-center gap-2 rounded px-1.5 py-1 text-left hover:bg-white/10"
-          button={
-            <>
-              <span className="flex size-7 items-center justify-center rounded-full bg-white/15 text-xs font-semibold">
-                {user.name.split(" ").slice(0, 2).map((p) => p[0]).join("")}
-              </span>
-              <span className="hidden leading-tight lg:block">
-                <span className="block max-w-36 truncate text-xs font-semibold">{user.name}</span>
-                <span className="block text-[11px] opacity-70">{ROLE_LABELS[membership.role]}</span>
-              </span>
-              <ChevronDown className="size-3.5 opacity-70" aria-hidden />
-            </>
-          }
-        >
-          {(close) => (
-            <>
-              <div className="border-b border-line px-3 py-2">
-                <p className="text-[13px] font-semibold">{user.name}</p>
-                <p className="text-xs text-muted">{user.email}</p>
-                <p className="text-xs text-muted">{ROLE_LABELS[membership.role]}</p>
-              </div>
-              <button
-                type="button"
-                role="menuitem"
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-slate-50"
-                onClick={() => {
-                  close();
-                  demoStore.logout();
-                  router.replace("/login");
-                }}
-              >
-                <LogOut className="size-4" aria-hidden />
-                Sair
-              </button>
-            </>
-          )}
-        </Menu>
+          {/* Conexão: só aparece escrita quando não está online (a faixa vermelha explica o resto). */}
+          <span className={cx("topbar-status", connection === "online" && "sr-only")} role="status" aria-live="polite">
+            <span className={cx("size-2 rounded-full", conn.dot)} aria-hidden />
+            {conn.label}
+          </span>
+          <span className="topbar-sep" aria-hidden />
+          <AccessibilityControls />
+          <Notifications />
+          <Menu
+            label={`Minha conta — ${user.name}, ${ROLE_LABELS[membership.role]}`}
+            buttonClassName="topbar-account"
+            button={
+              <>
+                <span className="topbar-avatar" data-initials={user.name.split(" ").slice(0, 2).map((p) => p[0]).join("")}>
+                  <span className={cx("topbar-avatar-dot", conn.dot)} aria-hidden />
+                </span>
+                <span className="topbar-label" aria-hidden>Minha conta</span>
+                <ChevronDown className="size-4 opacity-70" aria-hidden />
+              </>
+            }
+          >
+            {(close) => (
+              <>
+                <div className="border-b border-line px-3 py-2.5">
+                  <p className="text-sm font-semibold">{user.name}</p>
+                  <p className="text-sm text-muted">{ROLE_LABELS[membership.role]} · {settings.displayName}</p>
+                  <p className="text-sm text-muted">{user.email}</p>
+                  <p className="mt-1 flex items-center gap-1.5 text-sm text-muted"><span className={cx("size-2 rounded-full", conn.dot)} aria-hidden />{conn.label}</p>
+                </div>
+                {nav.wide && (
+                  <button type="button" role="menuitem" className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50" onClick={() => { close(); setNavMode(pref, nav.side ? "top" : "side"); }}>
+                    {nav.side ? <PanelTop className="size-4" aria-hidden /> : <PanelLeft className="size-4" aria-hidden />}
+                    {nav.side ? "Menu no topo" : "Menu na lateral"}
+                  </button>
+                )}
+                {can("os.view") && settings.activeModules.includes("orders") && (
+                  <a role="menuitem" href="/tv" target="_blank" rel="noopener" onClick={close} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50">
+                    <MonitorPlay className="size-4" aria-hidden />
+                    Modo TV da parede
+                  </a>
+                )}
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50"
+                  onClick={() => {
+                    close();
+                    // Apaga só as dicas já vistas por esta pessoa nesta oficina e mostra de novo.
+                    const suffix = `:${membership.workshopId}:${user.id}`;
+                    try {
+                      Object.keys(localStorage).filter((k) => k.startsWith("gavyo:prefs:tip:") && k.endsWith(suffix)).forEach((k) => localStorage.removeItem(k));
+                    } catch { /* sem armazenamento: nada a limpar */ }
+                    window.location.reload();
+                  }}
+                >
+                  <Lightbulb className="size-4" aria-hidden />
+                  Ver as dicas de novo
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50"
+                  onClick={() => {
+                    close();
+                    store.logout();
+                    router.replace("/login");
+                  }}
+                >
+                  <LogOut className="size-4" aria-hidden />
+                  Sair
+                </button>
+              </>
+            )}
+          </Menu>
+        </div>
       </div>
     </header>
   );
@@ -355,36 +383,44 @@ function ConnectionBanner() {
   const { connection, lastSyncAt } = useApp();
   if (connection === "online") return null;
   return (
-    <div role="alert" className="no-print flex items-center justify-center gap-2 border-b border-red-200 bg-danger-soft px-4 py-1.5 text-[13px] text-danger">
+    <div role="alert" className="no-print flex items-center justify-center gap-2 border-b border-red-200 bg-danger-soft px-4 py-1.5 text-sm text-danger">
       <WifiOff className="size-4" aria-hidden />
       {connection === "offline" ? (
         <span>
-          <strong>Você está offline.</strong> Exibindo dados carregados em {formatDateTime(lastSyncAt)}. Criação, edição, pagamentos e movimentações estão bloqueados até a conexão voltar.
+          <strong>Sem internet.</strong> Você pode consultar (dados de {formatDateTime(lastSyncAt)}). Abrir serviço, mudar etapa, receber e mexer no estoque voltam quando a internet voltar.
         </span>
       ) : (
-        <span>Reconectando e atualizando os dados…</span>
+        <span>Internet voltando. Atualizando os dados…</span>
       )}
     </div>
   );
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { settings } = useApp();
+  const { settings, user, membership } = useApp();
+  const { preferences } = useAccessibility();
+  const pathname = usePathname();
+  const main = useRef<HTMLElement>(null);
+  const modules = useVisibleModules();
+  const pref = `${membership.workshopId}:${user.id}`;
+  const nav = useNavMode(pref);
 
-  useEffect(() => {
+  useEffect(() => { main.current?.focus({ preventScroll: true }); }, [pathname]);
+
+  useLayoutEffect(() => {
     const root = document.documentElement.style;
-    root.setProperty("--primary", settings.primaryColor);
-    root.setProperty("--primary-fg", readableOn(settings.primaryColor));
+    root.setProperty("--primary", readableAccent(settings.primaryColor, preferences.contrast ? 7 : 5.5));
+    root.setProperty("--primary-fg", contrastOn(readableAccent(settings.primaryColor, preferences.contrast ? 7 : 5.5)));
     root.setProperty("--secondary", settings.secondaryColor);
-    root.setProperty("--secondary-fg", readableOn(settings.secondaryColor));
+    root.setProperty("--secondary-fg", contrastOn(settings.secondaryColor));
     return () => {
       for (const v of ["--primary", "--primary-fg", "--secondary", "--secondary-fg"]) root.removeProperty(v);
     };
-  }, [settings.primaryColor, settings.secondaryColor]);
+  }, [settings.primaryColor, settings.secondaryColor, preferences.contrast]);
 
   useEffect(() => {
-    const on = () => demoStore.setOnline(true);
-    const off = () => demoStore.setOnline(false);
+    const on = () => store.setOnline(true);
+    const off = () => store.setOnline(false);
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
     return () => {
@@ -393,18 +429,31 @@ export function AppShell({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // TV da parede: tela cheia, sem cabeçalho, barra da demonstração nem bandeja.
+  if (pathname === "/tv" || pathname.startsWith("/tv/")) {
+    return <main id="conteudo" className="tv-frame">{children}</main>;
+  }
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2">
+    <TrayProvider>
+    <PipProvider>
+    <div className={cx("app-frame flex min-h-screen flex-col", nav.side && "with-sidebar")}>
+      {nav.side && <SideNavigation modules={modules} pref={pref} />}
+      <a href="#conteudo" className="skip-link">
         Pular para o conteúdo
       </a>
-      <DemoBar />
+      {!SERVER_MODE && <DemoBar />}
       <Header />
       <ConnectionBanner />
-      <main id="conteudo" className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-4">
-        {children}
+      <GlobalShortcuts />
+      <main ref={main} tabIndex={-1} id="conteudo" className="app-main mx-auto w-full max-w-[1600px] flex-1 px-6 py-6">
+        <div key={pathname} className="page-enter">{children}</div>
       </main>
+      {/* Nas Ordens, a bandeja é renderizada dentro do quadro para aceitar arraste. */}
+      {pathname !== "/ordens" && <TrayDock />}
     </div>
+    </PipProvider>
+    </TrayProvider>
   );
 }
 
@@ -415,6 +464,7 @@ export function ModuleGuard({ module, children }: { module: ModuleKey; children:
   if (!settings.activeModules.includes(module)) {
     return (
       <div className="rounded-md border border-line bg-surface">
+        <h1 className="sr-only">{info.label}</h1>
         <EmptyState icon={<Lock className="size-8" aria-hidden />} title="Módulo desativado" description={`O módulo ${info.label} não está ativo para esta oficina. O proprietário pode ativá-lo em Configurações.`} />
       </div>
     );
@@ -422,6 +472,7 @@ export function ModuleGuard({ module, children }: { module: ModuleKey; children:
   if (info.anyOf.length > 0 && !info.anyOf.some(can)) {
     return (
       <div className="rounded-md border border-line bg-surface">
+        <h1 className="sr-only">{info.label}</h1>
         <EmptyState icon={<Lock className="size-8" aria-hidden />} title="Permissão insuficiente" description={`Seu usuário não tem acesso a ${info.label}. Fale com o proprietário da oficina se precisar deste acesso.`} />
       </div>
     );

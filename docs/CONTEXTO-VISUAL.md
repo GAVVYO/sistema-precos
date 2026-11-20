@@ -1,6 +1,8 @@
 # Contexto para o trabalho de melhoria visual
 
-Documento de passagem para quem for refinar a interface do GAVYO Auto. Leia também [ARQUITETURA.md](ARQUITETURA.md) e [FUNCIONALIDADES.md](FUNCIONALIDADES.md).
+Documento de passagem para quem for refinar a interface do GAVYO Auto. **Comece por [ESTADO-ATUAL.md](ESTADO-ATUAL.md) e [NAVEGACAO.md](NAVEGACAO.md): a agenda e a barra por gesto evoluíram após o redesenho.** Leia também [ARQUITETURA.md](ARQUITETURA.md) e [FUNCIONALIDADES.md](FUNCIONALIDADES.md).
+
+> Atualização de 16/11/2026: o cliente escolheu identidade automotiva técnica e precisa, animações mais presentes e prioridade em Início/Ordens. A rodada atual substituiu a base visual e concentrou o atendimento em localizar OS, mudar status e receber pagamento. Leia [DESIGN.md](../DESIGN.md), [PRODUCT.md](../PRODUCT.md) e [REVISAO-VISUAL.md](REVISAO-VISUAL.md) para a implementação vigente, percursos e validações. As observações abaixo descrevem a base anterior a essa rodada.
 
 ## O que é o projeto
 
@@ -59,8 +61,8 @@ Telas: `dashboard`, `orders` (Kanban, Nova OS, detalhes, pagamento, WhatsApp), `
 
 ## Detalhes técnicos úteis
 
-- `Input`/`Select`/`Textarea` aplicam `w-full` por padrão; passar uma classe `w-*` substitui. **Outras classes conflitantes (altura, padding) não são mescladas** — não há `tailwind-merge`. No cartão do Kanban há um `<select>` nativo por esse motivo. Adotar `tailwind-merge` ou variantes de tamanho seria uma melhoria bem-vinda.
-- `html { font-size: 14px }` — a escala `rem` do Tailwind parte de 14 px. Fonte: Segoe UI / fontes do sistema.
+- `Input`/`Select`/`Textarea` aplicam `w-full` por padrão; passar uma classe `w-*` substitui. Classes conflitantes são mescladas por `tailwind-merge` em `cx`. O controle alternativo do Kanban continua nativo.
+- `html { font-size: 16px }` — controles e texto operacional usam 14px. Manrope Variable é servida localmente pelo pacote Fontsource.
 - O Kanban limita a altura das colunas com `max-h-[calc(100vh-270px)]`; se a altura do cabeçalho mudar, ajuste.
 - A tela de acesso usa a cor primária padrão (ainda não há oficina selecionada).
 

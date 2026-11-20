@@ -14,22 +14,22 @@ export interface PermissionInfo {
 }
 
 export const PERMISSIONS: PermissionInfo[] = [
-  { key: "os.view", label: "Visualizar ordens de serviço", group: "Ordens de serviço" },
-  { key: "os.create", label: "Criar ordens de serviço", group: "Ordens de serviço" },
-  { key: "os.edit", label: "Editar dados da OS", group: "Ordens de serviço" },
-  { key: "os.status", label: "Atualizar status da OS", group: "Ordens de serviço" },
-  { key: "os.parts", label: "Adicionar e remover peças da OS", group: "Ordens de serviço" },
-  { key: "os.complete", label: "Concluir OS", group: "Ordens de serviço" },
-  { key: "os.cancel", label: "Cancelar OS", group: "Ordens de serviço" },
+  { key: "os.view", label: "Ver serviços", group: "Serviços" },
+  { key: "os.create", label: "Abrir serviços", group: "Serviços" },
+  { key: "os.edit", label: "Editar dados do serviço", group: "Serviços" },
+  { key: "os.status", label: "Mudar a etapa do serviço", group: "Serviços" },
+  { key: "os.parts", label: "Lançar e retirar peças do serviço", group: "Serviços" },
+  { key: "os.complete", label: "Marcar serviço como pronto", group: "Serviços" },
+  { key: "os.cancel", label: "Cancelar serviço", group: "Serviços" },
   { key: "stock.view", label: "Consultar estoque", group: "Estoque" },
   { key: "stock.move", label: "Cadastrar peças e movimentar estoque", group: "Estoque" },
-  { key: "finance.view", label: "Consultar financeiro", group: "Financeiro" },
-  { key: "finance.payment", label: "Registrar pagamentos e receitas", group: "Financeiro" },
-  { key: "finance.expense", label: "Registrar despesas", group: "Financeiro" },
+  { key: "finance.view", label: "Ver o financeiro", group: "Financeiro" },
+  { key: "finance.payment", label: "Receber pagamentos e lançar entradas", group: "Financeiro" },
+  { key: "finance.expense", label: "Lançar gastos", group: "Financeiro" },
   { key: "schedule.manage", label: "Gerenciar agenda", group: "Agenda e clientes" },
   { key: "customers.view", label: "Consultar clientes e veículos", group: "Agenda e clientes" },
-  { key: "reports.view", label: "Consultar relatórios", group: "Relatórios" },
-  { key: "reports.export", label: "Exportar relatórios", group: "Relatórios" },
+  { key: "reports.view", label: "Ver resultados (mecânicos, clientes, listas)", group: "Financeiro" },
+  { key: "reports.export", label: "Baixar planilhas (contador)", group: "Financeiro" },
   { key: "staff.manage", label: "Gerenciar funcionários", group: "Administração" },
   { key: "settings.manage", label: "Alterar configurações", group: "Administração" },
 ];
@@ -47,6 +47,8 @@ export const ROLE_TEMPLATES: Record<Role, PermissionKey[]> = {
     "schedule.manage",
     "customers.view",
     "stock.view",
+    // Recepção recebe no balcão (decisão do dono, 17/11/2026); não vê o Financeiro.
+    "finance.payment",
   ],
   mechanic: ["os.view", "os.status", "os.parts", "os.complete", "stock.view", "customers.view"],
   financial: [
@@ -68,16 +70,19 @@ export interface ModuleInfo {
   anyOf: PermissionKey[];
   /** Módulos essenciais não podem ser desativados pela oficina. */
   required?: boolean;
+  /** Fora do menu e das Configurações (continua aceito nos dados salvos). */
+  hidden?: boolean;
 }
 
 export const MODULES: ModuleInfo[] = [
-  { key: "dashboard", label: "Início", href: "/inicio", anyOf: [], required: true },
-  { key: "orders", label: "Ordens de serviço", href: "/ordens", anyOf: ["os.view"] },
+  { key: "dashboard", label: "Hoje", href: "/inicio", anyOf: [], required: true },
+  { key: "orders", label: "Serviços", href: "/ordens", anyOf: ["os.view"] },
   { key: "stock", label: "Estoque", href: "/estoque", anyOf: ["stock.view"] },
   { key: "finance", label: "Financeiro", href: "/financeiro", anyOf: ["finance.view"] },
   { key: "schedule", label: "Agenda", href: "/agenda", anyOf: ["schedule.manage"] },
-  { key: "customers", label: "Clientes e veículos", href: "/clientes", anyOf: ["customers.view"] },
-  { key: "reports", label: "Relatórios", href: "/relatorios", anyOf: ["reports.view"] },
+  { key: "customers", label: "Pessoas", href: "/clientes", anyOf: ["customers.view", "staff.manage"] },
+  // Virou a aba Resultados do Financeiro (decisão 79).
+  { key: "reports", label: "Resultados", href: "/financeiro", anyOf: ["reports.view"], hidden: true },
   {
     key: "settings",
     label: "Configurações",

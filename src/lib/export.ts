@@ -2,6 +2,7 @@
  * Exportações reais em PDF (jsPDF) e Excel (ExcelJS), geradas no navegador.
  * As bibliotecas são carregadas sob demanda para não pesar no carregamento inicial.
  */
+import type { Workbook } from "exceljs";
 import type { ISODate } from "@/domain/types";
 import { formatBRL, formatDate, formatDateTime } from "./format";
 
@@ -62,6 +63,24 @@ function fileName(title: string, ext: string): string {
 
 type JsPDF = import("jspdf").jsPDF;
 
+/** Logo guardada como arquivo no servidor (decisão 99): o PDF precisa dela em data URL. */
+async function withLogoData(branding: Branding): Promise<Branding> {
+  const src = branding.logoDataUrl;
+  if (!src || src.startsWith("data:") || typeof fetch === "undefined" || typeof FileReader === "undefined") return branding;
+  try {
+    const blob = await (await fetch(src, { credentials: "same-origin" })).blob();
+    const data = await new Promise<string | null>((resolve) => {
+      const r = new FileReader();
+      r.onload = () => resolve(typeof r.result === "string" ? r.result : null);
+      r.onerror = () => resolve(null);
+      r.readAsDataURL(blob);
+    });
+    return { ...branding, logoDataUrl: data };
+  } catch {
+    return { ...branding, logoDataUrl: null };
+  }
+}
+
 /** Cabeçalho com logotipo, oficina e título. Retorna a posição Y seguinte. */
 function pdfHeader(doc: JsPDF, branding: Branding, title: string, lines: string[]): number {
   const width = doc.internal.pageSize.getWidth();
@@ -101,7 +120,8 @@ export async function exportReportPdf(report: ReportData, branding: Branding): P
 }
 
 /** Monta o PDF sem salvar (usado também nos testes automatizados). */
-export async function buildReportPdf(report: ReportData, branding: Branding): Promise<JsPDF> {
+export async function buildReportPdf(report: ReportData, brand: Branding): Promise<JsPDF> {
+  const branding = await withLogoData(brand);
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   const doc = new jsPDF({ orientation: report.columns.length > 6 ? "landscape" : "portrait", unit: "mm", format: "a4" });
   const info = [`Gerado em ${formatDateTime(new Date().toISOString())}`];
@@ -153,10 +173,33 @@ export async function exportReportXlsx(report: ReportData, branding: Branding): 
 
 /** Monta a planilha .xlsx em memória (usado também nos testes automatizados). */
 export async function buildReportXlsx(report: ReportData, branding: Branding): Promise<ArrayBuffer> {
+  return buildWorkbookXlsx([report], branding);
+}
+
+/** Várias listas num arquivo só, uma aba para cada ("Mandar para o contador", decisão 77). */
+export async function buildWorkbookXlsx(reports: ReportData[], branding: Branding): Promise<ArrayBuffer> {
   const { default: ExcelJS } = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "GAVYO Auto";
   workbook.created = new Date();
+  for (const report of reports) addReportSheet(workbook, report, branding);
+  return (await workbook.xlsx.writeBuffer()) as ArrayBuffer;
+}
+
+export async function exportWorkbookXlsx(reports: ReportData[], branding: Branding, title: string): Promise<void> {
+  const buffer = await buildWorkbookXlsx(reports, branding);
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName(title, "xlsx");
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function addReportSheet(workbook: Workbook, report: ReportData, branding: Branding) {
   const sheet = workbook.addWorksheet(report.title.slice(0, 31));
 
   sheet.addRow([branding.workshopName]).font = { bold: true, size: 13 };
@@ -200,12 +243,11 @@ export async function buildReportXlsx(report: ReportData, branding: Branding): P
   // Os títulos ficam na coluna A; mantém-nos alinhados à esquerda.
   for (let i = 1; i < header.number; i++) sheet.getRow(i).getCell(1).alignment = { horizontal: "left" };
 
-  return (await workbook.xlsx.writeBuffer()) as ArrayBuffer;
 }
 
 export interface OrderDocument {
   number: string;
-  /** "Orçamento" enquanto aberta sem pagamento; "Ordem de serviço" caso contrário. */
+  /** "Orçamento" enquanto aberto sem pagamento; "Serviço" caso contrário. */
   kind: string;
   status: string;
   payment: string;
@@ -224,13 +266,14 @@ export interface OrderDocument {
   total: string;
 }
 
-export async function exportOrderPdf(order: OrderDocument, branding: Branding): Promise<void> {
+export async function exportOrderPdf(order: OrderDocument, brand: Branding): Promise<void> {
+  const branding = await withLogoData(brand);
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  let y = pdfHeader(doc, branding, `${order.kind} ${order.number}`, [
+  let y = pdfHeader(doc, branding, order.kind === "Serviço" ? order.number : `${order.kind} · ${order.number}`, [
     `Gerado em ${formatDateTime(new Date().toISOString())}`,
     `Abertura: ${order.openedAt}`,
-    `Status: ${order.status}`,
+    `Etapa: ${order.status}`,
   ]);
 
   const pairs: [string, string][] = [

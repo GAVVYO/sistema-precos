@@ -1,19 +1,23 @@
 "use client";
 
-import { createContext, ReactNode, useCallback, useContext, useMemo, useState, useSyncExternalStore } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { withTransition } from "@/lib/view-transition";
+import { ORDER_CLOSED_EVENT } from "@/lib/born";
 import { toast } from "@/components/ui/toast";
-import { Connection, demoStore, DemoState } from "@/demo/store";
+import type { Connection, DemoState } from "@/demo/store";
+import { store } from "./store";
 import type {
   Customer, Database, ID, Part, PermissionKey, User, Vehicle, WorkshopMembership, WorkshopSettings,
 } from "@/domain/types";
-import { can as canDo, Ctx, DomainError, scopeTo, WorkshopView } from "@/services/core";
+import type { Commands } from "@/services/commands";
+import { can as canDo, DomainError, scopeTo, WorkshopView } from "@/services/core";
 
-/** Estado bruto da demonstração (null durante a renderização no servidor). */
+/** Estado bruto (demonstração ou servidor; null enquanto carrega). */
 export function useDemoState(): DemoState | null {
   return useSyncExternalStore(
-    demoStore.subscribe,
-    () => demoStore.getState(),
-    () => demoStore.getServerState(),
+    store.subscribe,
+    () => store.getState(),
+    () => store.getServerState(),
   );
 }
 
@@ -42,8 +46,8 @@ interface AppValue {
   online: boolean;
   lastSyncAt: string;
   can: (permission: PermissionKey) => boolean;
-  /** Executa uma operação de escrita, exibindo aviso de sucesso ou erro. */
-  act: <T>(fn: (db: Database, ctx: Ctx) => T, successMessage?: string) => ActResult<T>;
+  /** Executa ações com nome (`c.createCustomer(...)`), exibindo aviso de sucesso ou erro. */
+  act: <T>(fn: (c: Commands) => T, successMessage?: string) => ActResult<T>;
   customerOf: (id: ID | null) => Customer | undefined;
   vehicleOf: (id: ID | null) => Vehicle | undefined;
   userOf: (id: ID | null) => User | undefined;
@@ -72,7 +76,24 @@ function byId<T extends { id: ID }>(list: T[]): Map<ID, T> {
 export function AppProvider({ state, children }: { state: DemoState; children: ReactNode }) {
   const session = state.session!;
   const { db } = state;
-  const [openOrderId, openOrder] = useState<ID | null>(null);
+  const [openOrderId, setOpenOrderId] = useState<ID | null>(null);
+  const openRef = useRef<ID | null>(null);
+  useEffect(() => { openRef.current = openOrderId; }, [openOrderId]);
+  // O cartão (ou o botão clicado) cresce e vira a janela do serviço; ao fechar, ela encolhe de volta.
+  const openOrder = useCallback((id: ID | null) => {
+    const card = (oid: ID | null) => (oid ? document.querySelector<HTMLElement>(`.svc-list [data-order-id="${oid}"]`) : null);
+    if (id) {
+      const active = document.activeElement;
+      const src = card(id) ?? (active instanceof HTMLElement && active !== document.body && !active.closest("dialog") ? active : null);
+      if (!src || document.querySelector("dialog[open]")) return setOpenOrderId(id);
+      withTransition("open", () => { src.classList.remove("vt-hero"); setOpenOrderId(id); }, { before: () => src.classList.add("vt-hero") });
+    } else {
+      const closed = () => window.dispatchEvent(new Event(ORDER_CLOSED_EVENT));
+      const dest = card(openRef.current);
+      if (!dest) { setOpenOrderId(null); window.setTimeout(closed, 0); return; }
+      withTransition("close", () => { setOpenOrderId(null); dest.classList.add("vt-hero"); }, { done: () => { dest.classList.remove("vt-hero"); closed(); } });
+    }
+  }, []);
   const [newOrder, setNewOrder] = useState<NewOrderPrefill | null>(null);
 
   const view = useMemo(() => scopeTo(db, session.workshopId), [db, session.workshopId]);
@@ -86,9 +107,9 @@ export function AppProvider({ state, children }: { state: DemoState; children: R
     [view],
   );
 
-  const act = useCallback(<T,>(fn: (db: Database, ctx: Ctx) => T, successMessage?: string): ActResult<T> => {
+  const act = useCallback(<T,>(fn: (c: Commands) => T, successMessage?: string): ActResult<T> => {
     try {
-      const value = demoStore.mutate(fn);
+      const value = store.run(fn);
       if (successMessage) toast("success", successMessage);
       return { ok: true, value };
     } catch (e) {
@@ -129,7 +150,7 @@ export function AppProvider({ state, children }: { state: DemoState; children: R
       openNewOrder: (prefill) => setNewOrder(prefill ?? {}),
       closeNewOrder: () => setNewOrder(null),
     };
-  }, [db, view, maps, session, state.connection, state.lastSyncAt, act, openOrderId, newOrder]);
+  }, [db, view, maps, session, state.connection, state.lastSyncAt, act, openOrderId, openOrder, newOrder]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

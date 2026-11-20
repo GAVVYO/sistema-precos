@@ -1,13 +1,6 @@
-import type { Metadata } from "next";
-import { ModuleGuard } from "@/components/layout/app-shell";
-import { ReportsPage } from "@/features/reports/reports-page";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Relatórios" };
-
+/** A antiga tela de Relatórios/Desempenho virou a aba Resultados do Financeiro (decisão 79). */
 export default function Page() {
-  return (
-    <ModuleGuard module="reports">
-      <ReportsPage />
-    </ModuleGuard>
-  );
+  redirect("/financeiro");
 }

@@ -1,13 +1,14 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "@/app-state/app-context";
-import { Badge, Button, Input, Select, Tone } from "@/components/ui/primitives";
+import { Badge, Button, Input, Tone } from "@/components/ui/primitives";
 import { ORDER_STATUS_LABELS } from "@/domain/labels";
 import type { ID, OrderStatus, ServiceOrder, Vehicle } from "@/domain/types";
 import { centsToInput, formatBRL, parseBRL } from "@/lib/format";
 import { OrderItemInput, orderTotals, PAYMENT_SITUATION_LABELS, PaymentSituation, paymentSituation } from "@/services/orders";
+import { maskMoney } from "@/lib/masks";
 
 export function vehicleLabel(v: Vehicle | undefined): string {
   if (!v) return "Veículo removido";
@@ -82,7 +83,7 @@ export function PartsEditor({
   alreadyUsed?: Map<ID, number>;
 }) {
   const { view, partOf } = useApp();
-  const [picked, setPicked] = useState("");
+  const [query, setQuery] = useState("");
   const available = (partId: ID) => (partOf(partId)?.quantity ?? 0) + (alreadyUsed?.get(partId) ?? 0);
   const options = view.parts
     .filter((p) => !drafts.some((d) => d.partId === p.id))
@@ -90,11 +91,14 @@ export function PartsEditor({
   const update = (partId: ID, patch: Partial<DraftItem>) =>
     onChange(drafts.map((d) => (d.partId === partId ? { ...d, ...patch } : d)));
 
-  const add = () => {
-    const part = partOf(picked);
+  const q = query.trim().toLocaleLowerCase("pt-BR");
+  const matches = (q ? options.filter((p) => `${p.name} ${p.code}`.toLocaleLowerCase("pt-BR").includes(q)) : options.filter((p) => p.quantity > 0)).slice(0, q ? 6 : 4);
+
+  const add = (id: ID) => {
+    const part = partOf(id);
     if (!part) return;
     onChange([...drafts, { partId: part.id, quantity: "1", price: centsToInput(part.priceCents) }]);
-    setPicked("");
+    setQuery("");
   };
 
   return (
@@ -141,7 +145,7 @@ export function PartsEditor({
                         inputMode="decimal"
                         value={d.price}
                         aria-label={`Preço unitário de ${part?.name}`}
-                        onChange={(e) => update(d.partId, { price: e.target.value })}
+                        onChange={(e) => update(d.partId, { price: maskMoney(e.target.value) })}
                         className="h-8"
                       />
                     </td>
@@ -163,18 +167,32 @@ export function PartsEditor({
           </table>
         </div>
       )}
-      <div className="flex gap-2">
-        <Select value={picked} onChange={(e) => setPicked(e.target.value)} aria-label="Peça do estoque">
-          <option value="">{options.length ? "Selecionar peça do estoque…" : "Todas as peças já foram adicionadas"}</option>
-          {options.map((p) => (
-            <option key={p.id} value={p.id} disabled={p.quantity <= 0}>
-              {p.name} ({p.code}) — {p.quantity > 0 ? `${p.quantity} em estoque` : "sem estoque"} — {formatBRL(p.priceCents)}
-            </option>
-          ))}
-        </Select>
-        <Button onClick={add} disabled={!picked} icon={<Plus className="size-4" aria-hidden />}>
-          Adicionar peça
-        </Button>
+      <div className="part-picker">
+        <label className="part-picker-search">
+          <Search className="size-4" aria-hidden />
+          <span className="sr-only">Procurar peça no estoque</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={options.length ? "Procurar peça (nome ou código)" : "Todas as peças já foram adicionadas"}
+            disabled={!options.length}
+          />
+        </label>
+        {matches.length > 0 && (
+          <ul className="part-picker-list" aria-label={query ? "Peças encontradas" : "Peças do estoque"}>
+            {matches.map((p) => (
+              <li key={p.id} className="part-picker-row" data-out={p.quantity <= 0 || undefined}>
+                <span className="part-picker-name">{p.name}</span>
+                <span className="part-picker-meta">{p.quantity > 0 ? `${p.quantity} no estoque` : "Acabou"} · {formatBRL(p.priceCents)}</span>
+                <Button size="sm" onClick={() => add(p.id)} disabled={p.quantity <= 0} aria-label={`Adicionar ${p.name}`} icon={<Plus className="size-4" aria-hidden />}>
+                  Adicionar
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {query && matches.length === 0 && <p className="part-picker-empty">Nenhuma peça com “{query}”.</p>}
       </div>
     </div>
   );

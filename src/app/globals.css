@@ -2758,3 +2758,4 @@ html[data-motion="reduce"] .ag-item { animation: none !important; }
    começa pelo texto que aparece ("Avisos", "Minha conta"). */
 .topbar-badge[data-count]::after { content: attr(data-count); }
 .topbar-avatar[data-initials]::before { content: attr(data-initials); }
+.cash-say strong[data-tone="out"] { color: var(--primary); }

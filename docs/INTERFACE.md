@@ -70,11 +70,12 @@ Decisão 58. A tela responde **"que carros estão aqui e o que cada um precisa a
 - Saíram: a tabela com 5 filtros e busca (o quadro de Serviços já faz isso), a atividade recente e o cartão de alertas de estoque.
 - **Mecânico** vê **"Seus carros, Nome"**: só os carros dele (Você está fazendo / Para você começar), sem dinheiro, e uma frase "1 carro está esperando alguém pegar — ver no quadro".
 - Recepção sem permissão para concluir vê "O mecânico marca quando ficar pronto" no lugar do botão.
-- Financeiro continua com o painel de números e "Organizar tela inicial" (só ele tem essa opção).
+- **Financeiro** (decisão 94) vê uma frase do mês ("entrou X e saiu Y: sobrou Z"), **Quem está devendo** com o botão **Receber** e **O que entrou e saiu por último**. Saiu o painel de quadros e o "Organizar tela inicial".
 
 ![Hoje — pátio](imagens/interface/hoje-patio.png)
 ![Hoje — mecânico](imagens/interface/hoje-mecanico.png)
 ![Hoje — celular](imagens/interface/hoje-patio-celular.png)
+![Hoje — financeiro](imagens/interface/hoje-financeiro.png)
 
 ## 4. Serviços (uma tela por etapa)
 

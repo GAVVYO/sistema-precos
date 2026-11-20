@@ -2,7 +2,7 @@
 
 import { writePref } from "@/lib/prefs";
 import {
-  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, LayoutDashboard, Lightbulb, Lock, MonitorPlay, PanelLeft, PanelTop, Settings2, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
+  Bell, CalendarClock, ChevronDown, CircleDollarSign, FlaskConical, Lightbulb, Lock, MonitorPlay, PanelLeft, PanelTop, Settings2, LogOut, PackageX, Plus, RotateCcw, Wifi, WifiOff, Wrench,
 } from "lucide-react";
 import Link from "next/link";
 import { setNavMode, SideNavigation, useNavMode } from "./side-navigation";
@@ -338,12 +338,6 @@ function Header() {
                     <MonitorPlay className="size-4" aria-hidden />
                     Modo TV da parede
                   </a>
-                )}
-                {membership.role === "financial" && (
-                  <Link role="menuitem" href="/inicio?organizar=1" onClick={close} className="widget-customize flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50">
-                    <LayoutDashboard className="size-4" aria-hidden />
-                    Organizar tela inicial
-                  </Link>
                 )}
                 <button
                   type="button"

@@ -13,7 +13,7 @@ import type { FinancialTransaction, PaymentMethod } from "@/domain/types";
 import { PaymentDialog, PaymentMethodPicker } from "@/features/orders/order-dialogs";
 import { CashChange, cashShort, PaymentMethodTiles, PaymentStage } from "@/features/orders/payment-stage";
 import { formatBRL, parseBRL, todayISO } from "@/lib/format";
-import { createExpense, createIncome, financeSummary, listReceivables, settleIncome } from "@/services/finance";
+import { financeSummary, listReceivables } from "@/services/finance";
 import { maskMoney } from "@/lib/masks";
 import { CashView } from "./cash-view";
 import { FinanceResults } from "./finance-results";
@@ -34,8 +34,8 @@ function TransactionDialog({ kind, onClose }: { kind: "income" | "expense"; onCl
     if (amountCents === null) return toast("error", "Informe um valor válido. Ex.: 150,00");
     const r =
       kind === "expense"
-        ? act((db, ctx) => createExpense(db, ctx, { description, category, amountCents, date, method, notes }), "Despesa registrada.")
-        : act((db, ctx) => createIncome(db, ctx, { description, amountCents, date, method, status, customerId: customerId || null, notes }), "Entrada registrada.");
+        ? act((c) => c.createExpense({ description, category, amountCents, date, method, notes }), "Despesa registrada.")
+        : act((c) => c.createIncome({ description, amountCents, date, method, status, customerId: customerId || null, notes }), "Entrada registrada.");
     if (r.ok) onClose();
   };
 
@@ -100,7 +100,7 @@ export function SettleDialog({ tx, onClose }: { tx: FinancialTransaction; onClos
             variant="primary"
             disabled={!online || (method === "cash" && cashShort(tx.amountCents, given))}
             onClick={() => {
-              const r = act((db, ctx) => settleIncome(db, ctx, tx.id, { method, date: todayISO() }), "Recebimento registrado.");
+              const r = act((c) => c.settleIncome(tx.id, { method, date: todayISO() }), "Recebimento registrado.");
               if (r.ok) onClose();
             }}
           >

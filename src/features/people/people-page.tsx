@@ -17,8 +17,7 @@ import { MiniPlate } from "@/features/dashboard/yard";
 import { CustomerDialog, VehicleDialog } from "@/features/customers/customers-page";
 import { vehicleLabel } from "@/features/orders/shared";
 import { formatDate, formatPhone, formatPlate } from "@/lib/format";
-import { addMember, setMemberPin, updateMember, updateMemberProfile } from "@/services/admin";
-import { createCustomer, saveVehicle } from "@/services/customers";
+
 import { BadgeCard, PhotoPicker } from "./badge-card";
 import { PairingQr } from "./pairing-qr";
 import { maskDigits, maskEmail, maskPhone, maskPlate } from "@/lib/masks";
@@ -56,9 +55,9 @@ function NewCustomerDialog({ onClose }: { onClose: () => void }) {
   const [stamped, setStamped] = useState(false);
   const save = () => {
     const hasCar = plate.trim() !== "";
-    const r = act((db, ctx) => {
-      const c = createCustomer(db, ctx, { name, phone });
-      if (hasCar) saveVehicle(db, ctx, c.id, { plate, brand, model, year: null, mileage: null });
+    const r = act((cmd) => {
+      const c = cmd.createCustomer({ name, phone });
+      if (hasCar) cmd.saveVehicle(c.id, { plate, brand, model, year: null, mileage: null });
       return c;
     });
     if (r.ok) stampThenClose(setStamped, onClose);
@@ -111,19 +110,19 @@ function StaffDialog({ member, onClose }: { member: WorkshopMembership | null; o
       // Funcionário novo já sai com PIN próprio: nada de PIN padrão conhecido por todos.
       if (!/^\d{4}$/.test(pin)) { setPinTouched(true); return; }
       let created: ID | null = null;
-      const r = act((db, ctx) => {
-        const m = addMember(db, ctx, { name, email, role, phone, photo });
-        setMemberPin(db, ctx, m.id, pin);
+      const r = act((c) => {
+        const m = c.addMember({ name, email, role, phone, photo });
+        c.setMemberPin(m.id, pin);
         created = m.id;
       });
       // Carimbo no crachá e, em seguida, o QR para já conectar o celular da pessoa.
       if (r.ok) { setStamped(true); window.setTimeout(() => setQrFor(created), motionReduced() ? 900 : 1600); }
       return;
     }
-    const r = act((db, ctx) => {
-      updateMemberProfile(db, ctx, member.id, { name, phone, photo });
-      if (pin) setMemberPin(db, ctx, member.id, pin);
-      if (!isSelf) updateMember(db, ctx, member.id, { role, active, permissions });
+    const r = act((c) => {
+      c.updateMemberProfile(member.id, { name, phone, photo });
+      if (pin) c.setMemberPin(member.id, pin);
+      if (!isSelf) c.updateMember(member.id, { role, active, permissions });
     }, "Cadastro atualizado.");
     if (r.ok) onClose();
   };

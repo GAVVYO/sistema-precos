@@ -32,8 +32,21 @@ export class DomainError extends Error {
   }
 }
 
+let idSource: (() => ID) | null = null;
+
 export function newId(): ID {
-  return crypto.randomUUID();
+  return idSource ? idSource() : crypto.randomUUID();
+}
+
+/** Roda `fn` tirando os IDs novos de `source` (para o servidor repetir os mesmos IDs da tela). */
+export function withIds<T>(source: () => ID, fn: () => T): T {
+  const prev = idSource;
+  idSource = source;
+  try {
+    return fn();
+  } finally {
+    idSource = prev;
+  }
 }
 
 export function membershipOf(db: Database, ctx: Pick<Ctx, "workshopId" | "userId">): WorkshopMembership | undefined {

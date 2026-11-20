@@ -6,7 +6,7 @@ import type { ID, ServiceOrder } from "@/domain/types";
 import { formatBRL, formatOrderNumber } from "@/lib/format";
 import { ORDER_STATUS_LABELS } from "@/domain/labels";
 import type { OrderStatus } from "@/domain/types";
-import { canChangeStatus, changeOrderStatus, setOrderItems, updateOrder } from "@/services/orders";
+import { canChangeStatus } from "@/services/orders";
 
 /** Dados da OS que o `updateOrder` exige, mantendo tudo igual exceto o que muda. */
 function details(order: ServiceOrder, mechanicId: ID | null) {
@@ -25,12 +25,12 @@ export function useOrderActions() {
     if (order.mechanicId === mechanicId) return;
     const before = order.mechanicId;
     const number = formatOrderNumber(order.number);
-    const r = act((d, c) => updateOrder(d, c, order.id, details(order, mechanicId)));
+    const r = act((c) => c.updateOrder(order.id, details(order, mechanicId)));
     if (!r.ok) return;
     const who = mechanicId ? userOf(mechanicId)?.name.split(" ")[0] : null;
     toast("success", who ? `${number} atribuído a ${who}.` : `${number} ficou sem responsável.`, {
       label: "Desfazer",
-      run: () => act((d, c) => updateOrder(d, c, order.id, details(order, before)), `${number}: responsável restaurado.`),
+      run: () => act((c) => c.updateOrder(order.id, details(order, before)), `${number}: responsável restaurado.`),
     });
   };
 
@@ -51,11 +51,11 @@ export function useOrderActions() {
       : exists
         ? before.map((i) => (i.partId === partId ? { ...i, quantity } : i))
         : [...before, { partId, quantity, unitPriceCents: part.priceCents }];
-    const r = act((d, c) => setOrderItems(d, c, order.id, next));
+    const r = act((c) => c.setOrderItems(order.id, next));
     if (!r.ok) return;
     toast("success", message, {
       label: "Desfazer",
-      run: () => act((d, c) => setOrderItems(d, c, order.id, before), "Peças restauradas e estoque devolvido."),
+      run: () => act((c) => c.setOrderItems(order.id, before), "Peças restauradas e estoque devolvido."),
     });
   };
 
@@ -74,14 +74,14 @@ export function useOrderActions() {
     for (const o of orders) {
       if (o.status === status || o.cancelledAt) continue;
       if (!canChangeStatus(db, { workshopId: o.workshopId, userId: user.id }, o.status, status)) continue;
-      if (act((d, c) => changeOrderStatus(d, c, o.id, status)).ok) moved.push({ order: o, from: o.status });
+      if (act((c) => c.changeOrderStatus(o.id, status)).ok) moved.push({ order: o, from: o.status });
     }
     if (!moved.length) return;
     const skipped = orders.length - moved.length;
     toast("success", `${moved.length} ${moved.length === 1 ? "serviço movido" : "serviços movidos"} para ${ORDER_STATUS_LABELS[status]}${skipped ? ` (${skipped} sem alteração)` : ""}.`, {
       label: "Desfazer",
       run: () => {
-        for (const m of moved) act((d, c) => changeOrderStatus(d, c, m.order.id, m.from));
+        for (const m of moved) act((c) => c.changeOrderStatus(m.order.id, m.from));
         toast("success", "Mudança desfeita.");
       },
     });
@@ -91,14 +91,14 @@ export function useOrderActions() {
     const changed: ServiceOrder[] = [];
     for (const o of orders) {
       if (o.mechanicId === mechanicId || o.cancelledAt || o.paymentId) continue;
-      if (act((d, c) => updateOrder(d, c, o.id, details(o, mechanicId))).ok) changed.push(o);
+      if (act((c) => c.updateOrder(o.id, details(o, mechanicId))).ok) changed.push(o);
     }
     if (!changed.length) return;
     const who = mechanicId ? userOf(mechanicId)?.name.split(" ")[0] : null;
     toast("success", `${changed.length} ${changed.length === 1 ? "serviço" : "serviços"} ${who ? `atribuído(s) a ${who}` : "sem responsável"}.`, {
       label: "Desfazer",
       run: () => {
-        for (const o of changed) act((d, c) => updateOrder(d, c, o.id, details(o, o.mechanicId)));
+        for (const o of changed) act((c) => c.updateOrder(o.id, details(o, o.mechanicId)));
         toast("success", "Responsáveis restaurados.");
       },
     });
@@ -109,11 +109,11 @@ export function useOrderActions() {
     const before = order.laborCents;
     const number = formatOrderNumber(order.number);
     const input = (v: number | null) => ({ ...details(order, order.mechanicId), laborCents: v });
-    const r = act((d, c) => updateOrder(d, c, order.id, input(laborCents)));
+    const r = act((c) => c.updateOrder(order.id, input(laborCents)));
     if (!r.ok) return;
     toast("success", `${number}: mão de obra ${formatBRL(laborCents)}.`, {
       label: "Desfazer",
-      run: () => act((d, c) => updateOrder(d, c, order.id, input(before)), `${number}: mão de obra restaurada.`),
+      run: () => act((c) => c.updateOrder(order.id, input(before)), `${number}: mão de obra restaurada.`),
     });
   };
 

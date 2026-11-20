@@ -14,7 +14,7 @@ import { toast } from "@/components/ui/toast";
 import { MOVEMENT_TYPE_LABELS, PART_CATEGORIES } from "@/domain/labels";
 import type { Part } from "@/domain/types";
 import { centsToInput, formatBRL, formatDateTime, formatOrderNumber, parseBRL } from "@/lib/format";
-import { createPart, moveStock, partSituation, setPartPhoto, updatePart } from "@/services/stock";
+import { partSituation } from "@/services/stock";
 import { maskMoney } from "@/lib/masks";
 
 function PartDialog({ part, onClose }: { part: Part | null; onClose: () => void }) {
@@ -42,8 +42,8 @@ function PartDialog({ part, onClose }: { part: Part | null; onClose: () => void 
     })();
     const input = { name, code: finalCode, category, description, minQuantity: Number(min), costCents, priceCents, photo };
     const r = part
-      ? act((db, ctx) => updatePart(db, ctx, part.id, input), "Peça atualizada.")
-      : act((db, ctx) => createPart(db, ctx, { ...input, initialQuantity: Number(initial) }), "Peça cadastrada.");
+      ? act((c) => c.updatePart(part.id, input), "Peça atualizada.")
+      : act((c) => c.createPart({ ...input, initialQuantity: Number(initial) }), "Peça cadastrada.");
     if (r.ok) onClose();
   };
 
@@ -107,7 +107,7 @@ function MoveDialog({ part, initial = "in", onClose }: { part: Part; initial?: M
             variant="primary"
             disabled={!online || !validQty || (after !== null && after < 0)}
             onClick={() => {
-              const r = act((db, ctx) => moveStock(db, ctx, { partId: part.id, type, quantity: qty, reason: reason.trim() || { in: "Peça chegou", out: "Peça saiu", adjust: "Contagem do estoque" }[type] }), "Pronto. Estoque atualizado.");
+              const r = act((c) => c.moveStock({ partId: part.id, type, quantity: qty, reason: reason.trim() || { in: "Peça chegou", out: "Peça saiu", adjust: "Contagem do estoque" }[type] }), "Pronto. Estoque atualizado.");
               if (r.ok) onClose();
             }}
           >
@@ -351,7 +351,7 @@ function SheetPhotoButton({ partId, has }: { partId: string; has: boolean }) {
   return (
     <label className="stk-photo-btn" data-off={!online || undefined}>
       <Camera size={18} weight="bold" aria-hidden /> {has ? "Trocar foto" : "Tirar foto"}
-      <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={!online} onChange={async (e) => { const d = await readPhoto(e.target.files?.[0]); if (d) act((db, ctx) => setPartPhoto(db, ctx, partId, d), "Foto da peça salva."); e.target.value = ""; }} />
+      <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={!online} onChange={async (e) => { const d = await readPhoto(e.target.files?.[0]); if (d) act((c) => c.setPartPhoto(partId, d), "Foto da peça salva."); e.target.value = ""; }} />
     </label>
   );
 }

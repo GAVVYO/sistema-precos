@@ -8,7 +8,8 @@ import { Connection, demoStore, DemoState } from "@/demo/store";
 import type {
   Customer, Database, ID, Part, PermissionKey, User, Vehicle, WorkshopMembership, WorkshopSettings,
 } from "@/domain/types";
-import { can as canDo, Ctx, DomainError, scopeTo, WorkshopView } from "@/services/core";
+import { bindCommands, type Commands } from "@/services/commands";
+import { can as canDo, DomainError, scopeTo, WorkshopView } from "@/services/core";
 
 /** Estado bruto da demonstração (null durante a renderização no servidor). */
 export function useDemoState(): DemoState | null {
@@ -44,8 +45,8 @@ interface AppValue {
   online: boolean;
   lastSyncAt: string;
   can: (permission: PermissionKey) => boolean;
-  /** Executa uma operação de escrita, exibindo aviso de sucesso ou erro. */
-  act: <T>(fn: (db: Database, ctx: Ctx) => T, successMessage?: string) => ActResult<T>;
+  /** Executa ações com nome (`c.createCustomer(...)`), exibindo aviso de sucesso ou erro. */
+  act: <T>(fn: (c: Commands) => T, successMessage?: string) => ActResult<T>;
   customerOf: (id: ID | null) => Customer | undefined;
   vehicleOf: (id: ID | null) => Vehicle | undefined;
   userOf: (id: ID | null) => User | undefined;
@@ -105,9 +106,9 @@ export function AppProvider({ state, children }: { state: DemoState; children: R
     [view],
   );
 
-  const act = useCallback(<T,>(fn: (db: Database, ctx: Ctx) => T, successMessage?: string): ActResult<T> => {
+  const act = useCallback(<T,>(fn: (c: Commands) => T, successMessage?: string): ActResult<T> => {
     try {
-      const value = demoStore.mutate(fn);
+      const value = demoStore.mutate((db, ctx) => fn(bindCommands(db, ctx)));
       if (successMessage) toast("success", successMessage);
       return { ok: true, value };
     } catch (e) {

@@ -15,7 +15,7 @@ import { MiniPlate } from "@/features/dashboard/yard";
 import { exportOrderPdf } from "@/lib/export";
 import { addDays, dateOf, formatBRL, formatBRLOrPending, formatDateTime, formatOrderNumber, formatPhone, formatPlate, formatTime, parseBRL, todayISO } from "@/lib/format";
 import { quoteMessage, statusMessage } from "@/lib/whatsapp";
-import { canChangeStatus, orderTotals, PAYMENT_SITUATION_LABELS, paymentSituation, setOrderItems } from "@/services/orders";
+import { canChangeStatus, orderTotals, PAYMENT_SITUATION_LABELS, paymentSituation } from "@/services/orders";
 import { useMoveOrder } from "./move-order";
 import { useOrderActions } from "./order-actions";
 import { CancelOrderDialog, EditOrderDialog, PaymentDialog, WhatsAppDialog } from "./order-dialogs";
@@ -63,7 +63,7 @@ export function OrderDetailsDialog({ orderId, onClose }: { orderId: ID; onClose:
   const saveParts = () => {
     const parsed = draftsToItems(drafts ?? []);
     if (typeof parsed === "string") return toast("error", parsed);
-    const r = act((d, c) => setOrderItems(d, c, order.id, parsed, correction), "Peças atualizadas e estoque ajustado.");
+    const r = act((c) => c.setOrderItems(order.id, parsed, correction), "Peças atualizadas e estoque ajustado.");
     if (r.ok) {
       setDrafts(null);
       setCorrection("");

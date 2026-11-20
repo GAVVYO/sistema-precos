@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { formatBRL, formatOrderNumber, formatPhone, formatPlate, normalizePhone, normalizePlate, parseBRL } from "@/lib/format";
 import { markBorn } from "@/lib/born";
-import { createOrder } from "@/services/orders";
+
 import { DraftItem, draftsToItems, draftsTotal, PartsEditor, vehicleLabel } from "./shared";
 import { maskDigits, maskMoney, maskPhone, maskPlate } from "@/lib/masks";
 
@@ -145,8 +145,8 @@ export function NewOrderDialog({ prefill, onClose }: { prefill: NewOrderPrefill;
     const yr = year.trim() === "" ? null : Number(year);
     if (yr !== null && !Number.isInteger(yr)) { setMoreOpen(true); return setError("O ano precisa ser um número, ex.: 2019."); }
     setBusy(true);
-    const result = act((db, ctx) =>
-      createOrder(db, ctx, {
+    const result = act((c) =>
+      c.createOrder({
         customer: customer ? { id: customer.id } : { name, phone },
         vehicle: vehicle ? { id: vehicle.id } : { plate, brand, model, year: yr, mileage: km },
         description,

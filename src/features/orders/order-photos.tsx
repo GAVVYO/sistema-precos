@@ -6,7 +6,7 @@ import { useApp } from "@/app-state/app-context";
 import { toast } from "@/components/ui/toast";
 import type { ServiceOrder, PhotoStage } from "@/domain/types";
 import { formatDateTime } from "@/lib/format";
-import { addOrderPhoto, deleteOrderPhoto, moveOrderPhoto, PHOTO_STAGE_LABEL, PHOTO_STAGES, photosOf, stageForStatus } from "@/services/photos";
+import { PHOTO_STAGE_LABEL, PHOTO_STAGES, photosOf, stageForStatus } from "@/services/photos";
 
 /**
  * Fotos do carro na ficha do serviço (decisão 87): Chegou · Durante · Pronto.
@@ -45,7 +45,7 @@ export function OrderPhotos({ order }: { order: ServiceOrder }) {
       if (!f.type.startsWith("image/")) continue;
       try {
         const dataUrl = await shrinkPhoto(f);
-        const r = act((db, ctx) => addOrderPhoto(db, ctx, order.id, { stage, dataUrl }));
+        const r = act((c) => c.addOrderPhoto(order.id, { stage, dataUrl }));
         if (!r.ok) break;
         added.push(r.value.id);
       } catch {
@@ -124,10 +124,10 @@ export function OrderPhotos({ order }: { order: ServiceOrder }) {
             <span className="ph-meta">{formatDateTime(current.takenAt)} · {userOf(current.userId)?.name.split(" ")[0] ?? "Alguém"}</span>
             <span className="ph-move" role="group" aria-label="Mudar o momento da foto">
               {PHOTO_STAGES.map((s) => (
-                <button key={s.value} type="button" aria-pressed={current.stage === s.value} disabled={!online} onClick={() => { if (s.value !== current.stage) { act((db, ctx) => moveOrderPhoto(db, ctx, current.id, s.value), `Foto movida para ${s.label}.`); setOpen(null); } }}>{s.label}</button>
+                <button key={s.value} type="button" aria-pressed={current.stage === s.value} disabled={!online} onClick={() => { if (s.value !== current.stage) { act((c) => c.moveOrderPhoto(current.id, s.value), `Foto movida para ${s.label}.`); setOpen(null); } }}>{s.label}</button>
               ))}
             </span>
-            <button type="button" className="ph-del" disabled={!online} onClick={() => { const r = act((db, ctx) => deleteOrderPhoto(db, ctx, current.id), "Foto apagada."); if (r.ok) setOpen(null); }}><Trash size={18} weight="bold" aria-hidden /> Apagar</button>
+            <button type="button" className="ph-del" disabled={!online} onClick={() => { const r = act((c) => c.deleteOrderPhoto(current.id), "Foto apagada."); if (r.ok) setOpen(null); }}><Trash size={18} weight="bold" aria-hidden /> Apagar</button>
           </div>
         </div>
       )}

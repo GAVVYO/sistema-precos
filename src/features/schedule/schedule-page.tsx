@@ -15,7 +15,7 @@ import {
   addDays, addMonths, formatDate, formatOrderNumber, formatPhone, formatPlate, monthName, startOfMonth, startOfWeek, todayISO, weekdayName,
 } from "@/lib/format";
 import { ChoiceGroup, DayPicker, MoreDetails, TimePicker } from "@/components/ui/choice";
-import { createAppointment, setAppointmentStatus, updateAppointment } from "@/services/appointments";
+
 import { maskPhone, maskPlate } from "@/lib/masks";
 import { MiniPlate } from "@/features/dashboard/yard";
 
@@ -52,13 +52,13 @@ function AppointmentDialog({ appointment, defaultDate, onClose }: { appointment:
   const input = { customerName, phone, plate, brand, model, service, date, time, mechanicId: mechanicId || null, notes };
   const save = () => {
     const r = a
-      ? act((db, ctx) => updateAppointment(db, ctx, a.id, input), a.date !== date || a.time !== time ? "Agendamento reagendado." : "Agendamento atualizado.")
-      : act((db, ctx) => createAppointment(db, ctx, input), "Agendamento criado.");
+      ? act((c) => c.updateAppointment(a.id, input), a.date !== date || a.time !== time ? "Agendamento reagendado." : "Agendamento atualizado.")
+      : act((c) => c.createAppointment(input), "Agendamento criado.");
     if (r.ok) onClose();
   };
   const setStatus = (status: AppointmentStatus, message: string) => {
     if (!a) return;
-    const r = act((db, ctx) => setAppointmentStatus(db, ctx, a.id, status), message);
+    const r = act((c) => c.setAppointmentStatus(a.id, status), message);
     if (r.ok) onClose();
   };
 
@@ -391,7 +391,7 @@ function DayView({ day, today, onPick, onOpen, onNew }: { day: ISODate; today: I
                   <div className="ag-actions">
                     <Badge tone={STATUS_TONE[a.status]}>{APPOINTMENT_STATUS_LABELS[a.status]}</Badge>
                     {a.status === "scheduled" && can("schedule.manage") && (
-                      <Button size="sm" disabled={!online} onClick={() => act((db, ctx) => setAppointmentStatus(db, ctx, a.id, "confirmed"), `${a.customerName.split(" ")[0]} confirmado.`)}>Confirmar</Button>
+                      <Button size="sm" disabled={!online} onClick={() => act((c) => c.setAppointmentStatus(a.id, "confirmed"), `${a.customerName.split(" ")[0]} confirmado.`)}>Confirmar</Button>
                     )}
                     {open && day <= today && can("os.create") && (
                       <Button size="sm" variant="primary" disabled={!online} onClick={() => openNewOrder({ appointmentId: a.id, customerName: a.customerName, phone: a.phone, plate: a.plate, brand: a.brand, model: a.model, description: a.service, mechanicId: a.mechanicId })}>Chegou: abrir serviço</Button>

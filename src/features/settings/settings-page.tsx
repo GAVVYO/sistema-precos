@@ -13,7 +13,7 @@ import { contrastOn } from "@/lib/theme";
 import { MODULES } from "@/domain/permissions";
 import type { ModuleKey } from "@/domain/types";
 import { formatPhone } from "@/lib/format";
-import { updateSettings } from "@/services/admin";
+
 import { maskPhone } from "@/lib/masks";
 
 const DEFAULT_COLORS = { primary: "#2563EB", secondary: "#172033" };
@@ -75,7 +75,7 @@ function WorkshopSettingsForm() {
 
   const save = () =>
     act(
-      (db, ctx) => updateSettings(db, ctx, { displayName, phone, logoDataUrl: logo, primaryColor: primary, secondaryColor: secondary, activeModules: modules }),
+      (c) => c.updateSettings({ displayName, phone, logoDataUrl: logo, primaryColor: primary, secondaryColor: secondary, activeModules: modules }),
       "Salvo. As cores e o menu já mudaram.",
     );
 

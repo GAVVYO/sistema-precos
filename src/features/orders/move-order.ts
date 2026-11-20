@@ -5,7 +5,7 @@ import { toast } from "@/components/ui/toast";
 import { ORDER_STATUS_LABELS } from "@/domain/labels";
 import type { OrderStatus, ServiceOrder } from "@/domain/types";
 import { formatOrderNumber } from "@/lib/format";
-import { canChangeStatus, changeOrderStatus } from "@/services/orders";
+import { canChangeStatus } from "@/services/orders";
 import { withTransition } from "@/lib/view-transition";
 
 /**
@@ -49,7 +49,7 @@ export function useMoveOrder() {
     const number = formatOrderNumber(order.number);
     const from = order.status;
     let res = { ok: false } as ReturnType<typeof act>;
-    const run = () => { res = act((d, c) => changeOrderStatus(d, c, order.id, next)); };
+    const run = () => { res = act((c) => c.changeOrderStatus(order.id, next)); };
     // O cartão "anda" até a próxima coluna (no arraste ele já está na mão: sem animação).
     if (opts.animate !== false && document.querySelector(`.yard [data-order-id="${order.id}"]`)) animateYardMove(order.id, run);
     else if (opts.animate !== false && document.querySelector(`.svc-list [data-order-id="${order.id}"]`)) animateToTab(order.id, next, run);
@@ -60,7 +60,7 @@ export function useMoveOrder() {
       "success",
       message ?? `${number} movido para ${ORDER_STATUS_LABELS[next]}.`,
       undoable
-        ? { label: "Desfazer", run: () => act((d, c) => changeOrderStatus(d, c, order.id, from), `${number} voltou para ${ORDER_STATUS_LABELS[from]}.`) }
+        ? { label: "Desfazer", run: () => act((c) => c.changeOrderStatus(order.id, from), `${number} voltou para ${ORDER_STATUS_LABELS[from]}.`) }
         : undefined,
     );
   };

@@ -9,17 +9,16 @@ import { Button, cx, Field, Input } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import type { Appointment } from "@/domain/types";
 import { formatDate } from "@/lib/format";
-import { updateAppointment } from "@/services/appointments";
 
 /** Reagenda e oferece "Desfazer" (também Ctrl/⌘+Z), voltando ao dia e horário anteriores. */
 export function useReschedule() {
   const { act } = useApp();
   return (a: Appointment, date: string, time: string): boolean => {
-    const r = act((db, ctx) => updateAppointment(db, ctx, a.id, { ...a, date, time }));
+    const r = act((c) => c.updateAppointment(a.id, { ...a, date, time }));
     if (!r.ok) return false;
     toast("success", `Agendamento de ${a.customerName.split(" ")[0]} alterado para ${formatDate(date)} às ${time}.`, {
       label: "Desfazer",
-      run: () => act((db, ctx) => updateAppointment(db, ctx, a.id, { ...a, date: a.date, time: a.time }), "Reagendamento desfeito."),
+      run: () => act((c) => c.updateAppointment(a.id, { ...a, date: a.date, time: a.time }), "Reagendamento desfeito."),
     });
     return true;
   };

@@ -13,7 +13,7 @@ import { toast } from "@/components/ui/toast";
 import type { ID, PaymentMethod, ServiceOrder } from "@/domain/types";
 import { centsToInput, formatBRL, formatOrderNumber, formatPhone, formatPlate, normalizePhone, parseBRL } from "@/lib/format";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
-import { cancelOrder, orderTotals, registerPayment, updateOrder } from "@/services/orders";
+import { orderTotals } from "@/services/orders";
 import { vehicleLabel } from "./shared";
 import { maskDigits, maskMoney, maskPhone } from "@/lib/masks";
 
@@ -52,7 +52,7 @@ export function PaymentDialog({ orderId, onClose }: { orderId: ID; onClose: () =
               const amount = formatBRL(totals.totalCents);
               // A linha de "Quem falta pagar" sai com brilho verde e as outras sobem.
               withTransition("pay", () => {
-                const r = act((db, ctx) => registerPayment(db, ctx, order.id, { method }), `Recebido ${amount} do ${formatOrderNumber(order.number)}. O valor já aparece no Financeiro.`);
+                const r = act((c) => c.registerPayment(order.id, { method }), `Recebido ${amount} do ${formatOrderNumber(order.number)}. O valor já aparece no Financeiro.`);
                 setBusy(false);
                 if (r.ok) { onClose(); celebratePayment(from, amount); }
               });
@@ -144,7 +144,7 @@ export function EditOrderDialog({ order, onClose }: { order: ServiceOrder; onClo
     const km = mileage.trim() === "" ? null : Number(mileage);
     if (km !== null && !Number.isInteger(km)) return toast("error", "Quilometragem deve ser um número inteiro.");
     const r = act(
-      (db, ctx) => updateOrder(db, ctx, order.id, { description, notes, mechanicId: mechanicId || null, laborCents, mileage: km }),
+      (c) => c.updateOrder(order.id, { description, notes, mechanicId: mechanicId || null, laborCents, mileage: km }),
       "Serviço atualizado.",
     );
     if (r.ok) onClose();
@@ -224,7 +224,7 @@ export function CancelOrderDialog({ order, hasParts, onClose }: { order: Service
             variant="danger"
             disabled={!online}
             onClick={() => {
-              const r = act((db, ctx) => cancelOrder(db, ctx, order.id, { reason, returnParts: hasParts && returnParts }), "Serviço cancelado.");
+              const r = act((c) => c.cancelOrder(order.id, { reason, returnParts: hasParts && returnParts }), "Serviço cancelado.");
               if (r.ok) onClose();
             }}
           >

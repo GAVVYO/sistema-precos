@@ -12,7 +12,7 @@ import { type DataColumn, DataTable } from "@/components/ui/data-table";
 import type { Customer, ID, ServiceOrder, Vehicle } from "@/domain/types";
 import { orderTotalText, StatusBadge, vehicleLabel } from "@/features/orders/shared";
 import { formatDate, formatOrderNumber, formatPhone, formatPlate } from "@/lib/format";
-import { createCustomer, saveVehicle, updateCustomer } from "@/services/customers";
+
 import { orderTotals } from "@/services/orders";
 import { maskDigits, maskPhone, maskPlate } from "@/lib/masks";
 
@@ -69,7 +69,7 @@ function VehicleForm({ customerId, vehicle, onDone }: { customerId: ID; vehicle:
     const yr = year.trim() === "" ? null : Number(year);
     const km = mileage.trim() === "" ? null : Number(mileage);
     if ((yr !== null && !Number.isInteger(yr)) || (km !== null && !Number.isInteger(km))) return toast("error", "Ano e quilometragem devem ser números inteiros.");
-    const r = act((db, ctx) => saveVehicle(db, ctx, owner, { plate, brand, model, year: yr, mileage: km }, vehicle?.id), vehicle ? "Veículo atualizado." : "Veículo cadastrado.");
+    const r = act((c) => c.saveVehicle(owner, { plate, brand, model, year: yr, mileage: km }, vehicle?.id), vehicle ? "Veículo atualizado." : "Veículo cadastrado.");
     if (r.ok) onDone();
   };
 
@@ -116,8 +116,8 @@ export function CustomerDialog({ customer, onClose }: { customer: Customer | nul
 
   const save = () => {
     const r = customer
-      ? act((db, ctx) => updateCustomer(db, ctx, customer.id, { name, phone }), "Cliente atualizado.")
-      : act((db, ctx) => createCustomer(db, ctx, { name, phone }), "Cliente cadastrado.");
+      ? act((c) => c.updateCustomer(customer.id, { name, phone }), "Cliente atualizado.")
+      : act((c) => c.createCustomer({ name, phone }), "Cliente cadastrado.");
     if (!r.ok) return;
     if (customer) setEditing(false);
     else onClose();

@@ -215,3 +215,7 @@ Na ficha do serviço: abas Chegou · Durante · Pronto, "Tirar foto" e visualiza
 Abas Todas · Está acabando · Acabou, busca e tipos em botões; peças em cartões ("21 unidades · Tem"); a ficha da peça tem Chegou mais / Saiu / Contei. "O que aconteceu" lista as entradas e saídas.
 
 ![Estoque](imagens/interface/estoque.png)
+
+Foto da peça (decisão 89): no cadastro ou direto na ficha ("Tirar foto"); aparece no cartão.
+
+![Estoque com foto da peça](imagens/interface/estoque-foto.png)

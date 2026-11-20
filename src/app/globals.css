@@ -2643,3 +2643,24 @@ html[data-motion="reduce"] :is(.ph-grid li, .ph-big, .ph-add svg) { animation: n
 .stk-mini .stk-delta { min-width: 44px; height: 28px; font-size: .875rem; }
 @media (prefers-reduced-motion: reduce) { .stk-grid li, .stk-level > span { animation: none; } .stk-card { transition: none; } }
 html[data-motion="reduce"] :is(.stk-grid li, .stk-level > span) { animation: none !important; }
+
+/* Foto da peça (decisão 89). */
+.stk-pic { display: grid; place-items: center; height: 120px; margin: -6px -8px 6px; border-radius: 16px; background: var(--bg); overflow: hidden; }
+.stk-img { width: 100%; height: 100%; object-fit: cover; transition: transform 260ms cubic-bezier(.16, 1, .3, 1); }
+.stk-card:hover .stk-img { transform: scale(1.05); }
+.stk-noimg { display: grid; place-items: center; color: color-mix(in srgb, var(--muted) 70%, transparent); font-size: 44px; }
+.stk-card:hover .stk-noimg svg { animation: ph-snap 420ms cubic-bezier(.34, 1.56, .64, 1); }
+.stk-sheet-pic { position: relative; display: grid; place-items: center; height: 220px; border-radius: 20px; background: var(--bg); overflow: hidden; }
+.stk-sheet-pic .stk-noimg { font-size: 72px; }
+.stk-sheet-pic .stk-photo-btn { position: absolute; right: 12px; bottom: 12px; }
+.stk-photo-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; background: var(--surface); box-shadow: 0 2px 8px rgb(23 32 51 / 15%); font-size: .9375rem; font-weight: 750; color: var(--primary); cursor: pointer; }
+.stk-photo-btn:hover { background: var(--color-primary-soft); }
+.stk-photo-btn:focus-within { outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 2px; }
+.stk-photo-btn[data-off] { opacity: .5; pointer-events: none; }
+.stk-field-photo { display: flex; align-items: center; gap: 14px; }
+.stk-field-pic { display: grid; flex: none; place-items: center; width: 84px; height: 84px; border-radius: 18px; background: var(--bg); overflow: hidden; }
+.stk-field-pic .stk-noimg { font-size: 36px; }
+@media (prefers-reduced-motion: reduce) { .stk-img { transition: none; } .stk-card:hover .stk-noimg svg { animation: none; } }
+.stk-pic, .stk-field-pic { position: relative; }
+.stk-pic .stk-img, .stk-sheet-pic .stk-img, .stk-field-pic .stk-img { position: absolute; inset: 0; }
+.stk-sheet-pic .stk-img { object-fit: contain; }

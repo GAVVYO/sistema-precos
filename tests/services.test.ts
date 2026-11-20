@@ -404,3 +404,19 @@ describe("fotos do carro (decisão 87)", () => {
     expect(photosOf(db, order.id)).toHaveLength(0);
   });
 });
+
+describe("foto da peça (decisão 89)", () => {
+  it("quem mexe no estoque põe e tira a foto; mecânico não; só imagem", async () => {
+    const { setPartPhoto } = await import("@/services/stock");
+    const db = buildSeed();
+    const now = new Date();
+    const part = db.parts.find((p) => p.workshopId === DEMO_WORKSHOP_ID)!;
+    const owner = { workshopId: DEMO_WORKSHOP_ID, userId: DEMO_OWNER_ID, now };
+    setPartPhoto(db, owner, part.id, "data:image/jpeg;base64,/9j/4AAQ");
+    expect(part.photo).toMatch(/^data:image\/jpeg/);
+    expect(() => setPartPhoto(db, owner, part.id, "javascript:alert(1)")).toThrow();
+    expect(() => setPartPhoto(db, { workshopId: DEMO_WORKSHOP_ID, userId: "u-raimundo", now }, part.id, null)).toThrow();
+    setPartPhoto(db, owner, part.id, null);
+    expect(part.photo).toBeNull();
+  });
+});

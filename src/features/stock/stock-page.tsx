@@ -2,7 +2,8 @@
 
 import { ChoiceGroup, MoreDetails } from "@/components/ui/choice";
 import { ArrowLeftRight, Boxes, ClipboardCheck, PackageMinus, PackagePlus, Pencil, Plus, SearchX } from "lucide-react";
-import { MagnifyingGlass, Package, Prohibit, Warning } from "@phosphor-icons/react";
+import { Camera, Car, Disc, Drop, Engine, Funnel, Lightning, MagnifyingGlass, Package, Prohibit, Warning } from "@phosphor-icons/react";
+import { shrinkPhoto } from "@/features/orders/order-photos";
 import { useState } from "react";
 import { initialQuery } from "@/lib/query";
 import { useApp } from "@/app-state/app-context";
@@ -13,7 +14,7 @@ import { toast } from "@/components/ui/toast";
 import { MOVEMENT_TYPE_LABELS, PART_CATEGORIES } from "@/domain/labels";
 import type { Part } from "@/domain/types";
 import { centsToInput, formatBRL, formatDateTime, formatOrderNumber, parseBRL } from "@/lib/format";
-import { createPart, moveStock, partSituation, updatePart } from "@/services/stock";
+import { createPart, moveStock, partSituation, setPartPhoto, updatePart } from "@/services/stock";
 import { maskMoney } from "@/lib/masks";
 
 function PartDialog({ part, onClose }: { part: Part | null; onClose: () => void }) {
@@ -26,6 +27,7 @@ function PartDialog({ part, onClose }: { part: Part | null; onClose: () => void 
   const [min, setMin] = useState(String(part?.minQuantity ?? 1));
   const [cost, setCost] = useState(centsToInput(part?.costCents ?? null));
   const [price, setPrice] = useState(centsToInput(part?.priceCents ?? null));
+  const [photo, setPhoto] = useState<string | null>(part?.photo ?? null);
   const categories = [...new Set([...PART_CATEGORIES, ...view.parts.map((p) => p.category)])];
 
   const save = () => {
@@ -38,7 +40,7 @@ function PartDialog({ part, onClose }: { part: Part | null; onClose: () => void 
       const used = new Set(view.parts.map((x) => x.code.toUpperCase()));
       for (let n = 1; ; n++) { const c = `${prefix}-${String(n).padStart(3, "0")}`; if (!used.has(c)) return c; }
     })();
-    const input = { name, code: finalCode, category, description, minQuantity: Number(min), costCents, priceCents };
+    const input = { name, code: finalCode, category, description, minQuantity: Number(min), costCents, priceCents, photo };
     const r = part
       ? act((db, ctx) => updatePart(db, ctx, part.id, input), "Peça atualizada.")
       : act((db, ctx) => createPart(db, ctx, { ...input, initialQuantity: Number(initial) }), "Peça cadastrada.");
@@ -57,6 +59,7 @@ function PartDialog({ part, onClose }: { part: Part | null; onClose: () => void 
       }
     >
       <div className="grid gap-4">
+        <PartPhotoField value={photo} onChange={setPhoto} category={category} />
         <Field label="Nome da peça">{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoFocus />}</Field>
         <ChoiceGroup label="Que tipo de peça?" value={category} onChange={setCategory} options={categories.map((c) => ({ value: c, label: c }))} />
         <div className="grid grid-cols-2 gap-3">
@@ -218,6 +221,7 @@ export function StockPage() {
                   return (
                     <li key={p.id} style={{ "--i": i } as React.CSSProperties}>
                       <button type="button" className="stk-card" data-sit={s} onClick={() => setOpenPart(p.id)}>
+                        <span className="stk-pic"><PartPic part={p} /></span>
                         <span className="stk-cat">{p.category}</span>
                         <span className="stk-name">{p.name}</span>
                         <span className="stk-qty"><strong>{p.quantity}</strong> {p.quantity === 1 ? "unidade" : "unidades"}</span>
@@ -278,6 +282,10 @@ export function StockPage() {
           </>}
         >
           <div className="stk-sheet">
+            <div className="stk-sheet-pic">
+              <PartPic part={sheet} />
+              {canMove && <SheetPhotoButton partId={sheet.id} has={!!sheet.photo} />}
+            </div>
             <div className="stk-sheet-qty" data-sit={partSituation(sheet)}>
               <strong>{sheet.quantity}</strong><span>{sheet.quantity === 1 ? "unidade" : "unidades"} · {SIT_WORD[partSituation(sheet)]}</span>
             </div>
@@ -319,3 +327,56 @@ function SitTab({ k, on, onSelect, icon, label, count }: { k: Sit; on: boolean; 
     </button>
   );
 }
+
+/** Ícone do tipo quando a peça ainda não tem foto. */
+const CATEGORY_ICON: Record<string, React.ReactNode> = {
+  Elétrica: <Lightning weight="duotone" />, Filtros: <Funnel weight="duotone" />, Freios: <Disc weight="duotone" />,
+  Lubrificantes: <Drop weight="duotone" />, Motor: <Engine weight="duotone" />, Suspensão: <Car weight="duotone" />,
+};
+
+/** Foto da peça (decisão 89) ou, sem foto, o ícone do tipo dela. */
+function PartPic({ part }: { part: Part }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return part.photo ? <img src={part.photo} alt="" className="stk-img" loading="lazy" /> : <span className="stk-noimg" aria-hidden>{CATEGORY_ICON[part.category] ?? <Package weight="duotone" />}</span>;
+}
+
+async function readPhoto(file?: File | null): Promise<string | null> {
+  if (!file || !file.type.startsWith("image/")) return null;
+  try { return await shrinkPhoto(file, 720); } catch { toast("error", "Não deu para ler essa foto. Tente outra."); return null; }
+}
+
+/** Na ficha: tirar ou trocar a foto direto, sem abrir o cadastro. */
+function SheetPhotoButton({ partId, has }: { partId: string; has: boolean }) {
+  const { act, online } = useApp();
+  return (
+    <label className="stk-photo-btn" data-off={!online || undefined}>
+      <Camera size={18} weight="bold" aria-hidden /> {has ? "Trocar foto" : "Tirar foto"}
+      <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={!online} onChange={async (e) => { const d = await readPhoto(e.target.files?.[0]); if (d) act((db, ctx) => setPartPhoto(db, ctx, partId, d), "Foto da peça salva."); e.target.value = ""; }} />
+    </label>
+  );
+}
+
+/** No cadastro: foto opcional (no celular abre a câmera). */
+function PartPhotoField({ value, onChange, category }: { value: string | null; onChange: (v: string | null) => void; category: string }) {
+  return (
+    <div className="stk-field-photo">
+      <span className="stk-field-pic">
+        {value
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img src={value} alt="Foto da peça" className="stk-img" />
+          : <span className="stk-noimg" aria-hidden>{CATEGORY_ICON[category] ?? <Package weight="duotone" />}</span>}
+      </span>
+      <span className="grid gap-1">
+        <span className="text-sm font-semibold">Foto da peça <span className="font-normal text-muted">(opcional)</span></span>
+        <span className="flex flex-wrap gap-2">
+          <label className="stk-photo-btn">
+            <Camera size={18} weight="bold" aria-hidden /> {value ? "Trocar foto" : "Tirar ou escolher foto"}
+            <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={async (e) => { const d = await readPhoto(e.target.files?.[0]); if (d) onChange(d); e.target.value = ""; }} />
+          </label>
+          {value && <button type="button" className="cash-link" onClick={() => onChange(null)}>Tirar a foto</button>}
+        </span>
+      </span>
+    </div>
+  );
+}
+

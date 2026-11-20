@@ -171,6 +171,8 @@ export interface Part {
   minQuantity: number;
   costCents: Cents;
   priceCents: Cents;
+  /** Foto da peça (decisão 89): JPEG reduzido em data URL na demonstração; arquivo no servidor na fase 2. */
+  photo?: string | null;
 }
 
 export type StockMovementType = "in" | "out" | "adjust" | "order_out" | "return";

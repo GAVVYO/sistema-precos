@@ -34,6 +34,16 @@ describe("animações leves", () => {
     }
   });
 
+  it("vidro: desfoque até 8px, sem saturate, e nunca vidro dentro de vidro", () => {
+    // O desfoque é recalculado a cada quadro de rolagem; o fundo já é 90%+ opaco.
+    const blurs = [...css.matchAll(/(?<!-webkit-)backdrop-filter:\s*([^;]+);/g)].map((m) => m[1]);
+    for (const b of blurs) {
+      expect(Number(/blur\((\d+)px\)/.exec(b)?.[1] ?? 0), b).toBeLessThanOrEqual(8);
+      expect(b).not.toMatch(/saturate/);
+    }
+    expect(css).not.toMatch(/\.island-search-slot \.order-search\s*\{[^}]*backdrop-filter/);
+  });
+
   it("movimento reduzido desliga os pseudo-elementos de brilho", () => {
     expect(css).toMatch(/data-motion="reduce"\][^{]*::(after|before)[^{]*\{[^}]*animation:\s*none/);
   });

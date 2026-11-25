@@ -6,7 +6,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import mysql from "mysql2/promise";
 import { adminLogin, isAdmin, listWorkshops, resetOwnerPassword, setWorkshopActive } from "@/server/admin";
-import { connectDevice, deviceOf, peopleOf, pinLogin, sessionOf } from "@/server/auth";
+import { connectDevice, deviceOf, ownerSession, peopleOf, pinLogin, sessionOf } from "@/server/auth";
 import { closePool } from "@/server/db";
 import { createDemoWorkshop, createWorkshop } from "@/server/provision";
 import { readImage } from "@/server/files";
@@ -157,6 +157,19 @@ describe.skipIf(!URL)("servidor com MySQL", () => {
     await expectCode(connectDevice("beto@b.com", "senha-nova-beto"), "forbidden");
     await setWorkshopActive(B.workshopId, true);
     await expect(connectDevice("beto@b.com", "senha-nova-beto")).resolves.toBeTruthy();
+  });
+
+  it("trocar a senha do dono desconecta os aparelhos e encerra as sessões", async () => {
+    const dev = await connectDevice("ana@a.com", "senha-forte-a");
+    const ses = await ownerSession(dev.token, dev.workshopId, dev.userId);
+    expect(await sessionOf(dev.token, ses.token)).not.toBeNull();
+    await resetOwnerPassword(A.workshopId, "outra-senha-boa-123");
+    expect(await deviceOf(dev.token)).toBeNull();
+    expect(await sessionOf(dev.token, ses.token)).toBeNull();
+    await expectCode(connectDevice("ana@a.com", "senha-forte-a"), "forbidden");
+    expect((await connectDevice("ana@a.com", "outra-senha-boa-123")).workshopId).toBe(A.workshopId);
+    // Volta a senha para os testes seguintes.
+    await resetOwnerPassword(A.workshopId, "senha-forte-a");
   });
 
   it("foto vira arquivo: o banco guarda só o endereço, e apagar a foto apaga o arquivo", async () => {

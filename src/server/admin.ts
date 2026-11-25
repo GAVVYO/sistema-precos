@@ -121,6 +121,9 @@ export async function resetOwnerPassword(workshopId: ID, password: string): Prom
   await transaction(async (c) => {
     await c.query("UPDATE users SET password_hash = ? WHERE id = ?", [hashSecret(value), owner.id]);
     await c.query("DELETE FROM attempts WHERE k = ?", [`pw:${owner.email.toLowerCase()}`]);
+    // Quem tinha a senha antiga sai: todo aparelho da oficina volta a pedir e-mail e senha.
+    await c.query("DELETE FROM sessions WHERE workshop_id = ?", [workshopId]);
+    await c.query("DELETE FROM devices WHERE workshop_id = ?", [workshopId]);
   });
 }
 

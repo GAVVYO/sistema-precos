@@ -111,8 +111,8 @@ async function write(c: PoolConnection, workshopId: ID, changes: Changes) {
 }
 
 /** PIN nunca fica em texto: o que a regra gravou vira resumo antes de salvar. */
-function hashNewPins(db: Database) {
-  for (const m of db.memberships) if (m.pin && !isHashed(m.pin)) m.pin = hashSecret(m.pin);
+async function hashNewPins(db: Database) {
+  for (const m of db.memberships) if (m.pin && !isHashed(m.pin)) m.pin = await hashSecret(m.pin);
 }
 
 /** O que pode ir para o navegador: sem resumo de senha nem de PIN. */
@@ -150,7 +150,7 @@ export async function applyBatch(workshopId: ID, userId: ID, batch: CommandBatch
     const before = await current(c, workshopId, from);
     const after = structuredClone(before);
     replayCommands(after, { workshopId, userId, now: new Date() }, batch);
-    hashNewPins(after);
+    await hashNewPins(after);
     created = await externalizeImages(after, workshopId);
     unused = unusedFiles(before, after, workshopId);
     const changes = diff(before, after, workshopId);
@@ -184,13 +184,13 @@ export async function readState(workshopId: ID, userId: ID, since?: number): Pro
 
 /** Grava uma oficina inteira de uma vez (criação pela GAVYO). */
 export async function insertWorkshop(db: Database, workshopId: ID, passwords: Record<ID, string>): Promise<void> {
-  hashNewPins(db);
+  await hashNewPins(db);
   await externalizeImages(db, workshopId);
   await transaction(async (c) => {
     await c.query("INSERT INTO tenants (id, version) VALUES (?, 1)", [workshopId]);
     await write(c, workshopId, diff(emptyDatabase(), db, workshopId));
     for (const [userId, password] of Object.entries(passwords)) {
-      await c.query("UPDATE users SET password_hash = ? WHERE id = ?", [hashSecret(password), userId]);
+      await c.query("UPDATE users SET password_hash = ? WHERE id = ?", [await hashSecret(password), userId]);
     }
   });
   cache.delete(workshopId);

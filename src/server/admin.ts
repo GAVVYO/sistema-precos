@@ -118,8 +118,9 @@ export async function resetOwnerPassword(workshopId: ID, password: string): Prom
   const value = parse(passwordSchema, password);
   const owner = (await listWorkshops()).find((w) => w.id === workshopId)?.owner;
   if (!owner) throw new DomainError("not_found", "Oficina sem dono ativo.");
+  const hash = await hashSecret(value);
   await transaction(async (c) => {
-    await c.query("UPDATE users SET password_hash = ? WHERE id = ?", [hashSecret(value), owner.id]);
+    await c.query("UPDATE users SET password_hash = ? WHERE id = ?", [hash, owner.id]);
     await c.query("DELETE FROM attempts WHERE k = ?", [`pw:${owner.email.toLowerCase()}`]);
     // Quem tinha a senha antiga sai: todo aparelho da oficina volta a pedir e-mail e senha.
     await c.query("DELETE FROM sessions WHERE workshop_id = ?", [workshopId]);

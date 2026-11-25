@@ -58,7 +58,8 @@ export async function connectDevice(rawEmail: string, password: string): Promise
     if (wait) throw new DomainError("forbidden", waitMessage(wait));
     const [users] = await c.query<RowDataPacket[]>("SELECT id, password_hash FROM users WHERE email = ?", [email]);
     const user = users[0];
-    if (!user || !checkSecret(password, user.password_hash)) {
+    // Sem usuário confere contra um resumo falso: a resposta demora o mesmo que senha errada.
+    if (!(await checkSecret(password, user?.password_hash)) || !user) {
       await failed(c, key, PASSWORD_LIMIT);
       throw new DomainError("forbidden", "E-mail ou senha não conferem.");
     }
@@ -133,7 +134,7 @@ export async function pinLogin(device: DeviceInfo, userId: ID, pin: string): Pro
     const wait = await blocked(c, key);
     if (wait) throw new DomainError("forbidden", waitMessage(wait));
     const m = (await memberships(c, device.workshopId)).find((x) => x.userId === userId && x.active);
-    if (!m || !checkSecret(pin, m.pin)) {
+    if (!(await checkSecret(pin, m?.pin)) || !m) {
       await failed(c, key, PIN_LIMIT);
       throw new DomainError("forbidden", "PIN errado. Tente de novo.");
     }

@@ -140,6 +140,10 @@ describe.skipIf(!URL)("servidor com MySQL", () => {
     expect(state.db.users.every((u) => !("passwordHash" in u) || u.passwordHash === undefined)).toBe(true);
   });
 
+  it("criar a demonstração de novo dá aviso claro, não erro 500", async () => {
+    await expectCode(createDemoWorkshop("outro@x.com", "senha-boa-123", "1234"), "conflict");
+  });
+
   it("área da GAVYO: chave, lista, troca de senha e desativar", async () => {
     process.env.GAVYO_ADMIN_KEY = "chave-de-teste-com-mais-de-24-letras";
     await expectCode(adminLogin("errada"), "forbidden");

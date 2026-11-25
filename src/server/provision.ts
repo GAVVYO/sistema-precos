@@ -35,6 +35,13 @@ async function emailTaken(email: string): Promise<boolean> {
   });
 }
 
+async function workshopExists(id: ID): Promise<boolean> {
+  return withConnection(async (c) => {
+    const [rows] = await c.query<RowDataPacket[]>("SELECT 1 FROM tenants WHERE id = ?", [id]);
+    return rows.length > 0;
+  });
+}
+
 /** Oficina vazia, pronta para usar. */
 export async function createWorkshop(raw: NewWorkshopInput): Promise<{ workshopId: ID; ownerId: ID }> {
   const input = parse(newWorkshopSchema, raw);
@@ -62,8 +69,12 @@ export async function createWorkshop(raw: NewWorkshopInput): Promise<{ workshopI
  * para mostrar o sistema a clientes. Todos entram com o mesmo PIN.
  */
 export async function createDemoWorkshop(ownerEmail: string, ownerPassword: string, pin: string): Promise<{ workshopId: ID }> {
+  // PIN fora do padrão criaria uma oficina em que ninguém consegue entrar.
+  parse(newWorkshopSchema.shape.ownerPin, pin);
   const email = parse(emailSchema, ownerEmail);
   parse(passwordSchema, ownerPassword);
+  // A demonstração usa ids fixos: uma segunda daria erro genérico do banco.
+  if (await workshopExists(DEMO_WORKSHOP_ID)) throw new DomainError("conflict", "A oficina de demonstração já existe. Use a que está na lista.");
   const seed = buildSeed();
   const view = scopeTo(seed, DEMO_WORKSHOP_ID);
   const db: Database = {

@@ -25,7 +25,7 @@ const REVEAL = 520; // cortina saindo
 
 export function SwoopHost() {
   const [job, setJob] = useState<Job | null>(null);
-  const eagle = useRef<HTMLImageElement>(null);
+  const eagle = useRef<HTMLDivElement>(null);
   const curtain = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,8 +93,10 @@ export function SwoopHost() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/gavyo-nome.png" alt="" className="swoop-word" />
       </div>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img ref={eagle} src="/brand/gavyo-aguia.png" alt="" className="swoop-eagle" />
+      <div ref={eagle} className="swoop-eagle">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/gavyo-aguia.png" alt="" className="swoop-eagle-img" />
+      </div>
     </div>
   );
 }

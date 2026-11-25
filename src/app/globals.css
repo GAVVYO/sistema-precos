@@ -2287,8 +2287,11 @@ html[data-motion="reduce"] :is(.login-logo, .login-logo-eagle, .login-logo-eagle
 .swoop-curtain { position: absolute; inset: 0; display: grid; place-items: center; clip-path: inset(0 0 0 100%); background: radial-gradient(120% 90% at 30% 40%, #1f6bff 0%, #1447c4 55%, #0d2a78 100%); }
 /* nome GAVYO em branco no meio da cortina */
 .swoop-word { width: min(48vw, 520px); height: auto; filter: brightness(0) invert(1); opacity: .95; }
+/* O voo (transform) fica na caixa de fora; o contorno de luz (4 sombras) fica na imagem de dentro,
+   desenhado uma vez só — antes ia junto com o elemento que se move a cada quadro. */
+.swoop-eagle { position: absolute; top: 0; left: 0; transform-origin: 50% 32%; will-change: transform; }
 /* contorno de luz para o gavião aparecer no fundo claro e no azul */
-.swoop-eagle { position: absolute; top: 0; left: 0; height: auto; transform-origin: 50% 32%; filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 22px rgb(255 255 255 / 55%)) drop-shadow(0 18px 26px rgb(5 20 70 / 45%)); will-change: transform; }
+.swoop-eagle-img { display: block; width: 100%; height: auto; filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 22px rgb(255 255 255 / 55%)) drop-shadow(0 18px 26px rgb(5 20 70 / 45%)); }
 
 /* Entrada no computador (decisão 73): painel da marca + formulário. O azul é o
    mesmo da cortina do rasante, então a transição parece sair do próprio painel. */

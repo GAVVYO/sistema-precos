@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "@/app-state/app-context";
+import { followBox } from "@/lib/follow-box";
 import { usePref } from "@/lib/prefs";
 import { Button } from "./primitives";
 import { useReducedMotion } from "./use-reduced-motion";
@@ -85,17 +86,15 @@ export function GuidedTour({ id, steps, delay = 500 }: { id: string; steps: Tour
     // "start" respeita o scroll-padding da ilha e deixa espaço para o balão embaixo.
     if (!visible && !fixed) el?.scrollIntoView({ block: "start", inline: "nearest", behavior: reduced ? "auto" : "smooth" });
     const settle = window.setTimeout(() => setSettled(index), visible || fixed || reduced ? 0 : 520);
-    let frame = 0;
-    const tick = () => {
+    if (!el) return () => window.clearTimeout(settle);
+    // Mede só quando algo mexe (rolagem, janela, tamanho do alvo), não a cada quadro.
+    // Procura o alvo de novo a cada medida: o React pode ter trocado o elemento.
+    const off = followBox(el, (first) => {
       const t = findTarget(step.target);
-      if (t) {
-        const r = t.getBoundingClientRect();
-        setBox((b) => (b && b.top === r.top && b.left === r.left && b.width === r.width && b.height === r.height ? b : { top: r.top, left: r.left, width: r.width, height: r.height }));
-      }
-      frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(frame); window.clearTimeout(settle); };
+      const r = t ? t.getBoundingClientRect() : first;
+      setBox((b) => (b && b.top === r.top && b.left === r.left && b.width === r.width && b.height === r.height ? b : { top: r.top, left: r.left, width: r.width, height: r.height }));
+    });
+    return () => { off(); window.clearTimeout(settle); };
   }, [open, step, reduced, index]);
 
   useLayoutEffect(() => {

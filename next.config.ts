@@ -19,8 +19,26 @@ const staticExport = process.env.STATIC_EXPORT === "1";
  */
 const standalone = process.env.STANDALONE === "1";
 
+/**
+ * Cabeçalhos de segurança (só com servidor; o export estático não os aceita):
+ * o site não abre dentro de <iframe> de outro site, o navegador não "adivinha"
+ * o tipo de arquivo e o endereço não vaza para outros sites. A câmera fica
+ * liberada para o próprio site (foto do serviço e leitura do QR).
+ */
+const securityHeaders = async () => [
+  {
+    source: "/:path*",
+    headers: [
+      { key: "X-Frame-Options", value: "DENY" },
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
+    ],
+  },
+];
+
 const nextConfig: NextConfig = {
-  ...(staticExport ? { output: "export" as const, trailingSlash: true, images: { unoptimized: true } } : {}),
+  ...(staticExport ? { output: "export" as const, trailingSlash: true, images: { unoptimized: true } } : { headers: securityHeaders }),
   ...(standalone ? { output: "standalone" as const } : {}),
   turbopack: {
     rules: {

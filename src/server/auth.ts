@@ -58,7 +58,8 @@ export async function connectDevice(rawEmail: string, password: string): Promise
     if (wait) throw new DomainError("forbidden", waitMessage(wait));
     const [users] = await c.query<RowDataPacket[]>("SELECT id, password_hash FROM users WHERE email = ?", [email]);
     const user = users[0];
-    if (!user || !checkSecret(password, user.password_hash)) {
+    // Sem usuário confere contra um resumo falso: a resposta demora o mesmo que senha errada.
+    if (!(await checkSecret(password, user?.password_hash)) || !user) {
       await failed(c, key, PASSWORD_LIMIT);
       throw new DomainError("forbidden", "E-mail ou senha não conferem.");
     }
@@ -77,8 +78,26 @@ export async function connectDevice(rawEmail: string, password: string): Promise
     const token = newToken();
     await c.query("INSERT INTO devices (token_hash, workshop_id, connected_by) VALUES (?, ?, ?)", [tokenHash(token), ws.workshop_id, user.id]);
     const [names] = await c.query<RowDataPacket[]>("SELECT data FROM records WHERE workshop_id = ? AND kind = 'workshops'", [ws.workshop_id]);
+    await purgeExpired(c);
     return { token, workshopId: ws.workshop_id, workshopName: names[0] ? JSON.parse(names[0].data).name : "", userId: user.id as ID };
   });
+}
+
+/**
+ * Limpeza: sessões vencidas e tentativas erradas antigas (sem bloqueio ativo)
+ * não servem para nada e só faziam as tabelas crescer. Roda a cada entrada
+ * bem-sucedida, em lotes pequenos.
+ */
+export async function purgeExpired(c: PoolConnection): Promise<void> {
+  // A entrada já deu certo: se a limpeza falhar (ex.: banco ocupado), fica para a próxima.
+  try {
+    await c.query("DELETE FROM sessions WHERE expires_at < UTC_TIMESTAMP() LIMIT 500");
+    await c.query(
+      "DELETE FROM attempts WHERE (blocked_until IS NULL OR blocked_until < UTC_TIMESTAMP()) AND updated_at < UTC_TIMESTAMP() - INTERVAL 1 DAY LIMIT 500",
+    );
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 export interface DeviceInfo {
@@ -133,12 +152,14 @@ export async function pinLogin(device: DeviceInfo, userId: ID, pin: string): Pro
     const wait = await blocked(c, key);
     if (wait) throw new DomainError("forbidden", waitMessage(wait));
     const m = (await memberships(c, device.workshopId)).find((x) => x.userId === userId && x.active);
-    if (!m || !checkSecret(pin, m.pin)) {
+    if (!(await checkSecret(pin, m?.pin)) || !m) {
       await failed(c, key, PIN_LIMIT);
       throw new DomainError("forbidden", "PIN errado. Tente de novo.");
     }
     await c.query("DELETE FROM attempts WHERE k = ?", [key]);
-    return openSession(c, device, userId);
+    const session = await openSession(c, device, userId);
+    await purgeExpired(c);
+    return session;
   });
 }
 

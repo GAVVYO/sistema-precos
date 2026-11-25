@@ -47,6 +47,21 @@ async function current(c: PoolConnection, workshopId: ID, version: number): Prom
   return db;
 }
 
+/** Só para leitura: a cópia em cache, sem clonar (quem chama não pode alterar). */
+async function snapshot(c: PoolConnection, workshopId: ID, version: number): Promise<Database> {
+  const hit = cache.get(workshopId);
+  if (hit && hit.version === version) return hit.db;
+  const db = await load(c, workshopId);
+  cache.set(workshopId, { version, db });
+  return db;
+}
+
+/**
+ * O estado já em texto (sem segredos), por versão: vários aparelhos buscando a
+ * mesma versão recebem o mesmo texto, sem copiar a oficina inteira a cada pedido.
+ */
+const texts = new Map<ID, { version: number; json: string }>();
+
 /** O que muda entre dois estados (por id, comparando o conteúdo). */
 export function diff(before: Database, after: Database, workshopId: ID): Changes {
   const changes: Changes = { upserts: {}, deletes: {} };
@@ -78,13 +93,15 @@ function assertOwn(changes: Changes, after: Database, workshopId: ID) {
   for (const u of changes.upserts.users ?? []) if (!members.has(u.id)) throw new DomainError("forbidden", "Operação fora da oficina.");
 }
 
+const BATCH = 200;
+
 async function write(c: PoolConnection, workshopId: ID, changes: Changes) {
   for (const kind of KINDS) {
-    for (const item of changes.upserts[kind] ?? []) {
-      await c.query(
-        "INSERT INTO records (workshop_id, kind, id, data) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE data = VALUES(data)",
-        [workshopId, kind, keyOf(kind, item), JSON.stringify(item)],
-      );
+    // Em lote (até 200 linhas por ida ao banco): criar a demonstração eram centenas de idas.
+    const items = changes.upserts[kind] ?? [];
+    for (let i = 0; i < items.length; i += BATCH) {
+      const rows = items.slice(i, i + BATCH).map((item) => [workshopId, kind, keyOf(kind, item), JSON.stringify(item)]);
+      await c.query("INSERT INTO records (workshop_id, kind, id, data) VALUES ? ON DUPLICATE KEY UPDATE data = VALUES(data)", [rows]);
     }
     const gone = changes.deletes[kind];
     if (gone?.length) await c.query("DELETE FROM records WHERE workshop_id = ? AND kind = ? AND id IN (?)", [workshopId, kind, gone]);
@@ -111,8 +128,8 @@ async function write(c: PoolConnection, workshopId: ID, changes: Changes) {
 }
 
 /** PIN nunca fica em texto: o que a regra gravou vira resumo antes de salvar. */
-function hashNewPins(db: Database) {
-  for (const m of db.memberships) if (m.pin && !isHashed(m.pin)) m.pin = hashSecret(m.pin);
+async function hashNewPins(db: Database) {
+  for (const m of db.memberships) if (m.pin && !isHashed(m.pin)) m.pin = await hashSecret(m.pin);
 }
 
 /** O que pode ir para o navegador: sem resumo de senha nem de PIN. */
@@ -150,7 +167,7 @@ export async function applyBatch(workshopId: ID, userId: ID, batch: CommandBatch
     const before = await current(c, workshopId, from);
     const after = structuredClone(before);
     replayCommands(after, { workshopId, userId, now: new Date() }, batch);
-    hashNewPins(after);
+    await hashNewPins(after);
     created = await externalizeImages(after, workshopId);
     unused = unusedFiles(before, after, workshopId);
     const changes = diff(before, after, workshopId);
@@ -169,34 +186,54 @@ export async function applyBatch(workshopId: ID, userId: ID, batch: CommandBatch
   return result;
 }
 
-/** Tudo da oficina para a tela (só para quem é dela). `null` = nada mudou desde `since`. */
-export async function readState(workshopId: ID, userId: ID, since?: number): Promise<{ version: number; db: Database } | null> {
+/**
+ * Tudo da oficina para a tela, já em texto JSON (só para quem é dela).
+ * `null` = nada mudou desde `since`.
+ * Sem transação de leitura: o MySQL da Hostinger recusa
+ * `START TRANSACTION WITH CONSISTENT SNAPSHOT` (só aceita em REPEATABLE READ),
+ * e isso derrubou a entrada em 25/11. Uma gravação entre as duas leituras só
+ * faz a tela buscar de novo na próxima vez (a versão muda).
+ */
+export async function readStateText(workshopId: ID, userId: ID, since?: number): Promise<{ version: number; json: string } | null> {
   return withConnection(async (c) => {
     const [rows] = await c.query<RowDataPacket[]>("SELECT version, active FROM tenants WHERE id = ?", [workshopId]);
     if (!rows[0] || !rows[0].active) throw new DomainError("forbidden", "Oficina não encontrada ou desativada.");
     const version = Number(rows[0].version);
     if (since === version) return null;
-    const db = await current(c, workshopId, version);
+    const db = await snapshot(c, workshopId, version);
     if (!membershipOf(db, { workshopId, userId })) throw new DomainError("forbidden", "Você não tem acesso a esta oficina.");
-    return { version, db: stripSecrets(db) };
+    let text = texts.get(workshopId);
+    if (!text || text.version !== version) {
+      text = { version, json: JSON.stringify(stripSecrets(db)) };
+      texts.set(workshopId, text);
+    }
+    return text;
   });
+}
+
+/** Igual a `readStateText`, já como objeto (testes e quem precisar dos dados). */
+export async function readState(workshopId: ID, userId: ID, since?: number): Promise<{ version: number; db: Database } | null> {
+  const text = await readStateText(workshopId, userId, since);
+  return text && { version: text.version, db: JSON.parse(text.json) as Database };
 }
 
 /** Grava uma oficina inteira de uma vez (criação pela GAVYO). */
 export async function insertWorkshop(db: Database, workshopId: ID, passwords: Record<ID, string>): Promise<void> {
-  hashNewPins(db);
+  await hashNewPins(db);
   await externalizeImages(db, workshopId);
   await transaction(async (c) => {
     await c.query("INSERT INTO tenants (id, version) VALUES (?, 1)", [workshopId]);
     await write(c, workshopId, diff(emptyDatabase(), db, workshopId));
     for (const [userId, password] of Object.entries(passwords)) {
-      await c.query("UPDATE users SET password_hash = ? WHERE id = ?", [hashSecret(password), userId]);
+      await c.query("UPDATE users SET password_hash = ? WHERE id = ?", [await hashSecret(password), userId]);
     }
   });
   cache.delete(workshopId);
+  texts.delete(workshopId);
 }
 
 /** Só para os testes. */
 export function clearCache() {
   cache.clear();
+  texts.clear();
 }

@@ -136,7 +136,7 @@ function ResetPassword({ row, onClose, onDone }: { row: Row; onClose: () => void
   return (
     <Dialog title={`Nova senha para ${row.owner?.name.split(" ")[0]}`} subtitle={`${row.name} · ${row.owner?.email}`} onClose={onClose}
       footer={<><Button onClick={onClose}>Cancelar</Button><Button variant="primary" disabled={password.length < 8} onClick={save}>Trocar senha</Button></>}>
-      <Field label="Senha nova" hint="Os aparelhos já conectados continuam funcionando. A senha antiga deixa de valer.">
+      <Field label="Senha nova" hint="A senha antiga deixa de valer e todos os aparelhos da oficina vão pedir o e-mail e a senha nova.">
         {(p) => (
           <div className="gv-pass">
             <Input {...p} value={password} onChange={(e) => { setError(null); setPassword(e.target.value); }} autoComplete="off" spellCheck={false} autoFocus />

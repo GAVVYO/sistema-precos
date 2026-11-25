@@ -48,9 +48,22 @@ export async function requireSession(req: NextRequest) {
   return s;
 }
 
+/** Maior pedido aceito: cabe um lote com 4 fotos de 2 MB (em base64) com folga. */
+export const MAX_BODY_BYTES = 12_000_000;
+const TOO_BIG = "Pedido grande demais. Envie menos fotos de uma vez.";
+
 export async function body<T>(req: NextRequest): Promise<T> {
+  // Recusa antes de ler, quando o tamanho vem no cabeçalho; e confere de novo depois de ler.
+  if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) throw new DomainError("validation", TOO_BIG);
+  let text: string;
   try {
-    return (await req.json()) as T;
+    text = await req.text();
+  } catch {
+    throw new DomainError("validation", "Pedido inválido.");
+  }
+  if (text.length > MAX_BODY_BYTES) throw new DomainError("validation", TOO_BIG);
+  try {
+    return JSON.parse(text) as T;
   } catch {
     throw new DomainError("validation", "Pedido inválido.");
   }

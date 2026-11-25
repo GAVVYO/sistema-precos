@@ -6,7 +6,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import mysql from "mysql2/promise";
 import { adminLogin, isAdmin, listWorkshops, resetOwnerPassword, setWorkshopActive } from "@/server/admin";
-import { connectDevice, deviceOf, peopleOf, pinLogin, sessionOf } from "@/server/auth";
+import { connectDevice, deviceOf, ownerSession, peopleOf, pinLogin, sessionOf } from "@/server/auth";
 import { closePool } from "@/server/db";
 import { createDemoWorkshop, createWorkshop } from "@/server/provision";
 import { readImage } from "@/server/files";
@@ -15,6 +15,7 @@ import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DomainError } from "@/services/core";
+import { KINDS } from "@/services/sync";
 
 const URL = process.env.TEST_DATABASE_URL;
 
@@ -138,6 +139,16 @@ describe.skipIf(!URL)("servidor com MySQL", () => {
     const state = (await readState(workshopId, owner.userId))!;
     expect(state.db.orders.length).toBeGreaterThan(5);
     expect(state.db.users.every((u) => !("passwordHash" in u) || u.passwordHash === undefined)).toBe(true);
+    // Gravação em lote: tudo da semente chegou ao banco.
+    const c = await mysql.createConnection(URL!);
+    const [rows] = await c.query<mysql.RowDataPacket[]>("SELECT COUNT(*) AS n FROM records WHERE workshop_id = ? AND kind <> 'counter'", [workshopId]);
+    await c.end();
+    const total = KINDS.reduce((n, k) => n + state.db[k].length, 0);
+    expect(Number(rows[0].n)).toBe(total);
+  });
+
+  it("criar a demonstração de novo dá aviso claro, não erro 500", async () => {
+    await expectCode(createDemoWorkshop("outro@x.com", "senha-boa-123", "1234"), "conflict");
   });
 
   it("área da GAVYO: chave, lista, troca de senha e desativar", async () => {
@@ -157,6 +168,43 @@ describe.skipIf(!URL)("servidor com MySQL", () => {
     await expectCode(connectDevice("beto@b.com", "senha-nova-beto"), "forbidden");
     await setWorkshopActive(B.workshopId, true);
     await expect(connectDevice("beto@b.com", "senha-nova-beto")).resolves.toBeTruthy();
+  });
+
+  it("trocar a senha do dono desconecta os aparelhos e encerra as sessões", async () => {
+    const dev = await connectDevice("ana@a.com", "senha-forte-a");
+    const ses = await ownerSession(dev.token, dev.workshopId, dev.userId);
+    expect(await sessionOf(dev.token, ses.token)).not.toBeNull();
+    await resetOwnerPassword(A.workshopId, "outra-senha-boa-123");
+    expect(await deviceOf(dev.token)).toBeNull();
+    expect(await sessionOf(dev.token, ses.token)).toBeNull();
+    await expectCode(connectDevice("ana@a.com", "senha-forte-a"), "forbidden");
+    expect((await connectDevice("ana@a.com", "outra-senha-boa-123")).workshopId).toBe(A.workshopId);
+    // Volta a senha para os testes seguintes.
+    await resetOwnerPassword(A.workshopId, "senha-forte-a");
+  });
+
+  it("sessões vencidas e tentativas antigas são apagadas ao entrar", async () => {
+    const c = await mysql.createConnection(URL!);
+    await c.query("INSERT INTO sessions (token_hash, device_hash, workshop_id, user_id, expires_at) VALUES (REPEAT('a', 64), REPEAT('b', 64), ?, ?, UTC_TIMESTAMP() - INTERVAL 1 HOUR)", [A.workshopId, A.ownerId]);
+    await c.query("INSERT INTO attempts (k, fails, blocked_until, updated_at) VALUES ('pin:velho', 1, NULL, UTC_TIMESTAMP() - INTERVAL 2 DAY)");
+    await c.query("INSERT INTO attempts (k, fails, blocked_until) VALUES ('pin:bloqueado', 5, UTC_TIMESTAMP() + INTERVAL 5 MINUTE)");
+    const dev = await connectDevice("ana@a.com", "senha-forte-a");
+    const s = await pinLogin((await deviceOf(dev.token))!, A.ownerId, "1111");
+    const [old] = await c.query<mysql.RowDataPacket[]>("SELECT 1 FROM sessions WHERE token_hash = REPEAT('a', 64)");
+    const [att] = await c.query<mysql.RowDataPacket[]>("SELECT k FROM attempts WHERE k IN ('pin:velho', 'pin:bloqueado')");
+    await c.end();
+    expect(old).toHaveLength(0);
+    expect(att.map((r) => r.k)).toEqual(["pin:bloqueado"]);
+    expect(await sessionOf(dev.token, s.token)).not.toBeNull();
+  });
+
+  it("duas buscas na mesma versão devolvem os mesmos dados, sem PIN nem resumo", async () => {
+    const a = await readState(A.workshopId, A.ownerId);
+    const b = await readState(A.workshopId, A.ownerId);
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    expect(JSON.stringify(a)).not.toMatch(/scrypt\$/);
+    clearCache();
+    expect(JSON.stringify(await readState(A.workshopId, A.ownerId))).toBe(JSON.stringify(a));
   });
 
   it("foto vira arquivo: o banco guarda só o endereço, e apagar a foto apaga o arquivo", async () => {

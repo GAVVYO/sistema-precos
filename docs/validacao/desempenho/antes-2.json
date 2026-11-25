@@ -1,0 +1,73 @@
+{
+  "data": "2026-11-25T16:46:49.793Z",
+  "cpu": 4,
+  "vezes": 3,
+  "janela": true,
+  "url": "http://localhost:3021",
+  "cenarios": {
+    "rolagem-servicos": {
+      "quadros": 242,
+      "p50ms": 16.7,
+      "p95ms": 16.8,
+      "perdidos": 0,
+      "loafMs": 0,
+      "rodadas": 3
+    },
+    "mover-cartao": {
+      "quadros": 86,
+      "p50ms": 16.7,
+      "p95ms": 33.4,
+      "perdidos": 3,
+      "loafMs": 261,
+      "rodadas": 3
+    },
+    "abrir-servico": {
+      "quadros": 116,
+      "p50ms": 16.7,
+      "p95ms": 66.8,
+      "perdidos": 12,
+      "loafMs": 855,
+      "rodadas": 3
+    },
+    "trocar-aba": {
+      "quadros": 190,
+      "p50ms": 16.7,
+      "p95ms": 50,
+      "perdidos": 14,
+      "loafMs": 597,
+      "rodadas": 3
+    },
+    "numeros-contando": {
+      "quadros": 88,
+      "p50ms": 16.7,
+      "p95ms": 16.9,
+      "perdidos": 2,
+      "loafMs": 531,
+      "rodadas": 3
+    },
+    "menu-lateral": {
+      "quadros": 183,
+      "p50ms": 16.7,
+      "p95ms": 66.7,
+      "perdidos": 17,
+      "loafMs": 560,
+      "rodadas": 3
+    },
+    "tv-parada": {
+      "quadros": 358,
+      "p50ms": 16.7,
+      "p95ms": 16.8,
+      "perdidos": 1,
+      "loafMs": 0,
+      "rodadas": 3
+    },
+    "tour": {
+      "quadros": 240,
+      "p50ms": 16.7,
+      "p95ms": 16.8,
+      "perdidos": 0,
+      "loafMs": 0,
+      "rodadas": 3
+    }
+  }
+}

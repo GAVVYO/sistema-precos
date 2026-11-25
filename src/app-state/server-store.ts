@@ -106,42 +106,75 @@ async function pull(full = false): Promise<void> {
   rebuild();
 }
 
+/**
+ * Servidor reiniciando ou fora do ar por instantes: o pedido nem chegou a ser
+ * feito, então a ação fica na fila e vai de novo. 504 (demorou demais) fica de
+ * fora: o servidor pode ter gravado, e repetir faria a ação valer duas vezes.
+ */
+export const RETRY_STATUS = new Set([502, 503]);
+
+/** Espera antes de tentar de novo: 4 s, 8 s, 16 s… no máximo 30 s. */
+export function retryDelay(attempt: number): number {
+  return Math.min(4000 * 2 ** attempt, 30_000);
+}
+let attempts = 0;
+
+function retryLater(connection: Connection) {
+  patch({ connection });
+  if (retry) clearTimeout(retry);
+  retry = setTimeout(() => { retry = null; patch({ connection: "reconnecting" }); void flush(); }, retryDelay(attempts++));
+}
+
 async function flush(): Promise<void> {
   if (sending || !queue.length || !state?.session) return;
+  if (retry) { clearTimeout(retry); retry = null; }
   sending = true;
   const batch = queue[0];
   const g = gen;
-  let res: Response;
+  // Tudo dentro do try/finally: nenhum erro inesperado deixa a fila travada em "enviando".
   try {
-    res = await api("/api/acoes", batch);
-    if (g !== gen) { sending = false; return; }
-  } catch {
-    // Sem internet: guarda a fila e tenta de novo daqui a pouco.
-    sending = false;
-    patch({ connection: "offline" });
-    if (retry) clearTimeout(retry);
-    retry = setTimeout(() => { patch({ connection: "reconnecting" }); void flush(); }, 4000);
-    return;
-  }
-  if (res.ok) {
-    const r = (await res.json()) as { from: number; version: number; changes: Changes };
-    queue.shift();
-    if (confirmed && r.from === confirmed.version) {
-      confirmed = { version: r.version, db: applyChanges(confirmed.db, r.changes, state.session.workshopId) };
-      patch({ connection: "online", lastSyncAt: new Date().toISOString() });
-      rebuild();
-    } else {
-      await pull(true);
+    let res: Response;
+    try {
+      res = await api("/api/acoes", batch);
+    } catch {
+      // Sem internet: guarda a fila e tenta de novo daqui a pouco.
+      if (g === gen) retryLater("offline");
+      return;
     }
-  } else if (res.status === 401 || (res.status === 403 && /Sessão encerrada/.test(await res.clone().text()))) {
-    signedOut();
-    toast("error", "Sua sessão terminou. Entre de novo com o PIN.");
-  } else {
-    queue.shift();
-    toast("error", `Não foi salvo: ${await errorText(res)}`);
-    rebuild();
+    if (g !== gen) return;
+    if (RETRY_STATUS.has(res.status)) return retryLater("reconnecting");
+    attempts = 0;
+    if (res.status === 504) {
+      // Não sabemos se gravou: a versão do servidor diz a verdade.
+      queue.shift();
+      toast("error", "O servidor demorou para responder. Confira se a última mudança ficou salva.");
+      await pull(true);
+    } else if (res.ok) {
+      // Resposta cortada no caminho: o servidor pode ter gravado; a versão dele é que vale.
+      const r = (await res.json().catch(() => null)) as { from: number; version: number; changes: Changes } | null;
+      queue.shift();
+      if (r && confirmed && state?.session && r.from === confirmed.version) {
+        confirmed = { version: r.version, db: applyChanges(confirmed.db, r.changes, state.session.workshopId) };
+        patch({ connection: "online", lastSyncAt: new Date().toISOString() });
+        rebuild();
+      } else {
+        await pull(true);
+      }
+    } else if (res.status === 401 || (res.status === 403 && /Sessão encerrada/.test(await res.clone().text()))) {
+      signedOut();
+      // Sem citar o PIN: se a senha do dono foi trocada, o aparelho foi desconectado e pede e-mail e senha.
+      toast("error", "Sua sessão terminou. Entre de novo para continuar.");
+      return;
+    } else {
+      queue.shift();
+      toast("error", `Não foi salvo: ${await errorText(res)}`);
+      rebuild();
+    }
+  } catch (e) {
+    console.error(e);
+  } finally {
+    sending = false;
   }
-  sending = false;
   void flush();
 }
 

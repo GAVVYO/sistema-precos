@@ -91,6 +91,18 @@ describe("fila de envio", () => {
     expect(serverStore.pending()).toBe(0);
   });
 
+  it("sessão encerrada: aviso não manda digitar o PIN (o aparelho pode ter sido desconectado)", async () => {
+    // Depois de trocar a senha do dono, o aparelho precisa de e-mail e senha, não de PIN.
+    server([() => json({ error: "Sessão encerrada. Entre novamente.", code: "forbidden" }, 403)]);
+    const { serverStore, toast } = await load();
+    serverStore.run(novoCliente("Depois da troca"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(serverStore.getState()!.session).toBeNull();
+    const msg = vi.mocked(toast).mock.calls.find(([kind]) => kind === "error")?.[1] as string;
+    expect(msg).toMatch(/sessão terminou/i);
+    expect(msg).not.toMatch(/PIN/);
+  });
+
   it("erro de regra (409) continua tirando a ação da fila com aviso", async () => {
     const s = server([() => json({ error: "Peça acabou." }, 409)]);
     const { serverStore, toast } = await load();

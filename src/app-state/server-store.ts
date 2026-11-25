@@ -162,7 +162,8 @@ async function flush(): Promise<void> {
       }
     } else if (res.status === 401 || (res.status === 403 && /Sessão encerrada/.test(await res.clone().text()))) {
       signedOut();
-      toast("error", "Sua sessão terminou. Entre de novo com o PIN.");
+      // Sem citar o PIN: se a senha do dono foi trocada, o aparelho foi desconectado e pede e-mail e senha.
+      toast("error", "Sua sessão terminou. Entre de novo para continuar.");
       return;
     } else {
       queue.shift();

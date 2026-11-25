@@ -12,7 +12,7 @@ Decisões 95 e 96. O mesmo projeto Next.js serve as telas e a API; os dados fica
 - **Senha e PIN** conferidos com scrypt assíncrono (não trava o servidor). E-mail que não existe confere contra um resumo falso: a resposta demora o mesmo que senha errada.
 - **Trocar a senha do dono** (Área da GAVYO) desconecta todos os aparelhos da oficina: todos pedem e-mail e a senha nova.
 - **Limpeza automática:** a cada entrada bem-sucedida, sessões vencidas e tentativas erradas com mais de 1 dia (sem bloqueio ativo) são apagadas, em lotes de 500.
-- **Estado pronto por versão:** `/api/estado` monta o texto da oficina (sem segredos) uma vez por versão e reaproveita para todos os aparelhos; versão e registros vêm da mesma foto do banco. A gravação junta até 200 registros por ida ao banco.
+- **Estado pronto por versão:** `/api/estado` monta o texto da oficina (sem segredos) uma vez por versão e reaproveita para todos os aparelhos. (Não usa `START TRANSACTION WITH CONSISTENT SNAPSHOT`: o MySQL da Hostinger recusa.) A gravação junta até 200 registros por ida ao banco.
 - **Fila no navegador** (`src/app-state/server-store.ts`): resposta 502/503 ou sem internet → a ação fica na fila e vai de novo em 4, 8, 16… até 30 s. 504 (demorou demais) não repete — o servidor pode ter gravado —: busca a versão do servidor e pede para conferir. Resposta cortada não trava a fila (busca a versão do servidor).
 
 ## Rotas

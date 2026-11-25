@@ -188,28 +188,26 @@ export async function applyBatch(workshopId: ID, userId: ID, batch: CommandBatch
 
 /**
  * Tudo da oficina para a tela, já em texto JSON (só para quem é dela).
- * `null` = nada mudou desde `since`. Versão e registros vêm da mesma foto do
- * banco (transação de leitura), mesmo com alguém gravando ao mesmo tempo.
+ * `null` = nada mudou desde `since`.
+ * Sem transação de leitura: o MySQL da Hostinger recusa
+ * `START TRANSACTION WITH CONSISTENT SNAPSHOT` (só aceita em REPEATABLE READ),
+ * e isso derrubou a entrada em 25/11. Uma gravação entre as duas leituras só
+ * faz a tela buscar de novo na próxima vez (a versão muda).
  */
 export async function readStateText(workshopId: ID, userId: ID, since?: number): Promise<{ version: number; json: string } | null> {
   return withConnection(async (c) => {
-    await c.query("START TRANSACTION WITH CONSISTENT SNAPSHOT");
-    try {
-      const [rows] = await c.query<RowDataPacket[]>("SELECT version, active FROM tenants WHERE id = ?", [workshopId]);
-      if (!rows[0] || !rows[0].active) throw new DomainError("forbidden", "Oficina não encontrada ou desativada.");
-      const version = Number(rows[0].version);
-      if (since === version) return null;
-      const db = await snapshot(c, workshopId, version);
-      if (!membershipOf(db, { workshopId, userId })) throw new DomainError("forbidden", "Você não tem acesso a esta oficina.");
-      let text = texts.get(workshopId);
-      if (!text || text.version !== version) {
-        text = { version, json: JSON.stringify(stripSecrets(db)) };
-        texts.set(workshopId, text);
-      }
-      return text;
-    } finally {
-      await c.query("COMMIT").catch(() => {});
+    const [rows] = await c.query<RowDataPacket[]>("SELECT version, active FROM tenants WHERE id = ?", [workshopId]);
+    if (!rows[0] || !rows[0].active) throw new DomainError("forbidden", "Oficina não encontrada ou desativada.");
+    const version = Number(rows[0].version);
+    if (since === version) return null;
+    const db = await snapshot(c, workshopId, version);
+    if (!membershipOf(db, { workshopId, userId })) throw new DomainError("forbidden", "Você não tem acesso a esta oficina.");
+    let text = texts.get(workshopId);
+    if (!text || text.version !== version) {
+      text = { version, json: JSON.stringify(stripSecrets(db)) };
+      texts.set(workshopId, text);
     }
+    return text;
   });
 }
 

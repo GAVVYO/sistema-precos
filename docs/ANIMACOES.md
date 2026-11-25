@@ -55,7 +55,42 @@ Regras aprendidas:
 
 ## Desempenho
 
-Medido com CPU 4× mais lenta: tela parada e rolagem a ~60 quadros/s; mover cartão ~65–85 ms (maior parte é o React). **`npm run dev` é ~4× mais pesado** — para julgar fluidez use `npm run build && npm run start`. Regra: só dê nome de transição ao que realmente muda de lugar (ex.: colunas marcadas com `data-vt-col`).
+**`npm run dev` é ~4× mais pesado** — para julgar fluidez use `npm run build && npm run start`. Regra: só dê nome de transição ao que realmente muda de lugar (ex.: colunas marcadas com `data-vt-col`).
+
+### Como medir
+
+```bash
+npm run build && npm run start          # em outro terminal
+npm run medir -- --janela --saida docs/validacao/desempenho/<nome>.json
+```
+
+`scripts/medir-animacoes.mjs` abre o Chrome instalado, deixa a CPU 4× mais lenta, roda 8 cenários (rolagem em Serviços, mover cartão, abrir serviço, trocar aba, números contando, menu lateral, TV parada, tour) e grava a **mediana de 3 rodadas**: quadros, p95 do intervalo entre quadros, quadros perdidos (> 33 ms) e tempo de quadros longos (LoAF). `--so <cenário>` roda um só; `--vezes N` muda as rodadas. A medição tem ruído grande entre momentos diferentes: **compare sempre antes e depois lado a lado, alternando** (dois servidores, portas diferentes).
+
+### Rodada de 25/11/2026 (antes × depois, alternados, 2× cada)
+
+| Cenário | p95 antes | p95 depois | perdidos antes | perdidos depois | quadros longos antes (ms) | depois (ms) |
+|---|---|---|---|---|---|---|
+| rolagem-servicos | 16,8 / 16,8 | 16,8 / 16,8 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| mover-cartao | 33,4 / 33,4 | 33,6 / 33,3 | 3 / 3 | 5 / 4 | 271 / 261 | 425 / 315 |
+| abrir-servico | 166,6 / 66,8 | 66,6 / 83,3 | 15 / 12 | 13 / 11 | 1657 / 855 | 1089 / 978 |
+| trocar-aba | 50 / 50 | 50 / 50 | 12 / 14 | 16 / 13 | 492 / 597 | 542 / 407 |
+| numeros-contando | 33,2 / 16,9 | 33,3 / 16,8 | 3 / 2 | 2 / 2 | 688 / 531 | 515 / 447 |
+| menu-lateral | 150,1 / 66,7 | 66,6 / 66,6 | 18 / 17 | 21 / 18 | 1378 / 560 | 430 / 352 |
+| tv-parada | 16,8 / 16,8 | 16,8 / 16,8 | 3 / 1 | 2 / 0 | 81 / 0 | 41 / 0 |
+| tour | 16,8 / 16,8 | 16,8 / 16,8 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+
+Arquivos: `docs/validacao/desempenho/antes-*.json` e `depois-*.json`.
+
+Leitura: a diferença ficou **dentro do ruído** na maioria dos cenários. O que trava quadros hoje é o trabalho do React (abrir serviço, menu lateral, trocar aba, mover cartão), não a pintura das animações. As mudanças desta rodada tiram trabalho da **pintura** e do **React por quadro**, que este medidor (baseado em `requestAnimationFrame`) quase não enxerga: sombras e fundos animados viraram `transform`/`opacity`, o "ao vivo" da TV (o dia inteiro) não repinta mais, o contador não re-renderiza o React ~40× e o tour não mede a tela a cada quadro.
+
+Próximo passo para ganho visível: o `OrderCard` e outras telas leem o contexto inteiro do app (`useApp()`), então qualquer mudança redesenha tudo; dividir esse contexto é o que reduziria os quadros longos.
+
+### Regras (com teste em `tests/animations-css.test.ts`)
+
+- Keyframe só anima `transform`, `opacity` (e `filter`/`clip-path` em casos pontuais) — nunca `box-shadow`, `background`, `width`, `height`, `top`, `left`, `margin`, `padding`. Brilho/sombra: deixe pronto num `::before`/`::after` e anime a opacidade.
+- Nada de `transition: all`.
+- Vidro (`backdrop-filter`) desligado no cabeçalho e no menu (bloco "Leveza"); se voltar, no máximo `blur(8px)`, sem `saturate`, nunca vidro dentro de vidro.
+- Laço de quadro (`requestAnimationFrame`) não chama `setState`: escreve direto no elemento (ver `CountUp`) ou mede só em evento (ver `src/lib/follow-box.ts`).
 
 ## Testes
 

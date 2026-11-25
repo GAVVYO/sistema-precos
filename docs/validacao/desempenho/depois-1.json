@@ -1,12 +1,12 @@
 {
-  "data": "2026-11-25T16:15:48.802Z",
+  "data": "2026-11-25T16:43:15.003Z",
   "cpu": 4,
   "vezes": 3,
   "janela": true,
   "url": "http://localhost:3020",
   "cenarios": {
     "rolagem-servicos": {
-      "quadros": 247,
+      "quadros": 242,
       "p50ms": 16.7,
       "p95ms": 16.8,
       "perdidos": 0,
@@ -14,55 +14,55 @@
       "rodadas": 3
     },
     "mover-cartao": {
-      "quadros": 89,
+      "quadros": 84,
       "p50ms": 16.7,
-      "p95ms": 16.8,
-      "perdidos": 3,
-      "loafMs": 129,
+      "p95ms": 33.6,
+      "perdidos": 5,
+      "loafMs": 425,
       "rodadas": 3
     },
     "abrir-servico": {
-      "quadros": 133,
+      "quadros": 119,
       "p50ms": 16.7,
-      "p95ms": 50,
-      "perdidos": 8,
-      "loafMs": 530,
+      "p95ms": 66.6,
+      "perdidos": 13,
+      "loafMs": 1089,
       "rodadas": 3
     },
     "trocar-aba": {
-      "quadros": 205,
-      "p50ms": 16.7,
-      "p95ms": 33.4,
-      "perdidos": 10,
-      "loafMs": 293,
-      "rodadas": 3
-    },
-    "numeros-contando": {
-      "quadros": 93,
-      "p50ms": 16.7,
-      "p95ms": 16.8,
-      "perdidos": 2,
-      "loafMs": 288,
-      "rodadas": 3
-    },
-    "menu-lateral": {
-      "quadros": 195,
+      "quadros": 190,
       "p50ms": 16.7,
       "p95ms": 50,
       "perdidos": 16,
-      "loafMs": 338,
+      "loafMs": 542,
+      "rodadas": 3
+    },
+    "numeros-contando": {
+      "quadros": 91,
+      "p50ms": 16.7,
+      "p95ms": 33.3,
+      "perdidos": 2,
+      "loafMs": 515,
+      "rodadas": 3
+    },
+    "menu-lateral": {
+      "quadros": 180,
+      "p50ms": 16.7,
+      "p95ms": 66.6,
+      "perdidos": 21,
+      "loafMs": 430,
       "rodadas": 3
     },
     "tv-parada": {
-      "quadros": 360,
+      "quadros": 355,
       "p50ms": 16.7,
       "p95ms": 16.8,
-      "perdidos": 0,
-      "loafMs": 0,
+      "perdidos": 2,
+      "loafMs": 41,
       "rodadas": 3
     },
     "tour": {
-      "quadros": 241,
+      "quadros": 240,
       "p50ms": 16.7,
       "p95ms": 16.8,
       "perdidos": 0,

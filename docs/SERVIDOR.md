@@ -8,6 +8,12 @@ Decisões 95 e 96. O mesmo projeto Next.js serve as telas e a API; os dados fica
 - **Gravação** (`src/server/workshop-store.ts`): trava a oficina (`SELECT … FOR UPDATE` em `tenants`), repete as ações, grava só os registros que mudaram em `records` e sobe a versão. Duas pessoas ao mesmo tempo entram em fila.
 - **Entrada** (`src/server/auth.ts`): o dono conecta o aparelho com e-mail e senha (cookie `gv_dev`, 400 dias); cada pessoa entra com o PIN (cookie `gv_ses`, 12 h). 5 senhas erradas = 15 min de espera; 5 PINs errados = 5 min. Senha e PIN só como resumo scrypt; nunca vão para o navegador.
 - **Segurança das rotas** (`src/server/http.ts`): cookies `httpOnly`, `SameSite=Lax`, `Secure` em produção; todo POST exige o cabeçalho `x-gavyo: 1`; erros de regra viram a frase da regra, os outros viram frase genérica (detalhe só no log).
+- **Tamanho e cabeçalhos:** pedido acima de 12 MB é recusado ("Pedido grande demais") antes de ser lido inteiro. O servidor manda `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy` e `Permissions-Policy` (câmera só para o próprio site) — `next.config.ts`, só fora do export estático.
+- **Senha e PIN** conferidos com scrypt assíncrono (não trava o servidor). E-mail que não existe confere contra um resumo falso: a resposta demora o mesmo que senha errada.
+- **Trocar a senha do dono** (Área da GAVYO) desconecta todos os aparelhos da oficina: todos pedem e-mail e a senha nova.
+- **Limpeza automática:** a cada entrada bem-sucedida, sessões vencidas e tentativas erradas com mais de 1 dia (sem bloqueio ativo) são apagadas, em lotes de 500.
+- **Estado pronto por versão:** `/api/estado` monta o texto da oficina (sem segredos) uma vez por versão e reaproveita para todos os aparelhos; versão e registros vêm da mesma foto do banco. A gravação junta até 200 registros por ida ao banco.
+- **Fila no navegador** (`src/app-state/server-store.ts`): resposta 502/503/504 ou sem internet → a ação fica na fila e vai de novo em 4, 8, 16… até 30 s; resposta cortada não trava a fila (busca a versão do servidor).
 
 ## Rotas
 
@@ -47,7 +53,9 @@ Com `"demo": true` (e só `ownerEmail`, `ownerPassword`, `ownerPin`), cria a Ofi
 
 ## Testes
 
-`TEST_DATABASE_URL=mysql://… npx vitest run tests/server.test.ts` — **apaga as tabelas** do banco de teste. Cobre: senha e bloqueio, PIN, sessão presa ao aparelho, PIN gravado só como resumo, uma oficina não lê nem mexe na outra, duas baixas simultâneas da última peça (só uma passa).
+`TEST_DATABASE_URL=mysql://… npx vitest run tests/server.test.ts` — **apaga as tabelas** do banco de teste. Cobre: senha e bloqueio, PIN, sessão presa ao aparelho, PIN gravado só como resumo, uma oficina não lê nem mexe na outra, duas baixas simultâneas da última peça (só uma passa), troca de senha desconecta aparelhos, demonstração repetida, limpeza de sessões e tentativas, estado igual entre buscas.
+
+Sem banco (rodam sempre): `tests/secrets.test.ts`, `tests/http.test.ts`, `tests/next-config.test.ts`, `tests/provision.test.ts`, `tests/server-store.test.ts`.
 
 ## Ligar o site no servidor
 

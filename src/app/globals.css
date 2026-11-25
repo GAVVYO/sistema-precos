@@ -959,7 +959,7 @@ html { scroll-padding-top: 140px; }
 .illus-hand { position: absolute; top: 54px; left: 70px; width: 18px; height: 18px; border-radius: 999px; background: rgb(15 23 42 / 35%); border: 2px solid #fff; animation: illus-drag 2.6s ease-in-out infinite; }
 @keyframes illus-drag { 0%, 15% { transform: translate(0, 0); } 55%, 80% { transform: translate(135px, 0); } 100% { transform: translate(0, 0); } }
 .illus-type { width: 240px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font-size: .9375rem; font-weight: 600; }
-.illus-type-text { position: relative; display: inline-block; white-space: nowrap; vertical-align: bottom; width: calc(var(--len) * 1ch + 2px); font-family: ui-monospace, monospace; clip-path: inset(0 100% 0 0); animation: illus-type 3s steps(var(--len)) infinite; }
+.illus-type-text { position: relative; display: inline-block; white-space: nowrap; vertical-align: bottom; width: calc(var(--len) * 1ch + 2px); font-family: ui-monospace, monospace; animation: illus-type 3s steps(var(--len)) infinite; }
 /* Cursor que anda junto com as letras. */
 .illus-type-text::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--primary); animation: illus-caret 3s steps(var(--len)) infinite; }
 @keyframes illus-type { 0% { clip-path: inset(0 100% 0 0); } 60%, 100% { clip-path: inset(0 0 0 0); } }
@@ -973,6 +973,8 @@ html { scroll-padding-top: 140px; }
 .tour[data-reduced] *, .tour[data-reduced] *::before, .tour[data-reduced] *::after { animation: none !important; transition: none !important; }
 .tour[data-reduced] .illus-card, .tour[data-reduced] .illus-hand { transform: translate(135px, 0); }
 .tour[data-reduced] .illus-seq-item:first-child { background: var(--primary); color: var(--primary-fg); }
+/* Placa digitada parada: texto inteiro e o cursor no fim. */
+.tour[data-reduced] .illus-type-text::after { transform: translateX(calc(var(--len) * 1ch)); }
 @media (max-width: 767px) { .tour-pop { padding: 14px; } .tour-title { font-size: 1.0625rem; } }
 @media (forced-colors: active) { .tour-spot { outline: 3px solid Highlight; } }
 /* ---------- Passo 5: tela "Hoje" ---------- */

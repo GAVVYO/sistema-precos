@@ -106,8 +106,12 @@ async function pull(full = false): Promise<void> {
   rebuild();
 }
 
-/** Servidor reiniciando ou fora do ar por instantes: a ação fica na fila e vai de novo. */
-export const RETRY_STATUS = new Set([502, 503, 504]);
+/**
+ * Servidor reiniciando ou fora do ar por instantes: o pedido nem chegou a ser
+ * feito, então a ação fica na fila e vai de novo. 504 (demorou demais) fica de
+ * fora: o servidor pode ter gravado, e repetir faria a ação valer duas vezes.
+ */
+export const RETRY_STATUS = new Set([502, 503]);
 
 /** Espera antes de tentar de novo: 4 s, 8 s, 16 s… no máximo 30 s. */
 export function retryDelay(attempt: number): number {
@@ -140,7 +144,12 @@ async function flush(): Promise<void> {
     if (g !== gen) return;
     if (RETRY_STATUS.has(res.status)) return retryLater("reconnecting");
     attempts = 0;
-    if (res.ok) {
+    if (res.status === 504) {
+      // Não sabemos se gravou: a versão do servidor diz a verdade.
+      queue.shift();
+      toast("error", "O servidor demorou para responder. Confira se a última mudança ficou salva.");
+      await pull(true);
+    } else if (res.ok) {
       // Resposta cortada no caminho: o servidor pode ter gravado; a versão dele é que vale.
       const r = (await res.json().catch(() => null)) as { from: number; version: number; changes: Changes } | null;
       queue.shift();

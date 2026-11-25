@@ -21,6 +21,7 @@ beforeEach(() => {
     addEventListener: (t: string, f: Fn) => { if (!listeners.has(t)) listeners.set(t, new Set()); listeners.get(t)!.add(f); },
     removeEventListener: (t: string, f: Fn) => listeners.get(t)?.delete(f),
   });
+  vi.stubGlobal("document", { documentElement: { tag: "html" } });
   vi.stubGlobal("requestAnimationFrame", (f: Fn) => { frames.push(f); return frames.length; });
   vi.stubGlobal("cancelAnimationFrame", () => { frames = []; });
   vi.stubGlobal("ResizeObserver", class {
@@ -56,7 +57,8 @@ describe("followBox", () => {
   it("observa o alvo e desliga tudo", () => {
     const onChange = vi.fn();
     const off = followBox(el, onChange);
-    expect(observers[0].observed).toEqual([el]);
+    // A página também: conteúdo acima do alvo crescendo empurra o alvo sem rolagem.
+    expect(observers[0].observed).toEqual([el, document.documentElement]);
     off();
     expect(observers[0].disconnected).toBe(true);
     fire("scroll"); fire("resize");

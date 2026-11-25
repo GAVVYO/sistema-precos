@@ -89,10 +89,15 @@ export async function connectDevice(rawEmail: string, password: string): Promise
  * bem-sucedida, em lotes pequenos.
  */
 export async function purgeExpired(c: PoolConnection): Promise<void> {
-  await c.query("DELETE FROM sessions WHERE expires_at < UTC_TIMESTAMP() LIMIT 500");
-  await c.query(
-    "DELETE FROM attempts WHERE (blocked_until IS NULL OR blocked_until < UTC_TIMESTAMP()) AND updated_at < UTC_TIMESTAMP() - INTERVAL 1 DAY LIMIT 500",
-  );
+  // A entrada já deu certo: se a limpeza falhar (ex.: banco ocupado), fica para a próxima.
+  try {
+    await c.query("DELETE FROM sessions WHERE expires_at < UTC_TIMESTAMP() LIMIT 500");
+    await c.query(
+      "DELETE FROM attempts WHERE (blocked_until IS NULL OR blocked_until < UTC_TIMESTAMP()) AND updated_at < UTC_TIMESTAMP() - INTERVAL 1 DAY LIMIT 500",
+    );
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 export interface DeviceInfo {

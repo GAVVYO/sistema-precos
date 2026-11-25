@@ -44,6 +44,13 @@ describe("animações leves", () => {
     expect(css).not.toMatch(/\.island-search-slot \.order-search\s*\{[^}]*backdrop-filter/);
   });
 
+  it("movimento reduzido: a placa digitada do tour aparece inteira (estilo base sem recorte)", () => {
+    // Sem animação vale o estilo base; o recorte do começo fica só no keyframe.
+    const base = /\.illus-type-text\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+    expect(base).not.toMatch(/clip-path/);
+    expect(css).toMatch(/\.tour\[data-reduced\] \.illus-type-text::after\s*\{[^}]*translateX\(calc\(var\(--len\) \* 1ch\)\)/);
+  });
+
   it("movimento reduzido desliga os pseudo-elementos de brilho", () => {
     expect(css).toMatch(/data-motion="reduce"\][^{]*::(after|before)[^{]*\{[^}]*animation:\s*none/);
   });

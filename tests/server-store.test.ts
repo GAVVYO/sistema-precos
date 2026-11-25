@@ -67,6 +67,18 @@ describe("fila de envio", () => {
     expect(toast).not.toHaveBeenCalledWith("error", expect.anything());
   });
 
+  it("504 (o servidor pode ter gravado): não reenvia; busca a versão do servidor e avisa para conferir", async () => {
+    const s = server([() => json({ error: "x" }, 504)]);
+    const { serverStore, toast } = await load();
+    const estadoAntes = vi.mocked(fetch).mock.calls.filter(([u]) => String(u).startsWith("/api/estado")).length;
+    serverStore.run(novoCliente("Talvez Salvo"));
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(s.acoes()).toBe(1);
+    expect(serverStore.pending()).toBe(0);
+    expect(vi.mocked(fetch).mock.calls.filter(([u]) => String(u).startsWith("/api/estado")).length).toBe(estadoAntes + 1);
+    expect(toast).toHaveBeenCalledWith("error", expect.stringMatching(/confira/i));
+  });
+
   it("resposta 200 com corpo estragado não trava a fila", async () => {
     const s = server([() => new Response("<html>cortado", { status: 200 }), () => ok(1)]);
     const { serverStore } = await load();
